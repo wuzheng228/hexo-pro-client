@@ -1,0 +1,60 @@
+#postroot {
+  height: 100vh;
+  overflow: hidden;
+}
+
+#editorWrapper {
+  height: 100%;
+  display: flex;
+}
+
+
+#markdown {
+  height: 100%;
+  flex: 0 0 50%;
+  padding: 0 12px 0 0;
+  overflow-y: auto;
+}
+
+#preview {
+  font-size: 14px;
+  /*make it same as codemirror */
+  height: 100%;
+  flex: 0 0 50%;
+  padding: 0 0 0 12px;
+  border-left: solid 1px #ddd;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#preview * {
+  overflow-x: auto;
+}
+
+#preview>pre {
+  padding: 0 4px;
+  -moz-border-radius: 0;
+  -webkit-border-radius: 0;
+  background-color: aqua;
+  border-radius: 0;
+  border-width: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  margin: 0;
+  white-space: pre;
+  word-wrap: normal;
+  line-height: inherit;
+  color: inherit;
+  z-index: 2;
+  position: relative;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-variant-ligatures: none;
+  font-variant-ligatures: none;
+
+}
+
+#preview>pre>code {
+  background-color: azure;
+}
