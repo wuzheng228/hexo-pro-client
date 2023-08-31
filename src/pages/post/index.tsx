@@ -1,6 +1,6 @@
 
 import MarkDownEditor from '@/components/MarkdownEditor';
-import { Button, Grid } from '@arco-design/web-react';
+import { Button, Divider, Grid } from '@arco-design/web-react';
 import axios from 'axios';
 import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
@@ -17,6 +17,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import moment from 'moment'
 import _ from 'lodash';
+import { center } from '@turf/turf';
 
 let treeData;
 
@@ -316,24 +317,24 @@ function Post() {
 
     return (
         <div>
-            <Row style={{ width: "100%" }}>
+            <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid gray', backgroundColor: 'white' }} align='center'>
                 {/* 博客名称输入 */}
                 <Col span={12}>
                     <input
-                        style={{ width: "100%", border: 'none', outline: 'none', boxSizing: 'border-box', fontSize: 34, fontWeight: 'bold' }}
+                        style={{ width: "100%", height: 60, border: 'none', outline: 'none', boxSizing: 'border-box', fontSize: 28, fontWeight: 500, marginLeft: 10 }}
                         value={title}
                         onChange={(v) => handleChangeTitle(v)}
                     />
                 </Col>
                 {/* 博客发布按钮 */}
-                <Col span={4}>
+                <Col span={3} offset={9} style={{ alignItems: 'center', justifyContent: 'center' }}>
                     <ButtonGroup>
                         <Button type='primary' icon={<IconDelete />} />
                         <Button type='primary' icon={<IconSettings />} />
                         {
                             post.isDraft ?
                                 <Button type='primary' onClick={publish}>发布博客</Button>
-                                : <Button type='secondary' onClick={unpublish}>转为草稿</Button>
+                                : <Button type='outline' onClick={unpublish}>转为草稿</Button>
                         }
                     </ButtonGroup>
                 </Col>
@@ -357,7 +358,7 @@ function Post() {
                     >{md}</Col>
                 </Row>
             </Row>
-        </div>
+        </div >
     )
 }
 
