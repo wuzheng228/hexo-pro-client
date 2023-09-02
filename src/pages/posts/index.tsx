@@ -1,21 +1,29 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Card, Button, TableColumnProps, Table, Image, Breadcrumb, Input } from '@arco-design/web-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
+import { GlobalState } from '@/store';
 
 function Posts() {
+
+  const userInfo = useSelector((state: GlobalState) => state.posts);
+  const dispatch = useDispatch();
   const inputRef = useRef(null)
-  const [postsList, setPostsList] = React.useState(null)
+  const [postsList, setPostList] = useState([])
 
   const queryPosts = () => {
     axios.get('/hexopro/api/posts/list')
       .then(res => {
-        console.log(res)
         const result = res.data.map((obj, i) => {
-          return { ...obj, key: i + 1 }
+          return { _id: obj._id, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, updated: obj.updated, key: i + 1 }
         });
-        setPostsList(result)
+        setPostList(result)
+        dispatch({
+          type: 'load_posts',
+          payload: { posts: result }
+        })
       })
   }
 
@@ -24,8 +32,7 @@ function Posts() {
       title: '封面',
       dataIndex: 'cover',
       render: (col, item, index) => {
-        return (<Image width={200} height={133} src={item.cover} />)
-
+        return (<Image width={64} height={42.56} src={item.cover} />)
       }
     },
     {
@@ -86,6 +93,9 @@ function Posts() {
 
   useEffect(() => {
     queryPosts()
+    return () => {
+      // 在组件卸载时执行清理操作，取消异步任务等
+    };
   }, []);
 
   return (

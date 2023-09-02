@@ -1,4 +1,5 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, } from 'react';
+import { connect } from 'react-redux';
 import {
   Tooltip,
   Input,
@@ -23,6 +24,7 @@ import {
   IconInteraction,
   IconTag,
 } from '@arco-design/web-react/icon';
+import { useHistory } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import { GlobalState } from '@/store';
 import { GlobalContext } from '@/context';
@@ -35,10 +37,17 @@ import styles from './style/index.module.less';
 import defaultLocale from '@/locale';
 import useStorage from '@/utils/useStorage';
 import { generatePermission } from '@/routes';
+import axios from 'axios';
+
+const mapStateToProps = (state) => {
+  return state
+}
 
 function Navbar({ show }: { show: boolean }) {
+  const history = useHistory();
   const t = useLocale();
   const userInfo = useSelector((state: GlobalState) => state.userInfo);
+  // const posts = useSelector((state: GlobalState) => state.posts);
   const dispatch = useDispatch();
 
   const [_, setUserStatus] = useStorage('userStatus');
@@ -57,6 +66,13 @@ function Navbar({ show }: { show: boolean }) {
     } else {
       Message.info(`You clicked ${key}`);
     }
+  }
+
+  function newPost() {
+    axios.post('/hexopro/api/posts/new', { title: 'untitled' }).then((res) => {
+      const post = res.data
+      history.push(`/post/${post._id}`);
+    })
   }
 
   useEffect(() => {
@@ -151,6 +167,9 @@ function Navbar({ show }: { show: boolean }) {
           />
         </li>
         <li>
+          < Button type='primary' onClick={() => newPost()}>去写作</Button>
+        </li>
+        <li>
           <Select
             triggerElement={<IconButton icon={<IconLanguage />} />}
             options={[
@@ -205,4 +224,4 @@ function Navbar({ show }: { show: boolean }) {
   );
 }
 
-export default Navbar;
+export default connect(mapStateToProps)(Navbar);

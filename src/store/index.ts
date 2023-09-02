@@ -1,4 +1,18 @@
 import defaultSettings from '../settings.json';
+
+export interface PostListItem {
+  _id: string
+  title: string
+  cover: string
+  permalink: string
+  date: string
+  updated: string
+}
+
+export interface PostListstate {
+  posts: PostListItem[]
+}
+
 export interface GlobalState {
   settings?: typeof defaultSettings;
   userInfo?: {
@@ -11,6 +25,7 @@ export interface GlobalState {
     permissions: Record<string, string[]>;
   };
   userLoading?: boolean;
+  posts?: PostListItem[]
 }
 
 const initialState: GlobalState = {
@@ -18,9 +33,10 @@ const initialState: GlobalState = {
   userInfo: {
     permissions: {},
   },
+  posts: []
 };
 
-export default function store(state = initialState, action) {
+const rootRreducer = function store(state = initialState, action) {
   switch (action.type) {
     case 'update-settings': {
       const { settings } = action.payload;
@@ -37,7 +53,13 @@ export default function store(state = initialState, action) {
         userInfo,
       };
     }
+    case 'load_posts':
+      console.log(action);
+
+      return { ...state, posts: action.payload.posts }
     default:
       return state;
   }
 }
+
+export default rootRreducer
