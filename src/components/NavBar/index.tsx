@@ -38,6 +38,7 @@ import defaultLocale from '@/locale';
 import useStorage from '@/utils/useStorage';
 import { generatePermission } from '@/routes';
 import axios from 'axios';
+import { parseDateTime } from '@/utils/dateTimeUtils';
 
 const mapStateToProps = (state) => {
   return state
@@ -71,6 +72,9 @@ function Navbar({ show }: { show: boolean }) {
   function newPost() {
     axios.post('/hexopro/api/posts/new', { title: 'untitled' }).then((res) => {
       const post = res.data
+      post.date = parseDateTime(post.date)
+      post.updated = parseDateTime(post.updated)
+      console.log(post.date)
       history.push(`/post/${post._id}`);
     })
   }
@@ -156,7 +160,7 @@ function Navbar({ show }: { show: boolean }) {
       <div className={styles.left}>
         <div className={styles.logo}>
           <Logo />
-          <div className={styles['logo-name']}>Arco Pro</div>
+          <div className={styles['logo-name']}>Hexo Pro</div>
         </div>
       </div>
       <ul className={styles.right}>

@@ -11,6 +11,7 @@ import {
 import { EditorState, Compartment } from '@codemirror/state';
 import { HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
+import { ayuLight } from 'thememirror';
 // import { uploadImage } from './api'; // Make sure to provide the correct path for your API
 
 const markdownHighlighting = HighlightStyle.define(
@@ -45,6 +46,7 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
             doc: initialValue,
             extensions: [
                 basicSetup,
+                ayuLight,
                 lineNumbers(),
                 highlightActiveLine(),
                 highlightActiveLineGutter(),

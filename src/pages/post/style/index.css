@@ -16,6 +16,29 @@
   overflow-y: auto;
 }
 
+/* 自定义滚动条样式 */
+#markdown::-webkit-scrollbar {
+  width: 10px;
+  /* 滚动条宽度 */
+}
+
+#markdown::-webkit-scrollbar-thumb {
+  background-color: #999;
+  /* 滚动条拖动手柄的颜色 */
+  border-radius: 10px;
+  /* 滚动条拖动手柄的圆角 */
+}
+
+#markdown::-webkit-scrollbar-track {
+  background-color: #f0f0f0;
+  /* 滚动条轨道的颜色 */
+}
+
+#markdown::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
+  /* 鼠标悬停时的颜色 */
+}
+
 #preview {
   font-size: 14px;
   /*make it same as codemirror */
@@ -31,7 +54,7 @@
   overflow-x: auto;
 }
 
-#preview>pre {
+/* #preview>pre {
   padding: 0 4px;
   -moz-border-radius: 0;
   -webkit-border-radius: 0;
@@ -57,4 +80,164 @@
 
 #preview>pre>code {
   background-color: azure;
+} */
+
+/* 去除 CodeMirror 编辑器的虚线框 */
+.cm-focused {
+  outline: none !important;
+}
+
+
+/* Markdown 渲染样式，仅在 #preview 下生效 */
+#preview {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  padding: 20px;
+  color: #333;
+}
+
+#preview h1 {
+  font-size: 2.5em;
+  border-bottom: 2px solid #ddd;
+  margin-top: 0;
+  padding-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+#preview h2 {
+  font-size: 2em;
+  border-bottom: 1px solid #ddd;
+  margin-top: 24px;
+  padding-bottom: 4px;
+  font-weight: 500;
+  color: #444;
+}
+
+#preview h3 {
+  font-size: 1.8em;
+  margin-top: 20px;
+  font-weight: 500;
+  color: #555;
+}
+
+#preview h4 {
+  font-size: 1.6em;
+  margin-top: 18px;
+  font-weight: 500;
+  color: #666;
+}
+
+#preview h5 {
+  font-size: 1.4em;
+  margin-top: 16px;
+  font-weight: 500;
+  color: #777;
+}
+
+#preview h6 {
+  font-size: 1.2em;
+  margin-top: 14px;
+  font-weight: 500;
+  color: #888;
+}
+
+#preview p {
+  margin: 14px 0;
+  color: #333;
+}
+
+#preview blockquote {
+  border-left: 4px solid #ccc;
+  margin: 16px 0;
+  padding-left: 16px;
+  color: #555;
+}
+
+#preview ul,
+#preview ol {
+  margin: 12px 0;
+  padding-left: 24px;
+  color: #333;
+}
+
+#preview ul li,
+#preview ol li {
+  margin: 4px 0;
+  color: #444;
+  list-style-type: disc;
+}
+
+#preview strong {
+  font-weight: 600;
+}
+
+#preview em {
+  font-style: italic;
+}
+
+#preview a {
+  color: #0074d9;
+  text-decoration: none;
+}
+
+#preview a:hover {
+  text-decoration: underline;
+}
+
+#preview pre {
+  background-color: #f7f7f7;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  overflow: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  color: #333;
+}
+
+#preview code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  background-color: #f7f7f7;
+  padding: 2px 4px;
+}
+
+#preview hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 16px 0;
+}
+
+#preview img {
+  max-width: 100%;
+  height: auto;
+  margin: 16px 0;
+  display: block;
+}
+
+#preview .inline-code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  background-color: #f7f7f7;
+  padding: 2px 4px;
+  color: #0074d9;
+}
+
+/* 表格样式，显示表格网格线 */
+#preview table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#preview th,
+#preview td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+#preview th {
+  background-color: #f2f2f2;
+  font-weight: 600;
 }

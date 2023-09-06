@@ -317,7 +317,7 @@ function Post() {
 
     return (
         <div>
-            <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid gray', backgroundColor: 'white' }} align='center'>
+            <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid #ddd', backgroundColor: 'white' }} align='center'>
                 {/* 博客名称输入 */}
                 <Col span={12}>
                     <input
