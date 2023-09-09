@@ -1,6 +1,6 @@
 
 import MarkDownEditor from '@/components/MarkdownEditor';
-import { Button, Divider, Grid } from '@arco-design/web-react';
+import { Button, Divider, Grid, Modal } from '@arco-design/web-react';
 import axios from 'axios';
 import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
@@ -18,6 +18,7 @@ import 'highlight.js/styles/github.css';
 import moment from 'moment'
 import _ from 'lodash';
 import { center } from '@turf/turf';
+import { PostSettings } from './postSettings';
 
 let treeData;
 
@@ -34,11 +35,14 @@ function Post() {
     const mouseIsOn = useRef(null);
     const { _id } = useParams();
     const [post, setPost] = useState({ isDraft: true });
+    const [tagsCatMeta, setTagsCatMeta] = useState({})
+    const [postMetaData, setPostMetadata] = useState({ tags: [], categories: [], frontMatter: {} })
     const [doc, setDoc] = useState('');
     const [title, setTitle] = useState('');
     const [initialRaw, setInitialRaw] = useState('');
     const [rendered, setRendered] = useState(null);
     const [update, setUpdate] = useState({});
+    const [visible, setVisible] = useState(false)
 
     const markdownElem = document.getElementById("markdown");
     const previewElem = document.getElementById("preview");
@@ -91,6 +95,16 @@ function Post() {
         })
     }
 
+    const postMeta = () => {
+        return new Promise((resolve, reject) => {
+            axios.get('/hexopro/api/postMeta/' + _id).then((res) => {
+                resolve(res.data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+    }
+
     const settings = () => {
         return new Promise((resolve, reject) => {
             axios.get('/hexopro/api/settings/list').then((res) => {
@@ -105,24 +119,46 @@ function Post() {
         return {
             post: queryPostById(_id),
             tagsCategoriesAndMetadata: tagsCategoriesAndMetadata(),
-            settings: settings()
+            settings: settings(),
+            postMeta: postMeta()
         }
     }
 
     const dataDidLoad = (name, data) => {
-        console.log('data')
-        if (name != 'post') {
+        if (name == 'postMeta') {
+            console.log('postMeta')
+            console.log(data)
+            setPostMetadata(data)
+            return
+        }
+        if (name == 'tagsCategoriesAndMetadata') {
+            setTagsCatMeta(data)
             return
         }
 
-        console.log('dataLoad', data)
-        const parts = data.raw.split('---')
-        const _slice = parts[0] === '' ? 2 : 1;
-        const raw = parts.slice(_slice).join('---').trim();
-        setTitle(data.title)
-        setInitialRaw(raw)
-        setRendered(raw)
-        setPost(data)
+        if (name == 'post') {
+            // console.log('dataLoad', data)
+            const parts = data.raw.split('---')
+            const _slice = parts[0] === '' ? 2 : 1;
+            const raw = parts.slice(_slice).join('---').trim();
+            setTitle(data.title)
+            setInitialRaw(raw)
+            setRendered(raw)
+            setPost(data)
+        }
+    }
+
+    const handleChange = (update) => {
+        console.log('update', update)
+        // var now = moment()
+        const promise = new Promise((resolve, reject) => {
+            axios.post('/hexopro/api/posts/' + _id, update).then((res) => {
+                resolve(res.data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+        return promise
     }
 
     const handleChangeTitle = (e) => {
@@ -317,7 +353,7 @@ function Post() {
 
     return (
         <div>
-            <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid #ddd', backgroundColor: 'white' }} align='center'>
+            <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid gray', backgroundColor: 'white' }} align='center'>
                 {/* 博客名称输入 */}
                 <Col span={12}>
                     <input
@@ -330,7 +366,7 @@ function Post() {
                 <Col span={3} offset={9} style={{ alignItems: 'center', justifyContent: 'center' }}>
                     <ButtonGroup>
                         <Button type='primary' icon={<IconDelete />} />
-                        <Button type='primary' icon={<IconSettings />} />
+                        <Button type='primary' icon={<IconSettings />} onClick={() => setVisible(true)} />
                         {
                             post.isDraft ?
                                 <Button type='primary' onClick={publish}>发布博客</Button>
@@ -358,6 +394,15 @@ function Post() {
                     >{md}</Col>
                 </Row>
             </Row>
+            <PostSettings
+                visible={visible}
+                setVisible={setVisible}
+                tagCatMeta={tagsCatMeta}
+                setTagCatMeta={setTagsCatMeta}
+                postMeta={postMetaData}
+                setPostMeta={setPostMetadata}
+                handleChange={handleChange}
+            />
         </div >
     )
 }

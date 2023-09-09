@@ -56,7 +56,7 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
                 EditorView.updateListener.of((update) => {
                     // if (update.docChanged) {
                     if (update.docChanged) {
-                        console.log("change:", update.state.doc.toString())
+                        // console.log("change:", update.state.doc.toString())
                         setRendered(update.state.doc.toString());
                         handleChangeContent(update.state.doc.toString())
                     }
@@ -86,8 +86,6 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
     }, [editorRef]);
 
     useEffect(() => {
-        console.log('ihi')
-        console.log(initialValue)
         if (!editorView || !initialValue) {
             return
         }
