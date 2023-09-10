@@ -12,15 +12,17 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeReact from 'rehype-react';
 import { remark } from 'remark';
 import './style/index.css';
-import { IconDelete, IconSettings } from '@arco-design/web-react/icon';
+import { IconDelete, IconObliqueLine, IconSettings } from '@arco-design/web-react/icon';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import moment from 'moment'
 import _ from 'lodash';
-import { center } from '@turf/turf';
 import { PostSettings } from './postSettings';
+import { useHistory } from "react-router-dom";
+import { marked, Renderer } from 'marked';
+import { render } from 'react-dom';
 
-let treeData;
+
 
 const Row = Grid.Row;
 const Col = Grid.Col;
@@ -30,7 +32,12 @@ type Post = {
     isDraft: boolean
 }
 
+
+
+
+
 function Post() {
+    const history = useHistory();
     const postRef = useRef(null);
     const mouseIsOn = useRef(null);
     const { _id } = useParams();
@@ -38,42 +45,13 @@ function Post() {
     const [tagsCatMeta, setTagsCatMeta] = useState({})
     const [postMetaData, setPostMetadata] = useState({ tags: [], categories: [], frontMatter: {} })
     const [doc, setDoc] = useState('');
+    const [md, setRenderedMarkdown] = useState('');
     const [title, setTitle] = useState('');
     const [initialRaw, setInitialRaw] = useState('');
-    const [rendered, setRendered] = useState(null);
+    const [rendered, setRendered] = useState('');
     const [update, setUpdate] = useState({});
     const [visible, setVisible] = useState(false)
-
-    const markdownElem = document.getElementById("markdown");
-    const previewElem = document.getElementById("preview");
-
-    const defaultPlugin = () => (tree) => {
-        treeData = tree; //treeData length corresponds to previewer's childNodes length
-        return tree;
-    };
-
-    const computeElemsOffsetTop = () => {
-        const markdownChildNodesOffsetTopList = [];
-        const previewChildNodesOffsetTopList = [];
-
-        treeData.children.forEach((child, index) => {
-            if (child.type !== "element" || child.position === undefined) return;
-
-            const pos = child.position.start.offset;
-            const lineInfo = editorView.lineBlockAt(pos);
-            const offsetTop = lineInfo.top;
-            markdownChildNodesOffsetTopList.push(offsetTop);
-            const childNode = previewElem.childNodes[index]
-            if (childNode instanceof HTMLElement) {
-                const listItem = childNode.offsetTop -
-                    previewElem.getBoundingClientRect().top //offsetTop from the top of preview
-                previewChildNodesOffsetTopList.push(
-                    listItem
-                );
-            }
-        });
-        return [markdownChildNodesOffsetTopList, previewChildNodesOffsetTopList];
-    };
+    const [lineNumber, setLineNumber] = useState(false)
 
     const queryPostById = (_id) => {
         return new Promise((resolve, reject) => {
@@ -177,6 +155,17 @@ function Post() {
         postRef.current({ _content: text })
     }
 
+    const removeBlog = () => {
+        const promise = new Promise((resolve, reject) => {
+            axios.get('/hexopro/api/posts/' + _id + '/remove').then((res) => {
+                resolve(res.data)
+            }).catch(err => {
+                reject(err)
+            })
+        })
+        history.push(`/posts`);
+    }
+
     const publish = () => {
         const res = handlePublish()
         res.then((data: Post) => {
@@ -233,70 +222,10 @@ function Post() {
         })
     }
 
-    const handlePreviewScroll = () => {
-        if (mouseIsOn.current !== "preview") {
-            return;
-        }
-        const [markdownChildNodesOffsetTopList, previewChildNodesOffsetTopList] =
-            computeElemsOffsetTop();
-        let scrollElemIndex;
-        for (let i = 0; previewChildNodesOffsetTopList.length > i; i++) {
-            if (previewElem.scrollTop < previewChildNodesOffsetTopList[i]) {
-                scrollElemIndex = i - 1;
-                break;
-            }
-        }
-
-        if (scrollElemIndex >= 0) {
-            const ratio =
-                (previewElem.scrollTop -
-                    previewChildNodesOffsetTopList[scrollElemIndex]) /
-                (previewChildNodesOffsetTopList[scrollElemIndex + 1] -
-                    previewChildNodesOffsetTopList[scrollElemIndex]);
-            markdownElem.scrollTop =
-                ratio *
-                (markdownChildNodesOffsetTopList[scrollElemIndex + 1] -
-                    markdownChildNodesOffsetTopList[scrollElemIndex]) +
-                markdownChildNodesOffsetTopList[scrollElemIndex];
-        }
-    };
-
-    const handleMarkdownScroll = () => {
-        console.log(mouseIsOn.current);
-        if (mouseIsOn.current !== "markdown") {
-            return;
-        }
-        const [markdownChildNodesOffsetTopList, previewChildNodesOffsetTopList] =
-            computeElemsOffsetTop();
-        let scrollElemIndex;
-        for (let i = 0; markdownChildNodesOffsetTopList.length > i; i++) {
-            if (markdownElem.scrollTop < markdownChildNodesOffsetTopList[i]) {
-                scrollElemIndex = i - 1;
-                break;
-            }
-        }
-
-        if (
-            markdownElem.scrollTop >=
-            markdownElem.scrollHeight - markdownElem.clientHeight //true when scroll reached the bottom
-        ) {
-            previewElem.scrollTop =
-                previewElem.scrollHeight - previewElem.clientHeight; //scroll to the bottom
-            return;
-        }
-
-        if (scrollElemIndex >= 0) {
-            const ratio =
-                (markdownElem.scrollTop -
-                    markdownChildNodesOffsetTopList[scrollElemIndex]) /
-                (markdownChildNodesOffsetTopList[scrollElemIndex + 1] -
-                    markdownChildNodesOffsetTopList[scrollElemIndex]);
-            previewElem.scrollTop =
-                ratio *
-                (previewChildNodesOffsetTopList[scrollElemIndex + 1] -
-                    previewChildNodesOffsetTopList[scrollElemIndex]) +
-                previewChildNodesOffsetTopList[scrollElemIndex];
-        }
+    const handleScroll = (percent) => {
+        console.log(percent)
+        const height = document.getElementById("preview").getBoundingClientRect().height
+        document.getElementById("preview").scrollTop = (document.getElementById("preview").scrollHeight - height) * percent
     }
 
     useEffect(() => {
@@ -311,11 +240,7 @@ function Post() {
     }, [])
 
     useEffect(() => {
-        // hljs.initHighlighting.call(() => { false });
-        hljs.initHighlighting();
-        hljs.highlightAll();
         const items = fetch()
-        console.log('item', items)
         Object.keys(items).forEach((name) => {
             Promise.resolve(items[name]).then((data) => {
                 const update = {}
@@ -333,23 +258,28 @@ function Post() {
             handleUpdate(update)
         }, 1000, { trailing: true, loading: true });
         postRef.current = p
-        // return () => {
-        //     p.cancel(); // 清除防抖函数的定时器
-        // };
     }, []);
 
-    const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, forceLineNumbers: true })
+    const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
 
-    const md = remark()
-        .use(remarkParse)
-        .use(remarkGfm)
-        .use(remarkRehype)
-        .use(rehypeFormat)
-        .use(rehypeHighlight, { ignoreMissing: true, detect: true })
-        .use(rehypeReact, { createElement, Fragment })
-        .use(defaultPlugin)
 
-        .processSync(rendered).result;
+
+    useEffect(() => {
+        const renderer = {
+            code(code, lang) {
+                const validLanguage = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return `<pre><code>${hljs.highlight(code, { language: validLanguage }).value}</code></pre>`
+            }
+
+        };
+        marked.use({ renderer });
+        marked.use({
+            pedantic: false,
+            gfm: true,
+            breaks: true
+        });
+        setRenderedMarkdown(marked(rendered))
+    }, [rendered])
 
     return (
         <div>
@@ -365,7 +295,8 @@ function Post() {
                 {/* 博客发布按钮 */}
                 <Col span={3} offset={9} style={{ alignItems: 'center', justifyContent: 'center' }}>
                     <ButtonGroup>
-                        <Button type='primary' icon={<IconDelete />} />
+                        <Button type='primary' icon={<IconObliqueLine />} onClick={() => setLineNumber(!lineNumber)} />
+                        <Button type='primary' icon={<IconDelete />} onClick={removeBlog} />
                         <Button type='primary' icon={<IconSettings />} onClick={() => setVisible(true)} />
                         {
                             post.isDraft ?
@@ -381,7 +312,7 @@ function Post() {
                         id="markdown"
                         span={12}
                         ref={editorRef}
-                        onScroll={handleMarkdownScroll}
+                        // onScroll={handleMarkdownScroll}
                         onMouseEnter={() => (mouseIsOn.current = 'markdown')}
                     >
                     </Col>
@@ -389,9 +320,10 @@ function Post() {
                         id="preview"
                         style={{ overflowY: 'hidden' }}
                         span={12}
-                        onScroll={handlePreviewScroll}
+                        // onScroll={handlePreviewScroll}
                         onMouseEnter={() => (mouseIsOn.current = 'preview')}
-                    >{md}</Col>
+                        dangerouslySetInnerHTML={{ __html: md }}
+                    ></Col>
                 </Row>
             </Row>
             <PostSettings

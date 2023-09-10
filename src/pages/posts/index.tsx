@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, Button, TableColumnProps, Table, Image, Breadcrumb, Input } from '@arco-design/web-react';
+import { Card, Button, TableColumnProps, Table, Image, Breadcrumb, Input, Space } from '@arco-design/web-react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
@@ -83,9 +83,12 @@ function Posts() {
       dataIndex: 'option',
       render: (col, item, index) => {
         return (
-          <Link to={`/post/${item._id}`}>
-            <Button type='primary' size='mini' >编辑</Button>
-          </Link>
+          <Space>
+            <Link to={`/post/${item._id}`}>
+              <Button type='primary' size='mini' >编辑</Button>
+            </Link>
+          </Space>
+
         )
       }
     }

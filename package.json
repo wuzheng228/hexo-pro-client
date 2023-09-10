@@ -18,6 +18,7 @@
     "@arco-design/web-react": "^2.32.2",
     "@arco-themes/react-arco-pro": "^0.0.7",
     "@babel/generator": "^7.22.10",
+    "@codemirror/lang-html": "^6.4.6",
     "@codemirror/lang-markdown": "^6.2.0",
     "@codemirror/state": "^6.2.1",
     "@codemirror/view": "^6.16.0",
@@ -33,6 +34,7 @@
     "copy-to-clipboard": "^3.3.1",
     "highlight.js": "^11.8.0",
     "lodash": "^4.17.21",
+    "marked": "^8.0.1",
     "mockjs": "^1.1.0",
     "moment": "^2.29.4",
     "nprogress": "^0.2.0",
@@ -53,7 +55,8 @@
     "remark-parse": "^10.0.2",
     "remark-rehype": "^10.1.0",
     "thememirror": "^2.0.1",
-    "unified": "^11.0.1"
+    "unified": "^11.0.1",
+    "util": "^0.12.5"
   },
   "devDependencies": {
     "@arco-plugins/webpack-react": "^1.1.1",

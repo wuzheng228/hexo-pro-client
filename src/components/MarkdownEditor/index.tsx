@@ -7,11 +7,13 @@ import {
     lineNumbers,
     highlightActiveLine,
     highlightActiveLineGutter,
+    keymap,
 } from '@codemirror/view';
-import { EditorState, Compartment } from '@codemirror/state';
+import { EditorState, Compartment, StateCommand } from '@codemirror/state';
 import { HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { ayuLight } from 'thememirror';
+import { defaultKeymap, indentMore, indentLess } from "@codemirror/commands"
 // import { uploadImage } from './api'; // Make sure to provide the correct path for your API
 
 const markdownHighlighting = HighlightStyle.define(
@@ -34,33 +36,58 @@ const markdownHighlighting = HighlightStyle.define(
     ]
 )
 
-function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChangeContent, forceLineNumbers }) {
+function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChangeContent, handleScroll, forceLineNumbers }) {
 
     const editorRef = useRef(null)
 
+    function findScrollContainer(node: HTMLElement) {
+        for (let cur: any = node; cur;) {
+            if (cur.scrollHeight <= cur.clientHeight) {
+                cur = cur.parentNode
+                continue
+            }
+            return cur
+        }
+    }
+
     const [editorView, setEditorView] = useState(null)
+    const [lineNumberCptState, setLineNumberCpt] = useState(null)
+
     useEffect(() => {
         if (!editorRef) return
+        const lineNumberCpt = new Compartment();
 
         const startState = EditorState.create({
             doc: initialValue,
             extensions: [
-                basicSetup,
                 ayuLight,
-                lineNumbers(),
+                keymap.of([
+                    ...defaultKeymap,
+                    {
+                        key: "Tab",
+                        preventDefault: true,
+                        run: indentMore,
+                    },
+                    {
+                        key: "Shift-Tab",
+                        preventDefault: true,
+                        run: indentLess,
+                    },]),
+                lineNumberCpt.of([lineNumbers(), basicSetup, EditorView.lineWrapping]),
                 highlightActiveLine(),
                 highlightActiveLineGutter(),
                 syntaxHighlighting(markdownHighlighting),
                 markdown({ base: markdownLanguage }),
-                EditorView.lineWrapping,
                 EditorView.updateListener.of((update) => {
-                    // if (update.docChanged) {
                     if (update.docChanged) {
-                        // console.log("change:", update.state.doc.toString())
                         setRendered(update.state.doc.toString());
                         handleChangeContent(update.state.doc.toString())
                     }
-                    // }
+                }),
+                EditorView.domEventHandlers({
+                    scroll(event, view) {
+                        handleScroll(findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollTop / findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollHeight)
+                    }
                 })
             ],
         })
@@ -70,20 +97,25 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
             state: startState,
         });
 
-        // const handleScroll = () => {
-        //     const { scrollHeight, clientHeight, scrollTop } = editorView.scrollDOM;
-        //     const scrollPercentage = scrollTop / (scrollHeight - clientHeight);
-        //     onScroll(scrollPercentage);
-        // };
-
-        // editorView.scrollDOM.addEventListener('scroll', handleScroll);
-        // return () => {
-        //     editorView.scrollDOM.removeEventListener('scroll', handleScroll);
-        //     editorView.destroy();
-        // };
         setEditorView(view)
+        setLineNumberCpt(lineNumberCpt)
         return () => view.destroy()
     }, [editorRef]);
+
+    useEffect(() => {
+        if (!editorView || !lineNumberCptState) {
+            return
+        }
+        if (forceLineNumbers) {
+            editorView.dispatch({
+                effects: lineNumberCptState.reconfigure([lineNumbers(), basicSetup, EditorView.lineWrapping])
+            })
+        } else {
+            editorView.dispatch({
+                effects: lineNumberCptState.reconfigure([])
+            })
+        }
+    }, [editorView, forceLineNumbers])
 
     useEffect(() => {
         if (!editorView || !initialValue) {
@@ -101,17 +133,6 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
         editorView.dispatch(transaction)
 
     }, [initialValue, editorView])
-
-    // useEffect(() => {
-    //     if (editorRef.current && forceLineNumbers && !(adminSettings.editor || {}).lineNumbers) {
-    //         editorRef.current.view.dispatch({
-    //             effects: history(editorRef.current.view.state.update({
-    //                 ...editorRef.current.view.state,
-    //                 lineNumbers: forceLineNumbers,
-    //             })),
-    //         });
-    //     }
-    // }, [forceLineNumbers]);
 
     return [editorRef, editorView];
 }
