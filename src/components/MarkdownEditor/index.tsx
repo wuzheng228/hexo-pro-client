@@ -14,7 +14,7 @@ import { HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { ayuLight } from 'thememirror';
 import { defaultKeymap, indentMore, indentLess } from "@codemirror/commands"
-// import { uploadImage } from './api'; // Make sure to provide the correct path for your API
+import axios from 'axios';
 
 const markdownHighlighting = HighlightStyle.define(
     [
@@ -48,6 +48,16 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
             }
             return cur
         }
+    }
+
+    function uploadImage(image, filename) {
+        const promise = new Promise((f, r) => {
+            axios.post('/hexopro/api/images/upload', { data: image, filename: filename }).then(res => {
+                console.log('image upload resp', res)
+                f(res.data)
+            })
+        })
+        return promise
     }
 
     const [editorView, setEditorView] = useState(null)
@@ -87,6 +97,30 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
                 EditorView.domEventHandlers({
                     scroll(event, view) {
                         handleScroll(findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollTop / findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollHeight)
+                    },
+                    paste(event, view) {
+                        console.log(event)
+                        // console.log(view)
+                        const items = (event.clipboardData).items;
+                        if (!items.length) return
+                        let blob;
+                        for (let i = items.length - 1; i >= 0; i--) {
+                            if (items[i].kind == 'file') {
+                                blob = items[i].getAsFile();
+                                break;
+                            }
+                        }
+                        if (!blob) return
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const filename = null;
+                            uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
+                                console.log(res)
+                                const transaction = view.state.replaceSelection(`\n![${res.msg}](${res.src})`)
+                                view.update([view.state.update(transaction)])
+                            });
+                        };
+                        reader.readAsDataURL(blob);
                     }
                 })
             ],

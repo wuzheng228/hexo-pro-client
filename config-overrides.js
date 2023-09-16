@@ -22,6 +22,15 @@ const devServerConfig = () => config => {
         },
         changeOrigin: true,
         secure: false
+      },
+      '/images/': {
+        target: 'http://localhost:4000',
+        timeout: 10000,
+        pathRewrite: {
+          '/images/': '/images/'
+        },
+        changeOrigin: true,
+        secure: false
       }
     }
   }
