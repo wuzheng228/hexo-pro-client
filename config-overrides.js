@@ -59,7 +59,7 @@ module.exports = {
     addWebpackAlias({
       '@': path.resolve(__dirname, 'src'),
     }),
-    // setWebpackPublicPath('/pro/')
+    // setWebpackPublicPath('/pro/') // 部署到hexo上时 buid需要加上
   ),
   devServer: overrideDevServer(
     devServerConfig()

@@ -36,7 +36,9 @@ const i18n = {
     'message.empty.tips': 'No Content',
     'message.lang.tips': 'Language switch to ',
     'navbar.search.placeholder': 'Please search',
-    'menu.posts': 'Posts',
+    'menu.posts': 'Articles',
+    'menu.posts.blogs': 'blogs',
+    'menu.posts.drafts': 'drafts'
   },
   'zh-CN': {
     'menu.dashboard': '仪表盘',
@@ -75,7 +77,9 @@ const i18n = {
     'message.empty.tips': '暂无内容',
     'message.lang.tips': '语言切换至 ',
     'navbar.search.placeholder': '输入内容查询',
-    'menu.posts': '博文',
+    'menu.posts': '文章',
+    'menu.posts.drafts': '草稿',
+    'menu.posts.blogs': '博客'
   },
 };
 
