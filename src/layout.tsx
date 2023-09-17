@@ -46,6 +46,7 @@ function getFlattenRoutes(routes) {
       );
       if (route.key && (!route.children || !visibleChildren.length)) {
         try {
+          console.log('route.key', route.key)
           route.component = lazyload(() => import(`./pages/${route.key}`));
           res.push(route);
         } catch (e) {
@@ -143,7 +144,10 @@ function PageLayout() {
   }
 
   function onClickMenuItem(key) {
+    console.log('key', key)
+    console.log('flattenRoutes', flattenRoutes)
     const currentRoute = flattenRoutes.find((r) => r.key === key);
+    console.log('currentRoute', currentRoute.path)
     const component = currentRoute.component;
     const preload = component.preload();
     NProgress.start();

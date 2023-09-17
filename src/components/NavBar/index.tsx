@@ -123,10 +123,10 @@ function Navbar({ show }: { show: boolean }) {
           </>
         }
       >
-        <Menu.Item onClick={handleChangeRole} key="switch role">
+        {/* <Menu.Item onClick={handleChangeRole} key="switch role">
           <IconTag className={styles['dropdown-icon']} />
           {t['menu.user.switchRoles']}
-        </Menu.Item>
+        </Menu.Item> */}
       </Menu.SubMenu>
       <Menu.Item key="setting">
         <IconSettings className={styles['dropdown-icon']} />
@@ -164,12 +164,12 @@ function Navbar({ show }: { show: boolean }) {
         </div>
       </div>
       <ul className={styles.right}>
-        <li>
+        {/* <li>
           <Input.Search
             className={styles.round}
             placeholder={t['navbar.search.placeholder']}
           />
-        </li>
+        </li> */}
         <li>
           < Button type='primary' onClick={() => newPost()}>去写作</Button>
         </li>
@@ -194,11 +194,11 @@ function Navbar({ show }: { show: boolean }) {
             }}
           />
         </li>
-        <li>
+        {/* <li>
           <MessageBox>
             <IconButton icon={<IconNotification />} />
           </MessageBox>
-        </li>
+        </li> */}
         <li>
           <Tooltip
             content={
@@ -216,11 +216,11 @@ function Navbar({ show }: { show: boolean }) {
         <Settings />
         {userInfo && (
           <li>
-            <Dropdown droplist={droplist} position="br">
-              <Avatar size={32} style={{ cursor: 'pointer' }}>
-                <img alt="avatar" src={userInfo.avatar} />
-              </Avatar>
-            </Dropdown>
+            {/* <Dropdown droplist={droplist} position="br"> */}
+            <Avatar size={32} style={{ cursor: 'pointer' }}>
+              <img alt="avatar" src={userInfo.avatar} />
+            </Avatar>
+            {/* </Dropdown> */}
           </li>
         )}
       </ul>

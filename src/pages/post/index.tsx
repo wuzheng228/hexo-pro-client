@@ -1,7 +1,7 @@
 
 import MarkDownEditor from '@/components/MarkdownEditor';
 import { Button, Divider, Grid, Modal } from '@arco-design/web-react';
-import axios from 'axios';
+import { service } from '@/utils/api';
 import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import remarkParse from 'remark-parse'
@@ -55,7 +55,7 @@ function Post() {
 
     const queryPostById = (_id) => {
         return new Promise((resolve, reject) => {
-            axios.get('/hexopro/api/posts/' + _id).then((res) => {
+            service.get('/hexopro/api/posts/' + _id).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -65,7 +65,7 @@ function Post() {
 
     const tagsCategoriesAndMetadata = () => {
         return new Promise((resolve, reject) => {
-            axios.get('/hexopro/api/tags-categories-and-metadata').then((res) => {
+            service.get('/hexopro/api/tags-categories-and-metadata').then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -75,7 +75,7 @@ function Post() {
 
     const postMeta = () => {
         return new Promise((resolve, reject) => {
-            axios.get('/hexopro/api/postMeta/' + _id).then((res) => {
+            service.get('/hexopro/api/postMeta/' + _id).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -85,7 +85,7 @@ function Post() {
 
     const settings = () => {
         return new Promise((resolve, reject) => {
-            axios.get('/hexopro/api/settings/list').then((res) => {
+            service.get('/hexopro/api/settings/list').then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -130,7 +130,7 @@ function Post() {
         console.log('update', update)
         // var now = moment()
         const promise = new Promise((resolve, reject) => {
-            axios.post('/hexopro/api/posts/' + _id, update).then((res) => {
+            service.post('/hexopro/api/posts/' + _id, update).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -157,7 +157,7 @@ function Post() {
 
     const removeBlog = () => {
         const promise = new Promise((resolve, reject) => {
-            axios.get('/hexopro/api/posts/' + _id + '/remove').then((res) => {
+            service.get('/hexopro/api/posts/' + _id + '/remove').then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -181,7 +181,7 @@ function Post() {
         }
         return new Promise((resolve, reject) => {
             console.log('publish blog')
-            axios.post('/hexopro/api/posts/' + _id + '/publish').then((res) => {
+            service.post('/hexopro/api/posts/' + _id + '/publish').then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -204,7 +204,7 @@ function Post() {
         }
         return new Promise((resolve, reject) => {
             console.log('unpublish blog')
-            axios.post('/hexopro/api/posts/' + _id + '/unpublish').then((res) => {
+            service.post('/hexopro/api/posts/' + _id + '/unpublish').then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -214,7 +214,7 @@ function Post() {
 
     const handleUpdate = (update) => {
         return new Promise((resolve, reject) => {
-            axios.post('/hexopro/api/posts/' + _id, update).then((res) => {
+            service.post('/hexopro/api/posts/' + _id, update).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)

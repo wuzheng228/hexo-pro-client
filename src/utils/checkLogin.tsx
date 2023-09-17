@@ -1,3 +1,4 @@
 export default function checkLogin() {
-  return localStorage.getItem('userStatus') === 'login';
+  console.log('checkLogin', localStorage.getItem('userStatus') === 'login')
+  return localStorage.getItem('userStatus') === 'login' || localStorage.getItem('userStatus') === 'unsafe';
 }

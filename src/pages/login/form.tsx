@@ -9,7 +9,7 @@ import {
 import { FormInstance } from '@arco-design/web-react/es/Form';
 import { IconLock, IconUser } from '@arco-design/web-react/icon';
 import React, { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
+import { service } from '@/utils/api';
 import useStorage from '@/utils/useStorage';
 import useLocale from '@/utils/useLocale';
 import locale from './locale';
@@ -26,7 +26,7 @@ export default function LoginForm() {
 
   const [rememberPassword, setRememberPassword] = useState(!!loginParams);
 
-  function afterLoginSuccess(params) {
+  function afterLoginSuccess(params, token) {
     // 记住密码
     if (rememberPassword) {
       setLoginParams(JSON.stringify(params));
@@ -34,20 +34,29 @@ export default function LoginForm() {
       removeLoginParams();
     }
     // 记录登录状态
-    localStorage.setItem('userStatus', 'login');
+    if (token) {
+      localStorage.setItem('userStatus', 'login');
+      localStorage.setItem('hexoProToken', token)
+    } else {
+      localStorage.setItem('userStatus', 'unsafe');
+    }
     // 跳转首页
-    window.location.href = '/';
+    window.location.href = '/pro';
   }
 
   function login(params) {
+    console.log(params)
     setErrorMessage('');
     setLoading(true);
-    axios
-      .post('/api/user/login', params)
+    service
+      .post('/hexopro/api/login', params)
       .then((res) => {
-        const { status, msg } = res.data;
-        if (status === 'ok') {
-          afterLoginSuccess(params);
+        console.log(res)
+        const { code, msg, token } = res.data;
+        if (code === 0) {
+          afterLoginSuccess(params, token);
+        } else if (code === -2) {
+          afterLoginSuccess(params, null);
         } else {
           setErrorMessage(msg || t['login.form.login.errMsg']);
         }
@@ -84,15 +93,15 @@ export default function LoginForm() {
         className={styles['login-form']}
         layout="vertical"
         ref={formRef}
-        initialValues={{ userName: 'admin', password: 'admin' }}
+        initialValues={{ username: 'admin', password: 'admin' }}
       >
         <Form.Item
-          field="userName"
-          rules={[{ required: true, message: t['login.form.userName.errMsg'] }]}
+          field="username"
+          rules={[{ required: true, message: t['login.form.username.errMsg'] }]}
         >
           <Input
             prefix={<IconUser />}
-            placeholder={t['login.form.userName.placeholder']}
+            placeholder={t['login.form.username.placeholder']}
             onPressEnter={onSubmitClick}
           />
         </Form.Item>
@@ -111,17 +120,9 @@ export default function LoginForm() {
             <Checkbox checked={rememberPassword} onChange={setRememberPassword}>
               {t['login.form.rememberPassword']}
             </Checkbox>
-            <Link>{t['login.form.forgetPassword']}</Link>
           </div>
           <Button type="primary" long onClick={onSubmitClick} loading={loading}>
             {t['login.form.login']}
-          </Button>
-          <Button
-            type="text"
-            long
-            className={styles['login-form-register-btn']}
-          >
-            {t['login.form.register']}
           </Button>
         </Space>
       </Form>

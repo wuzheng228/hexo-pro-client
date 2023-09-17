@@ -3,11 +3,11 @@ import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
-import { ConfigProvider } from '@arco-design/web-react';
+import { ConfigProvider, Message } from '@arco-design/web-react';
 import zhCN from '@arco-design/web-react/es/locale/zh-CN';
 import enUS from '@arco-design/web-react/es/locale/en-US';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
-import axios from 'axios';
+import { service } from '@/utils/api';
 import PageLayout from './layout';
 import { GlobalContext } from './context';
 import Login from './pages/login';
@@ -39,19 +39,22 @@ function Index() {
       type: 'update-userInfo',
       payload: { userLoading: true },
     });
-    axios.get('/api/user/userInfo').then((res) => {
+    service.get('/hexopro/api/userInfo').then((res) => {
       store.dispatch({
         type: 'update-userInfo',
         payload: { userInfo: res.data, userLoading: false },
       });
-    });
+    }).catch(err => {
+      console.log(err)
+    }
+    );
   }
 
   useEffect(() => {
     if (checkLogin()) {
       fetchUserInfo();
-    } else if (window.location.pathname.replace(/\//g, '') !== 'login') {
-      window.location.pathname = '/login';
+    } else if (window.location.pathname.replace(/\//g, '') !== 'prologin') {
+      window.location.pathname = '/pro/login';
     }
   }, []);
 
@@ -67,7 +70,7 @@ function Index() {
   };
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/pro">
       <ConfigProvider
         locale={getArcoLocale()}
         componentConfig={{

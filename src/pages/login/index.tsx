@@ -6,15 +6,18 @@ import LoginBanner from './banner';
 import styles from './style/index.module.less';
 
 function Login() {
+
+
   useEffect(() => {
     document.body.setAttribute('arco-theme', 'light');
+
   }, []);
 
   return (
     <div className={styles.container}>
       <div className={styles.logo}>
         <Logo />
-        <div className={styles['logo-text']}>Arco Design Pro</div>
+        <div className={styles['logo-text']}>Hexo Pro</div>
       </div>
       <div className={styles.banner}>
         <div className={styles['banner-inner']}>

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Card, Button, TableColumnProps, Table, Image, Breadcrumb, Input, Space } from '@arco-design/web-react';
-import axios from 'axios';
+import service from '@/utils/api';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
 import { GlobalState } from '@/store';
@@ -14,7 +14,7 @@ function Posts() {
   const [postsList, setPostList] = useState([])
 
   const queryPosts = () => {
-    axios.get('/hexopro/api/posts/list')
+    service.get('/hexopro/api/posts/list')
       .then(res => {
         const result = res.data.map((obj, i) => {
           return { _id: obj._id, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, updated: obj.updated, key: i + 1 }
