@@ -38,7 +38,8 @@ const i18n = {
     'navbar.search.placeholder': 'Please search',
     'menu.posts': 'Articles',
     'menu.posts.blogs': 'blogs',
-    'menu.posts.drafts': 'drafts'
+    'menu.posts.drafts': 'drafts',
+    'menu.pages': 'pages'
   },
   'zh-CN': {
     'menu.dashboard': '仪表盘',
@@ -79,7 +80,8 @@ const i18n = {
     'navbar.search.placeholder': '输入内容查询',
     'menu.posts': '文章',
     'menu.posts.drafts': '草稿',
-    'menu.posts.blogs': '博客'
+    'menu.posts.blogs': '博客',
+    'menu.pages': '页面'
   },
 };
 

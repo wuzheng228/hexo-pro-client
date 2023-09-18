@@ -45,13 +45,11 @@ export default function LoginForm() {
   }
 
   function login(params) {
-    console.log(params)
     setErrorMessage('');
     setLoading(true);
     service
       .post('/hexopro/api/login', params)
       .then((res) => {
-        console.log(res)
         const { code, msg, token } = res.data;
         if (code === 0) {
           afterLoginSuccess(params, token);

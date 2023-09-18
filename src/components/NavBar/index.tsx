@@ -23,6 +23,7 @@ import {
   IconDashboard,
   IconInteraction,
   IconTag,
+  IconDown,
 } from '@arco-design/web-react/icon';
 import { useHistory } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
@@ -70,12 +71,22 @@ function Navbar({ show }: { show: boolean }) {
   }
 
   function newPost() {
-    axios.post('/hexopro/api/posts/new', { title: 'untitled' }).then((res) => {
+    axios.post('/hexopro/api/posts/new', { title: 'Untitled' }).then((res) => {
       const post = res.data
       post.date = parseDateTime(post.date)
       post.updated = parseDateTime(post.updated)
       console.log(post.date)
       history.push(`/post/${post._id}`);
+    })
+  }
+
+  function newPage() {
+    axios.post('/hexopro/api/pages/new', { title: 'Untitled' }).then((res) => {
+      const post = res.data
+      post.date = parseDateTime(post.date)
+      post.updated = parseDateTime(post.updated)
+      console.log(post.date)
+      history.push(`/page/${post._id}`);
     })
   }
 
@@ -155,6 +166,14 @@ function Navbar({ show }: { show: boolean }) {
     </Menu>
   );
 
+  const writeDropList = (
+    <Menu>
+      <Menu.Item key='1' onClick={() => newPost()}>写文章</Menu.Item>
+      <Menu.Item key='2' onClick={() => newPage()}>新页面</Menu.Item>
+    </Menu>
+  );
+
+
   return (
     <div className={styles.navbar}>
       <div className={styles.left}>
@@ -171,7 +190,9 @@ function Navbar({ show }: { show: boolean }) {
           />
         </li> */}
         <li>
-          < Button type='primary' onClick={() => newPost()}>去写作</Button>
+          <Dropdown droplist={writeDropList} trigger='click'>
+            <Button type='primary' >创作<IconDown /></Button>
+          </Dropdown>
         </li>
         <li>
           <Select

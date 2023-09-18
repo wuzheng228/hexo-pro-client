@@ -54,8 +54,6 @@ const rootRreducer = function store(state = initialState, action) {
       };
     }
     case 'load_posts':
-      console.log(action);
-
       return { ...state, posts: action.payload.posts }
     default:
       return state;

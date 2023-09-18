@@ -7,7 +7,12 @@ import {
   IconTag,
   IconMenuFold,
   IconMenuUnfold,
+  IconBook,
+  IconFile,
+  IconFolderDelete,
+  IconList,
 } from '@arco-design/web-react/icon';
+import IconBlog from './assets/blog.svg'
 import { Provider, useSelector } from 'react-redux';
 import qs from 'query-string';
 import NProgress from 'nprogress';
@@ -31,7 +36,13 @@ function getIconFromKey(key) {
     case 'dashboard':
       return <IconDashboard className={styles.icon} />;
     case 'posts':
-      return <IconTag className={styles.icon} />;
+      return <IconBook className={styles.icon} />;
+    case 'pages':
+      return <IconFile className={styles.icon} />;
+    case 'posts/blogs':
+      return <IconList className={styles.icon} />
+    case 'posts/drafts':
+      return <IconFolderDelete className={styles.icon} />
     default:
       return <div className={styles['icon-empty']} />;
   }
@@ -46,7 +57,6 @@ function getFlattenRoutes(routes) {
       );
       if (route.key && (!route.children || !visibleChildren.length)) {
         try {
-          console.log('route.key', route.key)
           route.component = lazyload(() => import(`./pages/${route.key}`));
           res.push(route);
         } catch (e) {
@@ -144,10 +154,7 @@ function PageLayout() {
   }
 
   function onClickMenuItem(key) {
-    console.log('key', key)
-    console.log('flattenRoutes', flattenRoutes)
     const currentRoute = flattenRoutes.find((r) => r.key === key);
-    console.log('currentRoute', currentRoute.path)
     const component = currentRoute.component;
     const preload = component.preload();
     NProgress.start();
@@ -260,6 +267,10 @@ function PageLayout() {
                   <Route
                     path="/post/:_id"
                     component={lazyload(() => import('./pages/post/'))}
+                  />
+                  <Route
+                    path="/page/:_id"
+                    component={lazyload(() => import('./pages/page/'))}
                   />
                   <Route
                     path="*"
