@@ -11,7 +11,7 @@ service.interceptors.request.use(config => {
 service.interceptors.response.use((resp) => {
     if (resp.data && resp.data.code && resp.data.code == 401) {
         window.location.pathname = '/pro/login';
-        // localStorage.removeItem('userStatus')
+        localStorage.removeItem('userStatus')
     }
     return resp
 }, err => {
