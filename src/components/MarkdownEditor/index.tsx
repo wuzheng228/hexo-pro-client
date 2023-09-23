@@ -7,11 +7,14 @@ import {
     lineNumbers,
     highlightActiveLine,
     highlightActiveLineGutter,
+    keymap,
 } from '@codemirror/view';
-import { EditorState, Compartment } from '@codemirror/state';
+import { EditorState, Compartment, StateCommand } from '@codemirror/state';
 import { HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
-// import { uploadImage } from './api'; // Make sure to provide the correct path for your API
+import { ayuLight } from 'thememirror';
+import { defaultKeymap, indentMore, indentLess } from "@codemirror/commands"
+import service from '@/utils/api';
 
 const markdownHighlighting = HighlightStyle.define(
     [
@@ -33,32 +36,93 @@ const markdownHighlighting = HighlightStyle.define(
     ]
 )
 
-function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChangeContent, forceLineNumbers }) {
+function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChangeContent, handleScroll, forceLineNumbers }) {
 
     const editorRef = useRef(null)
 
+    function findScrollContainer(node: HTMLElement) {
+        for (let cur: any = node; cur;) {
+            if (cur.scrollHeight <= cur.clientHeight) {
+                cur = cur.parentNode
+                continue
+            }
+            return cur
+        }
+    }
+
+    function uploadImage(image, filename) {
+        const promise = new Promise((f, r) => {
+            service.post('/hexopro/api/images/upload', { data: image, filename: filename }).then(res => {
+                // console.log('image upload resp', res)
+                f(res.data)
+            })
+        })
+        return promise
+    }
+
     const [editorView, setEditorView] = useState(null)
+    const [lineNumberCptState, setLineNumberCpt] = useState(null)
+
     useEffect(() => {
         if (!editorRef) return
+        const lineNumberCpt = new Compartment();
 
         const startState = EditorState.create({
             doc: initialValue,
             extensions: [
-                basicSetup,
-                lineNumbers(),
+                EditorView.lineWrapping,
+                ayuLight,
+                keymap.of([
+                    ...defaultKeymap,
+                    {
+                        key: "Tab",
+                        preventDefault: true,
+                        run: indentMore,
+                    },
+                    {
+                        key: "Shift-Tab",
+                        preventDefault: true,
+                        run: indentLess,
+                    },]),
+                lineNumberCpt.of([lineNumbers(), basicSetup, EditorView.lineWrapping]),
                 highlightActiveLine(),
                 highlightActiveLineGutter(),
                 syntaxHighlighting(markdownHighlighting),
                 markdown({ base: markdownLanguage }),
-                EditorView.lineWrapping,
                 EditorView.updateListener.of((update) => {
-                    // if (update.docChanged) {
                     if (update.docChanged) {
-                        console.log("change:", update.state.doc.toString())
                         setRendered(update.state.doc.toString());
                         handleChangeContent(update.state.doc.toString())
                     }
-                    // }
+                }),
+                EditorView.domEventHandlers({
+                    scroll(event, view) {
+                        handleScroll(findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollTop / findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollHeight)
+                    },
+                    paste(event, view) {
+                        // console.log(event)
+                        // console.log(view)
+                        const items = (event.clipboardData).items;
+                        if (!items.length) return
+                        let blob;
+                        for (let i = items.length - 1; i >= 0; i--) {
+                            if (items[i].kind == 'file') {
+                                blob = items[i].getAsFile();
+                                break;
+                            }
+                        }
+                        if (!blob) return
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const filename = null;
+                            uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
+                                // console.log(res)
+                                const transaction = view.state.replaceSelection(`\n![${res.msg}](${res.src})`)
+                                view.update([view.state.update(transaction)])
+                            });
+                        };
+                        reader.readAsDataURL(blob);
+                    }
                 })
             ],
         })
@@ -68,24 +132,27 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
             state: startState,
         });
 
-        // const handleScroll = () => {
-        //     const { scrollHeight, clientHeight, scrollTop } = editorView.scrollDOM;
-        //     const scrollPercentage = scrollTop / (scrollHeight - clientHeight);
-        //     onScroll(scrollPercentage);
-        // };
-
-        // editorView.scrollDOM.addEventListener('scroll', handleScroll);
-        // return () => {
-        //     editorView.scrollDOM.removeEventListener('scroll', handleScroll);
-        //     editorView.destroy();
-        // };
         setEditorView(view)
+        setLineNumberCpt(lineNumberCpt)
         return () => view.destroy()
     }, [editorRef]);
 
     useEffect(() => {
-        console.log('ihi')
-        console.log(initialValue)
+        if (!editorView || !lineNumberCptState) {
+            return
+        }
+        if (forceLineNumbers) {
+            editorView.dispatch({
+                effects: lineNumberCptState.reconfigure([lineNumbers(), basicSetup, EditorView.lineWrapping])
+            })
+        } else {
+            editorView.dispatch({
+                effects: lineNumberCptState.reconfigure([])
+            })
+        }
+    }, [editorView, forceLineNumbers])
+
+    useEffect(() => {
         if (!editorView || !initialValue) {
             return
         }
@@ -101,17 +168,6 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
         editorView.dispatch(transaction)
 
     }, [initialValue, editorView])
-
-    // useEffect(() => {
-    //     if (editorRef.current && forceLineNumbers && !(adminSettings.editor || {}).lineNumbers) {
-    //         editorRef.current.view.dispatch({
-    //             effects: history(editorRef.current.view.state.update({
-    //                 ...editorRef.current.view.state,
-    //                 lineNumbers: forceLineNumbers,
-    //             })),
-    //         });
-    //     }
-    // }, [forceLineNumbers]);
 
     return [editorRef, editorView];
 }

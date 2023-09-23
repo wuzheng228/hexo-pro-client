@@ -5,7 +5,8 @@ const {
   addWebpackModuleRule,
   addWebpackPlugin,
   addWebpackAlias,
-  overrideDevServer
+  overrideDevServer,
+  setWebpackPublicPath
 } = require('customize-cra');
 const ArcoWebpackPlugin = require('@arco-plugins/webpack-react');
 const addLessLoader = require('customize-cra-less-loader');
@@ -19,6 +20,15 @@ const devServerConfig = () => config => {
         timeout: 10000,
         pathRewrite: {
           '/hexopro/api': '/hexopro/api'
+        },
+        changeOrigin: true,
+        secure: false
+      },
+      '/images/': {
+        target: 'http://localhost:4000',
+        timeout: 10000,
+        pathRewrite: {
+          '/images/': '/images/'
         },
         changeOrigin: true,
         secure: false
@@ -48,9 +58,11 @@ module.exports = {
     ),
     addWebpackAlias({
       '@': path.resolve(__dirname, 'src'),
-    })
+    }),
+    // setWebpackPublicPath('/pro/') // 部署到hexo上时 buid需要加上
   ),
   devServer: overrideDevServer(
     devServerConfig()
   ),
+
 };

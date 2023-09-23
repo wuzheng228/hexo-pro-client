@@ -7,8 +7,13 @@ import {
   IconTag,
   IconMenuFold,
   IconMenuUnfold,
+  IconBook,
+  IconFile,
+  IconFolderDelete,
+  IconList,
 } from '@arco-design/web-react/icon';
-import { useSelector } from 'react-redux';
+import IconBlog from './assets/blog.svg'
+import { Provider, useSelector } from 'react-redux';
 import qs from 'query-string';
 import NProgress from 'nprogress';
 import Navbar from './components/NavBar';
@@ -31,7 +36,13 @@ function getIconFromKey(key) {
     case 'dashboard':
       return <IconDashboard className={styles.icon} />;
     case 'posts':
-      return <IconTag className={styles.icon} />;
+      return <IconBook className={styles.icon} />;
+    case 'pages':
+      return <IconFile className={styles.icon} />;
+    case 'posts/blogs':
+      return <IconList className={styles.icon} />
+    case 'posts/drafts':
+      return <IconFolderDelete className={styles.icon} />
     default:
       return <div className={styles['icon-empty']} />;
   }
@@ -256,6 +267,10 @@ function PageLayout() {
                   <Route
                     path="/post/:_id"
                     component={lazyload(() => import('./pages/post/'))}
+                  />
+                  <Route
+                    path="/page/:_id"
+                    component={lazyload(() => import('./pages/page/'))}
                   />
                   <Route
                     path="*"

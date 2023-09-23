@@ -1,26 +1,25 @@
 
 import MarkDownEditor from '@/components/MarkdownEditor';
-import { Button, Divider, Grid, Message, Modal, Popconfirm, Skeleton } from '@arco-design/web-react';
+import { Button, Divider, Grid, Message, Modal, Popconfirm } from '@arco-design/web-react';
 import { service } from '@/utils/api';
 import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
-import remarkParse from 'remark-parse'
-import remarkRehype from 'remark-rehype'
-import remarkGfm from 'remark-gfm'
-import rehypeFormat from 'rehype-format'
-import rehypeHighlight from 'rehype-highlight'
-import rehypeReact from 'rehype-react';
-import { remark } from 'remark';
+// import remarkParse from 'remark-parse'
+// import remarkRehype from 'remark-rehype'
+// import remarkGfm from 'remark-gfm'
+// import rehypeFormat from 'rehype-format'
+// import rehypeHighlight from 'rehype-highlight'
+// import rehypeReact from 'rehype-react';
+// import { remark } from 'remark';
 import './style/index.css';
 import { IconDelete, IconObliqueLine, IconOrderedList, IconSettings } from '@arco-design/web-react/icon';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
-import moment from 'moment'
 import _ from 'lodash';
-import { PostSettings } from './postSettings';
+import { PageSettings } from './pageSettings';
 import { useHistory } from "react-router-dom";
-import { marked, Renderer } from 'marked';
-import { render } from 'react-dom';
+import { marked } from 'marked';
+
 
 
 
@@ -28,23 +27,20 @@ const Row = Grid.Row;
 const Col = Grid.Col;
 const ButtonGroup = Button.Group;
 
-type Post = {
+type Page = {
     isDraft: boolean
+    isDiscarded: boolean
     source: string
 }
 
-
-
-
-
-function Post() {
+function Page() {
     const history = useHistory();
     const postRef = useRef(null);
     const mouseIsOn = useRef(null);
     const { _id } = useParams();
-    const [post, setPost] = useState({ isDraft: true, source: null });
-    const [tagsCatMeta, setTagsCatMeta] = useState({})
-    const [postMetaData, setPostMetadata] = useState({ tags: [], categories: [], frontMatter: {} })
+    const [page, setPage] = useState({ isDraft: true, source: null });
+    const [pageMetaData, setPageMetadata] = useState({ tags: [], categories: [], frontMatter: {}, source: '' })
+    const [fmtKeys, setFmtKeys] = useState([])
     const [doc, setDoc] = useState('');
     const [md, setRenderedMarkdown] = useState('');
     const [title, setTitle] = useState('');
@@ -54,19 +50,9 @@ function Post() {
     const [visible, setVisible] = useState(false)
     const [lineNumber, setLineNumber] = useState(false)
 
-    const queryPostById = (_id) => {
+    const queryPageById = (_id) => {
         return new Promise((resolve, reject) => {
-            service.get('/hexopro/api/posts/' + _id).then((res) => {
-                resolve(res.data)
-            }).catch(err => {
-                reject(err)
-            })
-        })
-    }
-
-    const tagsCategoriesAndMetadata = () => {
-        return new Promise((resolve, reject) => {
-            service.get('/hexopro/api/tags-categories-and-metadata').then((res) => {
+            service.get('/hexopro/api/pages/' + _id).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -76,17 +62,7 @@ function Post() {
 
     const postMeta = () => {
         return new Promise((resolve, reject) => {
-            service.get('/hexopro/api/postMeta/' + _id).then((res) => {
-                resolve(res.data)
-            }).catch(err => {
-                reject(err)
-            })
-        })
-    }
-
-    const settings = () => {
-        return new Promise((resolve, reject) => {
-            service.get('/hexopro/api/settings/list').then((res) => {
+            service.get('/hexopro/api/pageMeta/' + _id).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -96,23 +72,19 @@ function Post() {
 
     const fetch = () => {
         return {
-            post: queryPostById(_id),
-            tagsCategoriesAndMetadata: tagsCategoriesAndMetadata(),
-            settings: settings(),
-            postMeta: postMeta()
+            page: queryPageById(_id),
+            pageMeta: postMeta()
         }
     }
 
     const dataDidLoad = (name, data) => {
-        if (name == 'postMeta') {
-            setPostMetadata(data)
+        if (name == 'pageMeta') {
+            setPageMetadata(data)
+            setFmtKeys(Object.keys(data.frontMatter))
             return
         }
-        if (name == 'tagsCategoriesAndMetadata') {
-            setTagsCatMeta(data)
-            return
-        }
-        if (name == 'post') {
+
+        if (name == 'page') {
             // console.log('dataLoad', data)
             const parts = data.raw.split('---')
             const _slice = parts[0] === '' ? 2 : 1;
@@ -120,15 +92,16 @@ function Post() {
             setTitle(data.title)
             setInitialRaw(raw)
             setRendered(raw)
-            setPost(data)
+            setPage(data)
+            const content = (data)._content;
+            setDoc(content)
         }
     }
 
     const handleChange = (update) => {
-        console.log('update', update)
         // var now = moment()
         const promise = new Promise((resolve, reject) => {
-            service.post('/hexopro/api/posts/' + _id, update).then((res) => {
+            service.post('/hexopro/api/pages/' + _id, update).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -142,11 +115,7 @@ function Post() {
             return
         }
         setTitle(e.target.value)
-        console.log(post.source)
-        const parts = post.source.split('/')
-        parts[parts.length - 1] = e.target.value + '.md'
-        const newSource = parts.join('/')
-        postRef.current({ title: e.target.value, source: newSource })
+        postRef.current({ title: e.target.value })
     }
 
     const handleChangeContent = (text) => {
@@ -157,33 +126,33 @@ function Post() {
         postRef.current({ _content: text })
     }
 
-    const removeBlog = () => {
+    const removePage = () => {
         const promise = new Promise((resolve, reject) => {
-            service.get('/hexopro/api/posts/' + _id + '/remove').then((res) => {
+            service.get('/hexopro/api/pages/' + _id + '/remove').then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
             })
         })
-        history.push(`/posts`);
+        history.push(`/pages`);
     }
 
     const publish = () => {
         const res = handlePublish()
-        res.then((data: Post) => {
-            setPost(data)
+        res.then((data: Page) => {
+            setPage(data)
         }).catch(err => {
             console.log(err)
         })
     }
 
     const handlePublish = () => {
-        if (!post.isDraft) {
+        if (!page.isDraft) {
             return
         }
         return new Promise((resolve, reject) => {
             console.log('publish blog')
-            service.post('/hexopro/api/posts/' + _id + '/publish').then((res) => {
+            service.post('/hexopro/api/pages/' + _id + '/publish').then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -193,20 +162,20 @@ function Post() {
 
     const unpublish = () => {
         const res = handleUnpublish()
-        res.then((data: Post) => {
-            setPost(data)
+        res.then((data: Page) => {
+            setPage(data)
         }).catch(err => {
             console.log(err)
         })
     }
 
     const handleUnpublish = () => {
-        if (post.isDraft) {
+        if (page.isDraft) {
             return
         }
         return new Promise((resolve, reject) => {
             console.log('unpublish blog')
-            service.post('/hexopro/api/posts/' + _id + '/unpublish').then((res) => {
+            service.post('/hexopro/api/pages/' + _id + '/unpublish').then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -216,7 +185,7 @@ function Post() {
 
     const handleUpdate = (update) => {
         return new Promise((resolve, reject) => {
-            service.post('/hexopro/api/posts/' + _id, update).then((res) => {
+            service.post('/hexopro/api/pages/' + _id, update).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -228,17 +197,6 @@ function Post() {
         const height = document.getElementById("preview").getBoundingClientRect().height
         document.getElementById("preview").scrollTop = (document.getElementById("preview").scrollHeight - height) * percent
     }
-
-    useEffect(() => {
-        queryPostById(_id).then((res) => {
-            if (typeof res === 'object' && res != null && '_content' in res) {
-                const content = (res as { _content: string })._content;
-                setDoc(content)
-            }
-        }).catch(err => {
-            setDoc(err)
-        })
-    }, [])
 
     useEffect(() => {
         const items = fetch()
@@ -263,8 +221,6 @@ function Post() {
 
     const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
 
-
-
     useEffect(() => {
         const renderer = {
             code(code, lang) {
@@ -283,7 +239,7 @@ function Post() {
     }, [rendered])
 
     return (
-        <div >
+        <div>
             <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid gray', backgroundColor: 'white' }} align='center'>
                 {/* 博客名称输入 */}
                 <Col span={12}>
@@ -294,27 +250,22 @@ function Post() {
                     />
                 </Col>
                 {/* 博客发布按钮 */}
-                <Col span={3} offset={8} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 20 }}>
+                <Col span={2} offset={9} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 50 }}>
                     <ButtonGroup>
                         <Button type='outline' icon={<IconOrderedList />} onClick={() => setLineNumber(!lineNumber)} />
                         <Button type='outline' icon={<IconSettings />} onClick={() => setVisible(true)} />
-                        {
-                            post.isDraft ?
-                                <Button type='primary' onClick={publish}>发布博客</Button>
-                                : <Button type='outline' onClick={unpublish}>转为草稿</Button>
-                        }
                     </ButtonGroup>
                 </Col>
-                <Col span={1}>
+                <Col span={1} >
                     <Popconfirm
                         focusLock
                         title='确认删除'
-                        content='确认删除博客吗?'
+                        content='确认删除页面吗?'
                         onOk={() => {
                             Message.info({
                                 content: 'ok',
                             });
-                            removeBlog()
+                            removePage()
                         }}
                         onCancel={() => {
                             Message.error({
@@ -324,6 +275,7 @@ function Post() {
                     >
                         <Button type='secondary' icon={<IconDelete />} />
                     </Popconfirm>
+
                 </Col>
             </Row>
             <Row style={{ boxSizing: 'border-box', margin: 0, backgroundColor: 'white', height: "100vh", overflow: 'hidden', width: "100%" }}>
@@ -346,17 +298,15 @@ function Post() {
                     ></Col>
                 </Row>
             </Row>
-            <PostSettings
+            <PageSettings
                 visible={visible}
                 setVisible={setVisible}
-                tagCatMeta={tagsCatMeta}
-                setTagCatMeta={setTagsCatMeta}
-                postMeta={postMetaData}
-                setPostMeta={setPostMetadata}
+                pageMeta={pageMetaData}
+                setPageMeta={setPageMetadata}
                 handleChange={handleChange}
             />
         </div >
     )
 }
 
-export default Post
+export default Page
