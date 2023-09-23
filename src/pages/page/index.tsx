@@ -15,11 +15,11 @@ import './style/index.css';
 import { IconDelete, IconObliqueLine, IconOrderedList, IconSettings } from '@arco-design/web-react/icon';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
-import moment from 'moment'
 import _ from 'lodash';
 import { PageSettings } from './pageSettings';
 import { useHistory } from "react-router-dom";
-import { marked, Renderer } from 'marked';
+import { marked } from 'marked';
+
 
 
 
@@ -30,6 +30,7 @@ const ButtonGroup = Button.Group;
 type Page = {
     isDraft: boolean
     isDiscarded: boolean
+    source: string
 }
 
 function Page() {
@@ -37,8 +38,9 @@ function Page() {
     const postRef = useRef(null);
     const mouseIsOn = useRef(null);
     const { _id } = useParams();
-    const [page, setPage] = useState({ isDraft: true });
-    const [pageMetaData, setPageMetadata] = useState({ tags: [], categories: [], frontMatter: {} })
+    const [page, setPage] = useState({ isDraft: true, source: null });
+    const [pageMetaData, setPageMetadata] = useState({ tags: [], categories: [], frontMatter: {}, source: '' })
+    const [fmtKeys, setFmtKeys] = useState([])
     const [doc, setDoc] = useState('');
     const [md, setRenderedMarkdown] = useState('');
     const [title, setTitle] = useState('');
@@ -77,9 +79,8 @@ function Page() {
 
     const dataDidLoad = (name, data) => {
         if (name == 'pageMeta') {
-            console.log('pageMeta')
-            console.log(data)
             setPageMetadata(data)
+            setFmtKeys(Object.keys(data.frontMatter))
             return
         }
 
@@ -98,7 +99,6 @@ function Page() {
     }
 
     const handleChange = (update) => {
-        console.log('update', update)
         // var now = moment()
         const promise = new Promise((resolve, reject) => {
             service.post('/hexopro/api/pages/' + _id, update).then((res) => {
@@ -134,7 +134,7 @@ function Page() {
                 reject(err)
             })
         })
-        history.push(`/pro/pages`);
+        history.push(`/pages`);
     }
 
     const publish = () => {

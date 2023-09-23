@@ -18,6 +18,30 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
     const [originFms, setOriginFms] = useState([])
 
 
+    const tagClose = (v) => {
+        const newTags = postMeta.tags.filter(item => item !== v)
+        const meta = { ...postMeta, tags: newTags }
+        setPostMeta(meta)
+    }
+
+    const catClose = (v) => {
+        const newCats = postMeta.categories.filter(item => item !== v)
+        const meta = { ...postMeta, categories: newCats }
+        setPostMeta(meta)
+    }
+
+    const fmtClose = (v) => {
+        const newfmt = {}
+        Object.keys(postMeta.frontMatter).forEach(key => {
+            if (key === v) {
+                return
+            }
+            newfmt[key] = postMeta.frontMatter[key]
+        })
+        const meta = { ...postMeta, frontMatter: newfmt }
+        setPostMeta(meta)
+    }
+
     return (
         <Modal
             title={
@@ -49,8 +73,8 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                     <Space style={{ width: '100', flexWrap: 'wrap' }}>
                         {
                             // 循环填充当前已有的标签
-                            postMeta.tags.map((item, index) => {
-                                return <Tag key={index} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
+                            postMeta.tags.map((item) => {
+                                return <Tag key={item} closable onClose={() => tagClose(item)} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
                             })
                         }
                         <Button type='dashed' onClick={() => {
@@ -63,6 +87,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                     {
                         <TagAdder existTags={tagCatMeta.tags} tags={postMeta.tags} onchange={(v) => {
                             const meta = { ...postMeta, tags: v }
+                            console.log(v)
                             setPostMeta(meta)
                         }} visible={tagOpenStat} cardTitle={'标签'} placeholder={'请输入标签...'} onClose={() => setTagOpenStat(false)} />
                     }
@@ -72,8 +97,8 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                 <Col>
                     <Space style={{ width: '100', flexWrap: 'wrap' }}>
                         {
-                            postMeta.categories.map((item, index) => {
-                                return <Tag key={index} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
+                            postMeta.categories.map((item) => {
+                                return <Tag key={item} color="blue" style={{ marginBottom: 5 }} closable onClose={() => catClose(item)}>{item}</Tag>
                             })
                         }
                         <Button type='dashed' onClick={() => {
@@ -96,10 +121,10 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                     <Space style={{ width: '100', flexWrap: 'wrap' }}>
                         {
                             /* 遍历渲染已有的fontMatter */
-                            Object.keys(postMeta.frontMatter).map((item, index) => {
+                            Object.keys(postMeta.frontMatter).map((item) => {
                                 return (
-                                    <Tooltip key={index} content={!postMeta.frontMatter[item] ? 'unset' : postMeta.frontMatter[item]}>
-                                        <Tag key={index} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
+                                    <Tooltip key={item} content={!postMeta.frontMatter[item] ? 'unset' : postMeta.frontMatter[item]}>
+                                        <Tag closable onClose={() => fmtClose(item)} key={item} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
                                     </Tooltip>
 
                                 )
@@ -120,7 +145,6 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                             (v) => {
                                 const meta = { ...postMeta, frontMatter: v }
                                 setPostMeta(meta)
-                                console.log(meta)
                             }
                         } />
                     }

@@ -1,16 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { Button, Checkbox, Grid, Modal, Space, Tag, Tooltip } from "@arco-design/web-react";
+import { Button, Checkbox, Grid, Input, Message, Modal, Space, Tag, Tooltip } from "@arco-design/web-react";
 import { FrontMatterAdder } from "./frontMatterAdder";
+import { post } from "@/utils/api";
 
 const Row = Grid.Row;
 const Col = Grid.Col;
-const CheckboxGroup = Checkbox.Group
 
 export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handleChange }) {
     // 添加使用的状态
     const [fmOpenStat, setFmOpenStat] = useState(false)
     const [originFms, setOriginFms] = useState([])
 
+    const fmtClose = (v) => {
+        const newfmt = {}
+        Object.keys(pageMeta.frontMatter).forEach(key => {
+            if (key === v) {
+                return
+            }
+            newfmt[key] = pageMeta.frontMatter[key]
+        })
+        const meta = { ...pageMeta, frontMatter: newfmt }
+        setPageMeta(meta)
+    }
+
+    function isPathValid(path) {
+        // 匹配以.md为扩展名的文件名，并且路径只包含合法字符（字母、数字、斜杠、下划线和短横线）
+        const regex = /^([a-zA-Z0-9-_\/]+)\/([a-zA-Z0-9-_]+\.md)$/i; // i标志表示不区分大小写
+        return regex.test(path);
+    }
 
     return (
         <Modal
@@ -21,17 +38,19 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
             }
             visible={visible}
             onCancel={() => {
+                setPageMeta({ ...pageMeta, tags: [], categories: [], frontMatter: originFms });
                 setVisible(false);
-                console.log('cancel', originFms)
-                setPageMeta({ ...pageMeta, frontMatter: originFms })
             }}
             onOk={() => {
-                setVisible(false);
-                handleChange({ frontMatter: pageMeta.frontMatter })
+                if (!isPathValid(pageMeta.source)) {
+                    Message.error('配置的页面路径非法请检查！')
+                } else {
+                    setVisible(false);
+                    handleChange({ frontMatter: pageMeta.frontMatter, source: pageMeta.source })
+                }
             }}
             afterOpen={() => {
-
-                setOriginFms(pageMeta.frontMatter)
+                setOriginFms(pageMeta.frontMatter);
             }}
             style={{ width: 800 }}
         >
@@ -40,10 +59,10 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
                     <Space style={{ width: '100', flexWrap: 'wrap' }}>
                         {
                             /* 遍历渲染已有的fontMatter */
-                            Object.keys(pageMeta.frontMatter).map((item, index) => {
+                            Object.keys(pageMeta.frontMatter).map((item) => {
                                 return (
-                                    <Tooltip key={index} content={!pageMeta.frontMatter[item] ? 'unset' : pageMeta.frontMatter[item]}>
-                                        <Tag key={index} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
+                                    <Tooltip key={item} content={!pageMeta.frontMatter[item] ? 'unset' : pageMeta.frontMatter[item]}>
+                                        <Tag closable onClose={() => fmtClose(item)} key={item} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
                                     </Tooltip>
 
                                 )
@@ -62,10 +81,17 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
                             (v) => {
                                 const meta = { ...pageMeta, frontMatter: v }
                                 setPageMeta(meta)
-                                console.log(meta)
                             }
                         } />
                     }
+                </Col>
+            </Row>
+            <Row style={{ marginTop: 15, marginBottom: 15 }}>
+                <Col>
+                    <Input style={{ width: 350 }} allowClear placeholder='请输入页面存放路径' value={pageMeta.source} onChange={(v) => {
+                        const newMeta = { ...pageMeta, source: v }
+                        setPageMeta(newMeta)
+                    }} />
                 </Col>
             </Row>
         </Modal>

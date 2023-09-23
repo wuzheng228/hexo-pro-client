@@ -27,11 +27,11 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
                 {
                     fmkeys.map((item, i) => {
                         return (
-                            <Checkbox key={i} value={item}>
+                            <Checkbox key={item} value={item}>
                                 {({ checked }) => {
                                     return (
-                                        <Tooltip content={!frontMatter[item] ? 'unset' : frontMatter[item]}>
-                                            <Tag key={i} color={checked ? 'purple' : ''} style={{ marginBottom: 5 }}>
+                                        <Tooltip key={item} content={!frontMatter[item] ? 'unset' : frontMatter[item]}>
+                                            <Tag key={item} color={checked ? 'purple' : ''} style={{ marginBottom: 5 }}>
                                                 {item}
                                             </Tag>
                                         </Tooltip>

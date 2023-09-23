@@ -14,7 +14,7 @@ import { HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { ayuLight } from 'thememirror';
 import { defaultKeymap, indentMore, indentLess } from "@codemirror/commands"
-import axios from 'axios';
+import service from '@/utils/api';
 
 const markdownHighlighting = HighlightStyle.define(
     [
@@ -52,8 +52,8 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
 
     function uploadImage(image, filename) {
         const promise = new Promise((f, r) => {
-            axios.post('/hexopro/api/images/upload', { data: image, filename: filename }).then(res => {
-                console.log('image upload resp', res)
+            service.post('/hexopro/api/images/upload', { data: image, filename: filename }).then(res => {
+                // console.log('image upload resp', res)
                 f(res.data)
             })
         })
@@ -70,6 +70,7 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
         const startState = EditorState.create({
             doc: initialValue,
             extensions: [
+                EditorView.lineWrapping,
                 ayuLight,
                 keymap.of([
                     ...defaultKeymap,
@@ -99,7 +100,7 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
                         handleScroll(findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollTop / findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollHeight)
                     },
                     paste(event, view) {
-                        console.log(event)
+                        // console.log(event)
                         // console.log(view)
                         const items = (event.clipboardData).items;
                         if (!items.length) return
@@ -115,7 +116,7 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
                         reader.onload = (event) => {
                             const filename = null;
                             uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
-                                console.log(res)
+                                // console.log(res)
                                 const transaction = view.state.replaceSelection(`\n![${res.msg}](${res.src})`)
                                 view.update([view.state.update(transaction)])
                             });

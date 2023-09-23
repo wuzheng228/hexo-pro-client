@@ -1,6 +1,6 @@
 
 import MarkDownEditor from '@/components/MarkdownEditor';
-import { Button, Divider, Grid, Message, Modal, Popconfirm } from '@arco-design/web-react';
+import { Button, Divider, Grid, Message, Modal, Popconfirm, Skeleton } from '@arco-design/web-react';
 import { service } from '@/utils/api';
 import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
@@ -30,6 +30,7 @@ const ButtonGroup = Button.Group;
 
 type Post = {
     isDraft: boolean
+    source: string
 }
 
 
@@ -41,7 +42,7 @@ function Post() {
     const postRef = useRef(null);
     const mouseIsOn = useRef(null);
     const { _id } = useParams();
-    const [post, setPost] = useState({ isDraft: true });
+    const [post, setPost] = useState({ isDraft: true, source: null });
     const [tagsCatMeta, setTagsCatMeta] = useState({})
     const [postMetaData, setPostMetadata] = useState({ tags: [], categories: [], frontMatter: {} })
     const [doc, setDoc] = useState('');
@@ -111,7 +112,6 @@ function Post() {
             setTagsCatMeta(data)
             return
         }
-
         if (name == 'post') {
             // console.log('dataLoad', data)
             const parts = data.raw.split('---')
@@ -142,7 +142,11 @@ function Post() {
             return
         }
         setTitle(e.target.value)
-        postRef.current({ title: e.target.value })
+        console.log(post.source)
+        const parts = post.source.split('/')
+        parts[parts.length - 1] = e.target.value + '.md'
+        const newSource = parts.join('/')
+        postRef.current({ title: e.target.value, source: newSource })
     }
 
     const handleChangeContent = (text) => {
@@ -161,7 +165,7 @@ function Post() {
                 reject(err)
             })
         })
-        history.push(`/pro/posts`);
+        history.push(`/posts`);
     }
 
     const publish = () => {
@@ -279,7 +283,7 @@ function Post() {
     }, [rendered])
 
     return (
-        <div>
+        <div >
             <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid gray', backgroundColor: 'white' }} align='center'>
                 {/* 博客名称输入 */}
                 <Col span={12}>

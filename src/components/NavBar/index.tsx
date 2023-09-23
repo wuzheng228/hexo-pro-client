@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, } from 'react';
+import React, { useContext, useEffect, useState, } from 'react';
 import { connect } from 'react-redux';
 import {
   Tooltip,
@@ -10,6 +10,7 @@ import {
   Divider,
   Message,
   Button,
+  Modal,
 } from '@arco-design/web-react';
 import {
   IconLanguage,
@@ -38,7 +39,7 @@ import styles from './style/index.module.less';
 import defaultLocale from '@/locale';
 import useStorage from '@/utils/useStorage';
 import { generatePermission } from '@/routes';
-import axios from 'axios';
+import { service } from '../../utils/api'
 import { parseDateTime } from '@/utils/dateTimeUtils';
 
 const mapStateToProps = (state) => {
@@ -49,6 +50,9 @@ function Navbar({ show }: { show: boolean }) {
   const history = useHistory();
   const t = useLocale();
   const userInfo = useSelector((state: GlobalState) => state.userInfo);
+  const [postTitle, setPostTitle] = useState('Untitled');
+  const [target, setTarget] = useState('Post')
+  const [visible, setVisible] = useState(false);
   // const posts = useSelector((state: GlobalState) => state.posts);
   const dispatch = useDispatch();
 
@@ -70,24 +74,34 @@ function Navbar({ show }: { show: boolean }) {
     }
   }
 
+  function checkTitle(v) {
+    if (!v || v.length == 0 || v.length < 3 || v.length > 32) {
+      Message.error('标题长度不能小于3大于32!')
+      return false
+    }
+    return true
+  }
+
   function newPost() {
-    axios.post('/hexopro/api/posts/new', { title: 'Untitled' }).then((res) => {
+    if (!checkTitle(postTitle)) return
+    service.post('/hexopro/api/posts/new', { title: postTitle }).then((res) => {
       const post = res.data
       post.date = parseDateTime(post.date)
       post.updated = parseDateTime(post.updated)
-      console.log(post.date)
       history.push(`/post/${post._id}`);
     })
+    setVisible(false)
   }
 
   function newPage() {
-    axios.post('/hexopro/api/pages/new', { title: 'Untitled' }).then((res) => {
+    if (!checkTitle(postTitle)) return
+    service.post('/hexopro/api/pages/new', { title: postTitle }).then((res) => {
       const post = res.data
       post.date = parseDateTime(post.date)
       post.updated = parseDateTime(post.updated)
-      console.log(post.date)
       history.push(`/page/${post._id}`);
     })
+    setVisible(false)
   }
 
   useEffect(() => {
@@ -168,8 +182,14 @@ function Navbar({ show }: { show: boolean }) {
 
   const writeDropList = (
     <Menu>
-      <Menu.Item key='1' onClick={() => newPost()}>写文章</Menu.Item>
-      <Menu.Item key='2' onClick={() => newPage()}>新页面</Menu.Item>
+      <Menu.Item key='1' onClick={() => {
+        setVisible(true)
+        setTarget('Post')
+      }}>写文章</Menu.Item>
+      <Menu.Item key='2' onClick={() => {
+        setVisible(true)
+        setTarget('Page')
+      }}>新页面</Menu.Item>
     </Menu>
   );
 
@@ -245,6 +265,24 @@ function Navbar({ show }: { show: boolean }) {
           </li>
         )}
       </ul>
+      <Modal
+        title='标题'
+        visible={visible}
+        onOk={() => {
+          if (target == 'Post') {
+            newPost()
+          } else {
+            newPage()
+          }
+        }}
+        onCancel={() => setVisible(false)}
+        autoFocus={false}
+        focusLock={true}
+      >
+        <p>
+          <Input style={{ width: '100%' }} allowClear placeholder='请输入标题' value={postTitle} onChange={setPostTitle} />
+        </p>
+      </Modal>
     </div>
   );
 }
