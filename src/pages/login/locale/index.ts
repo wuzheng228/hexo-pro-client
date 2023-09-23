@@ -10,9 +10,9 @@ const i18n = {
     'login.form.forgetPassword': 'Forgot password',
     'login.form.login': 'login',
     'login.form.register': 'register account',
-    'login.banner.slogan1': 'Out-of-the-box high-quality template',
+    'login.banner.slogan1': 'Hexo Pro',
     'login.banner.subSlogan1':
-      'Rich page templates, covering most typical business scenarios',
+      'Your own blog editing backend',
     'login.banner.slogan2': 'Built-in solutions to common problems',
     'login.banner.subSlogan2':
       'Internationalization, routing configuration, state management everything',
@@ -30,8 +30,8 @@ const i18n = {
     'login.form.forgetPassword': '忘记密码',
     'login.form.login': '登录',
     'login.form.register': '注册账号',
-    'login.banner.slogan1': '开箱即用的高质量模板',
-    'login.banner.subSlogan1': '丰富的的页面模板，覆盖大多数典型业务场景',
+    'login.banner.slogan1': 'Hexo Pro',
+    'login.banner.subSlogan1': '属于你自己的博客编辑后台',
     'login.banner.slogan2': '内置了常见问题的解决方案',
     'login.banner.subSlogan2': '国际化，路由配置，状态管理应有尽有',
     'login.banner.slogan3': '接入可视化增强工具AUX',
