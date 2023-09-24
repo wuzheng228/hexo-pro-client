@@ -165,7 +165,11 @@ function Post() {
                 reject(err)
             })
         })
-        history.push(`/posts`);
+        if (post.isDraft) {
+            history.push(`/posts/drafts`);
+        } else {
+            history.push(`/posts/blogs`);
+        }
     }
 
     const publish = () => {
@@ -322,7 +326,7 @@ function Post() {
                             });
                         }}
                     >
-                        <Button type='secondary' icon={<IconDelete />} />
+                        <Button type='secondary' icon={<IconDelete />} disabled={!post.isDraft} />
                     </Popconfirm>
                 </Col>
             </Row>
