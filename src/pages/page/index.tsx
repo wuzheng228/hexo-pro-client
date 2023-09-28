@@ -15,6 +15,7 @@ import './style/index.css';
 import { IconDelete, IconObliqueLine, IconOrderedList, IconSettings } from '@arco-design/web-react/icon';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
+import IconSort from '../../assets/sort.svg'
 import _ from 'lodash';
 import { PageSettings } from './pageSettings';
 import { useHistory } from "react-router-dom";
@@ -49,6 +50,7 @@ function Page() {
     const [update, setUpdate] = useState({});
     const [visible, setVisible] = useState(false)
     const [lineNumber, setLineNumber] = useState(false)
+    const [enableAutoStroll, setEnableAutoStroll] = useState(false)
 
     const queryPageById = (_id) => {
         return new Promise((resolve, reject) => {
@@ -252,6 +254,7 @@ function Page() {
                 {/* 博客发布按钮 */}
                 <Col span={2} offset={9} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 50 }}>
                     <ButtonGroup>
+                        <Button type={!enableAutoStroll ? 'dashed' : 'outline'} icon={<IconSort />} onClick={() => setEnableAutoStroll(!enableAutoStroll)} />
                         <Button type='outline' icon={<IconOrderedList />} onClick={() => setLineNumber(!lineNumber)} />
                         <Button type='outline' icon={<IconSettings />} onClick={() => setVisible(true)} />
                     </ButtonGroup>
@@ -290,7 +293,7 @@ function Page() {
                     </Col>
                     <Col
                         id="preview"
-                        style={{ overflowY: 'hidden' }}
+                        style={{ overflowY: 'scroll' }}
                         span={12}
                         // onScroll={handlePreviewScroll}
                         onMouseEnter={() => (mouseIsOn.current = 'preview')}
