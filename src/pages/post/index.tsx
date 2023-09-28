@@ -13,6 +13,7 @@ import rehypeReact from 'rehype-react';
 import { remark } from 'remark';
 import './style/index.css';
 import { IconDelete, IconObliqueLine, IconOrderedList, IconSettings } from '@arco-design/web-react/icon';
+import IconSort from '../../assets/sort.svg'
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import moment from 'moment'
@@ -53,6 +54,7 @@ function Post() {
     const [update, setUpdate] = useState({});
     const [visible, setVisible] = useState(false)
     const [lineNumber, setLineNumber] = useState(false)
+    const [enableAutoStroll, setEnableAutoStroll] = useState(false)
 
     const queryPostById = (_id) => {
         return new Promise((resolve, reject) => {
@@ -229,8 +231,10 @@ function Post() {
     }
 
     const handleScroll = (percent) => {
-        const height = document.getElementById("preview").getBoundingClientRect().height
-        document.getElementById("preview").scrollTop = (document.getElementById("preview").scrollHeight - height) * percent
+        if (enableAutoStroll) {
+            const height = document.getElementById("preview").getBoundingClientRect().height
+            document.getElementById("preview").scrollTop = (document.getElementById("preview").scrollHeight - height) * percent
+        }
     }
 
     useEffect(() => {
@@ -298,9 +302,10 @@ function Post() {
                     />
                 </Col>
                 {/* 博客发布按钮 */}
-                <Col span={3} offset={8} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 20 }}>
+                <Col span={4} offset={7} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 20 }}>
                     <ButtonGroup>
-                        <Button type='outline' icon={<IconOrderedList />} onClick={() => setLineNumber(!lineNumber)} />
+                        <Button type={!enableAutoStroll ? 'dashed' : 'outline'} icon={<IconSort />} onClick={() => setEnableAutoStroll(!enableAutoStroll)} />
+                        <Button type={!lineNumber ? 'dashed' : 'outline'} icon={<IconOrderedList />} onClick={() => setLineNumber(!lineNumber)} />
                         <Button type='outline' icon={<IconSettings />} onClick={() => setVisible(true)} />
                         {
                             post.isDraft ?
@@ -342,7 +347,7 @@ function Post() {
                     </Col>
                     <Col
                         id="preview"
-                        style={{ overflowY: 'hidden' }}
+                        style={{ overflowY: 'scroll' }}
                         span={12}
                         // onScroll={handlePreviewScroll}
                         onMouseEnter={() => (mouseIsOn.current = 'preview')}
