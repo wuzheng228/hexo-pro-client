@@ -87,6 +87,28 @@
   outline: none !important;
 }
 
+#preview::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  background: linear-gradient(transparent, transparent);
+}
+
+#preview::-webkit-scrollbar {
+  width: 0;
+}
+
+#preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#preview::-webkit-scrollbar-thumb {
+  background: transparent;
+}
 
 /* Markdown 渲染样式，仅在 #preview 下生效 */
 #preview {
