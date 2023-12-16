@@ -63,7 +63,7 @@ function Navbar({ show }: { show: boolean }) {
 
   function logout() {
     setUserStatus('logout');
-    window.location.href = '/login';
+    window.location.href = '/pro/login';
   }
 
   function onMenuItemClick(key) {
