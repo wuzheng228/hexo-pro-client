@@ -135,7 +135,7 @@ function Navbar({ show }: { show: boolean }) {
 
   const droplist = (
     <Menu onClickMenuItem={onMenuItemClick}>
-      <Menu.SubMenu
+      {/* <Menu.SubMenu
         key="role"
         title={
           <>
@@ -147,13 +147,13 @@ function Navbar({ show }: { show: boolean }) {
             </span>
           </>
         }
-      >
-        {/* <Menu.Item onClick={handleChangeRole} key="switch role">
+      > */}
+      {/* <Menu.Item onClick={handleChangeRole} key="switch role">
           <IconTag className={styles['dropdown-icon']} />
           {t['menu.user.switchRoles']}
         </Menu.Item> */}
-      </Menu.SubMenu>
-      <Menu.Item key="setting">
+      {/* </Menu.SubMenu> */}
+      {/* <Menu.Item key="setting">
         <IconSettings className={styles['dropdown-icon']} />
         {t['menu.user.setting']}
       </Menu.Item>
@@ -172,7 +172,7 @@ function Navbar({ show }: { show: boolean }) {
         </Menu.Item>
       </Menu.SubMenu>
 
-      <Divider style={{ margin: '4px 0' }} />
+      <Divider style={{ margin: '4px 0' }} /> */}
       <Menu.Item key="logout">
         <IconPoweroff className={styles['dropdown-icon']} />
         {t['navbar.logout']}
@@ -257,11 +257,11 @@ function Navbar({ show }: { show: boolean }) {
         <Settings />
         {userInfo && (
           <li>
-            {/* <Dropdown droplist={droplist} position="br"> */}
-            <Avatar size={32} style={{ cursor: 'pointer' }}>
-              <img alt="avatar" src={userInfo.avatar} />
-            </Avatar>
-            {/* </Dropdown> */}
+            <Dropdown droplist={droplist} position="br">
+              <Avatar size={32} style={{ cursor: 'pointer' }}>
+                <img alt="avatar" src={userInfo.avatar} />
+              </Avatar>
+            </Dropdown>
           </li>
         )}
       </ul>
