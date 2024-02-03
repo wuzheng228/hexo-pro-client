@@ -266,11 +266,11 @@ function PageLayout() {
                   </Route>
                   <Route
                     path="/post/:_id"
-                    component={lazyload(() => import('./pages/post/'))}
+                    component={lazyload(() => import('./pages/content/posts/post'))}
                   />
                   <Route
                     path="/page/:_id"
-                    component={lazyload(() => import('./pages/page/'))}
+                    component={lazyload(() => import('./pages/content/pages/page'))}
                   />
                   <Route
                     path="*"

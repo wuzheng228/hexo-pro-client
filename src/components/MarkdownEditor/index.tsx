@@ -15,6 +15,10 @@ import { tags } from '@lezer/highlight';
 import { ayuLight } from 'thememirror';
 import { defaultKeymap, indentMore, indentLess } from "@codemirror/commands"
 import service from '@/utils/api';
+import Styles from './style/index.module.less'
+import { Grid } from '@arco-design/web-react';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
 
 const markdownHighlighting = HighlightStyle.define(
     [
@@ -36,9 +40,24 @@ const markdownHighlighting = HighlightStyle.define(
     ]
 )
 
-function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChangeContent, handleScroll, forceLineNumbers }) {
+const Row = Grid.Row;
+const Col = Grid.Col;
+
+function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enableAutoStroll, forceLineNumbers }) {
 
     const editorRef = useRef(null)
+    const mouseIsOn = useRef(null);
+    const previewRef = useRef(null)
+    const [md, setRenderedMarkdown] = useState('');
+    const [rendered, setRendered] = useState('');
+
+    const handleScroll = (percent) => {
+        if (enableAutoStroll) {
+            const ele = previewRef.current
+            const height = ele.getBoundingClientRect().height
+            ele.scrollTop = (ele.scrollHeight - height) * percent
+        }
+    }
 
     function findScrollContainer(node: HTMLElement) {
         for (let cur: any = node; cur;) {
@@ -62,10 +81,12 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
 
     const [editorView, setEditorView] = useState(null)
     const [lineNumberCptState, setLineNumberCpt] = useState(null)
+    const [domEventHandlersState, setdomEventHandlers] = useState(null)
 
     useEffect(() => {
         if (!editorRef) return
         const lineNumberCpt = new Compartment();
+        const domEventHandlers = new Compartment();
 
         const startState = EditorState.create({
             doc: initialValue,
@@ -95,9 +116,10 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
                         handleChangeContent(update.state.doc.toString())
                     }
                 }),
-                EditorView.domEventHandlers({
+                domEventHandlers.of(EditorView.domEventHandlers({
                     scroll(event, view) {
-                        handleScroll(findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollTop / findScrollContainer(document.querySelector("#markdown > div > div.cm-scroller")).scrollHeight)
+                        console.log(enableAutoStroll)
+                        handleScroll(editorRef.current.scrollTop / editorRef.current.scrollHeight)
                     },
                     paste(event, view) {
                         // console.log(event)
@@ -123,7 +145,7 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
                         };
                         reader.readAsDataURL(blob);
                     }
-                })
+                }))
             ],
         })
 
@@ -134,6 +156,7 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
 
         setEditorView(view)
         setLineNumberCpt(lineNumberCpt)
+        setdomEventHandlers(domEventHandlers)
         return () => view.destroy()
     }, [editorRef]);
 
@@ -169,7 +192,89 @@ function MarkdownEditor({ initialValue, adminSettings, setRendered, handleChange
 
     }, [initialValue, editorView])
 
-    return [editorRef, editorView];
+
+    useEffect(() => {
+        const renderer = {
+            code(code, lang) {
+                const validLanguage = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return `<pre><code>${hljs.highlight(code, { language: validLanguage }).value}</code></pre>`
+            }
+
+        };
+        marked.use({ renderer });
+        marked.use({
+            pedantic: false,
+            gfm: true,
+            breaks: true
+        });
+        setRenderedMarkdown(marked(rendered))
+    }, [rendered])
+
+    useEffect(() => {
+        if (!editorView) return;
+
+        const transaction = editorView.state.update({
+            effects: domEventHandlersState.reconfigure(EditorView.domEventHandlers({
+                scroll(event, view) {
+                    handleScroll(editorRef.current.scrollTop / editorRef.current.scrollHeight)
+                },
+                paste(event, view) {
+                    // console.log(event)
+                    // console.log(view)
+                    const items = (event.clipboardData).items;
+                    if (!items.length) return
+                    let blob;
+                    for (let i = items.length - 1; i >= 0; i--) {
+                        if (items[i].kind == 'file') {
+                            blob = items[i].getAsFile();
+                            break;
+                        }
+                    }
+                    if (!blob) return
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const filename = null;
+                        uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
+                            // console.log(res)
+                            const transaction = view.state.replaceSelection(`\n![${res.msg}](${res.src})`)
+                            view.update([view.state.update(transaction)])
+                        });
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }))
+        })
+
+        // 更新 EditorView
+        editorView.dispatch(transaction);
+    }, [editorView, enableAutoStroll]);
+
+    return (
+
+        <div>
+            <Row className={Styles.editorWrapper} style={{ width: "100%", height: '100vh' }}>
+                <Col
+                    id={'markdown'}
+                    span={12}
+                    // onScroll={handleMarkdownScroll}
+                    className={Styles.markdown}
+                    ref={editorRef}
+                    onMouseEnter={() => (mouseIsOn.current = 'markdown')}
+                />
+                <Col
+                    id={'preview'}
+                    span={12}
+                    ref={previewRef}
+                    className={Styles.preview}
+                    style={{ overflowY: 'scroll' }}
+                    // onScroll={handlePreviewScroll}
+                    onMouseEnter={() => (mouseIsOn.current = 'preview')}
+                    dangerouslySetInnerHTML={{ __html: md }}
+                ></Col>
+            </Row>
+
+        </div>
+    )
 }
 
 export default MarkdownEditor

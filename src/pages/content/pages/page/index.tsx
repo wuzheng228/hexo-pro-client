@@ -11,11 +11,11 @@ import { useParams } from 'react-router-dom';
 // import rehypeHighlight from 'rehype-highlight'
 // import rehypeReact from 'rehype-react';
 // import { remark } from 'remark';
-import './style/index.css';
+import styles from '../../style/index.module.less';
 import { IconDelete, IconObliqueLine, IconOrderedList, IconSettings } from '@arco-design/web-react/icon';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
-import IconSort from '../../assets/sort.svg'
+import IconSort from './../../../../assets/sort.svg'
 import _ from 'lodash';
 import { PageSettings } from './pageSettings';
 import { useHistory } from "react-router-dom";
@@ -37,16 +37,14 @@ type Page = {
 function Page() {
     const history = useHistory();
     const postRef = useRef(null);
-    const mouseIsOn = useRef(null);
     const { _id } = useParams();
     const [page, setPage] = useState({ isDraft: true, source: null });
     const [pageMetaData, setPageMetadata] = useState({ tags: [], categories: [], frontMatter: {}, source: '' })
     const [fmtKeys, setFmtKeys] = useState([])
     const [doc, setDoc] = useState('');
-    const [md, setRenderedMarkdown] = useState('');
     const [title, setTitle] = useState('');
     const [initialRaw, setInitialRaw] = useState('');
-    const [rendered, setRendered] = useState('');
+    // const [rendered, setRendered] = useState('');
     const [update, setUpdate] = useState({});
     const [visible, setVisible] = useState(false)
     const [lineNumber, setLineNumber] = useState(false)
@@ -93,7 +91,7 @@ function Page() {
             const raw = parts.slice(_slice).join('---').trim();
             setTitle(data.title)
             setInitialRaw(raw)
-            setRendered(raw)
+            // setRendered(raw)
             setPage(data)
             const content = (data)._content;
             setDoc(content)
@@ -121,10 +119,10 @@ function Page() {
     }
 
     const handleChangeContent = (text) => {
-        if (text === rendered) {
-            return
-        }
-        setRendered(text)
+        // if (text === rendered) {
+        //     return
+        // }
+        // setRendered(text)
         postRef.current({ _content: text })
     }
 
@@ -195,10 +193,6 @@ function Page() {
         })
     }
 
-    const handleScroll = (percent) => {
-        const height = document.getElementById("preview").getBoundingClientRect().height
-        document.getElementById("preview").scrollTop = (document.getElementById("preview").scrollHeight - height) * percent
-    }
 
     useEffect(() => {
         const items = fetch()
@@ -221,24 +215,7 @@ function Page() {
         postRef.current = p
     }, []);
 
-    const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
-
-    useEffect(() => {
-        const renderer = {
-            code(code, lang) {
-                const validLanguage = hljs.getLanguage(lang) ? lang : 'plaintext';
-                return `<pre><code>${hljs.highlight(code, { language: validLanguage }).value}</code></pre>`
-            }
-
-        };
-        marked.use({ renderer });
-        marked.use({
-            pedantic: false,
-            gfm: true,
-            breaks: true
-        });
-        setRenderedMarkdown(marked(rendered))
-    }, [rendered])
+    // const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
 
     return (
         <div>
@@ -254,7 +231,14 @@ function Page() {
                 {/* 博客发布按钮 */}
                 <Col span={2} offset={9} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 50 }}>
                     <ButtonGroup>
-                        <Button type={!enableAutoStroll ? 'dashed' : 'outline'} icon={<IconSort />} onClick={() => setEnableAutoStroll(!enableAutoStroll)} />
+                        <Button type={!enableAutoStroll ? 'dashed' : 'outline'} icon={<IconSort />} onClick={() => {
+                            console.log(enableAutoStroll)
+                            if (enableAutoStroll) {
+                                setEnableAutoStroll(false)
+                            } else {
+                                setEnableAutoStroll(true)
+                            }
+                        }} />
                         <Button type='outline' icon={<IconOrderedList />} onClick={() => setLineNumber(!lineNumber)} />
                         <Button type='outline' icon={<IconSettings />} onClick={() => setVisible(true)} />
                     </ButtonGroup>
@@ -282,24 +266,7 @@ function Page() {
                 </Col>
             </Row>
             <Row style={{ boxSizing: 'border-box', margin: 0, backgroundColor: 'white', height: "100vh", overflow: 'hidden', width: "100%" }}>
-                <Row id='editorWrapper' style={{ width: "100%" }}>
-                    <Col
-                        id="markdown"
-                        span={12}
-                        ref={editorRef}
-                        // onScroll={handleMarkdownScroll}
-                        onMouseEnter={() => (mouseIsOn.current = 'markdown')}
-                    >
-                    </Col>
-                    <Col
-                        id="preview"
-                        style={{ overflowY: 'scroll' }}
-                        span={12}
-                        // onScroll={handlePreviewScroll}
-                        onMouseEnter={() => (mouseIsOn.current = 'preview')}
-                        dangerouslySetInnerHTML={{ __html: md }}
-                    ></Col>
-                </Row>
+                <MarkDownEditor initialValue={doc} adminSettings={{ editor: { lineNumbers: true } }} handleChangeContent={handleChangeContent} enableAutoStroll={enableAutoStroll} forceLineNumbers={lineNumber} />
             </Row>
             <PageSettings
                 visible={visible}

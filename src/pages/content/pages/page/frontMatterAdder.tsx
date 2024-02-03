@@ -1,7 +1,6 @@
 import React from "react"
 import { Button, Card, Checkbox, Form, Grid, Input, Space, Tag, Tooltip, Typography } from "@arco-design/web-react"
 import { useEffect, useState } from "react"
-import './style/index.css'
 
 const CheckboxGroup = Checkbox.Group
 
