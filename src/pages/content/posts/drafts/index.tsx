@@ -5,14 +5,18 @@ import service from '@/utils/api';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
 import { GlobalState } from '@/store';
-import ArticleList from '../component/Article';
+import ArticleList from '../component/ArticleList';
 
-function Blog() {
+function Drafts() {
+
   return (
     <div>
-      <ArticleList published={true} />
+      <div>
+        <ArticleList published={false} />
+      </div>
     </div>
+
   );
 }
 
-export default Blog;
+export default Drafts;

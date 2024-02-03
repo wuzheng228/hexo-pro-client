@@ -28,17 +28,17 @@ export const routes: IRoute[] = [
     children: [
       {
         name: 'menu.posts.blogs',
-        key: 'posts/blogs',
+        key: 'content/posts/blogs',
       },
       {
         name: 'menu.posts.drafts',
-        key: 'posts/drafts',
+        key: 'content/posts/drafts',
       }
     ],
   },
   {
     name: 'menu.pages',
-    key: 'pages',
+    key: 'content/pages',
   }
 ];
 

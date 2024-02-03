@@ -11,9 +11,9 @@ import rehypeFormat from 'rehype-format'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeReact from 'rehype-react';
 import { remark } from 'remark';
-import './style/index.css';
+import styles from '../../style/index.module.less';
 import { IconDelete, IconObliqueLine, IconOrderedList, IconSettings } from '@arco-design/web-react/icon';
-import IconSort from '../../assets/sort.svg'
+import IconSort from '../../../../assets/sort.svg'
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import moment from 'moment'
@@ -54,7 +54,7 @@ function Post() {
     const [update, setUpdate] = useState({});
     const [visible, setVisible] = useState(false)
     const [lineNumber, setLineNumber] = useState(false)
-    const [enableAutoStroll, setEnableAutoStroll] = useState(false)
+    const [enableAutoStrol, setEnableAutoStroll] = useState(false)
 
     const queryPostById = (_id) => {
         return new Promise((resolve, reject) => {
@@ -230,13 +230,6 @@ function Post() {
         })
     }
 
-    const handleScroll = (percent) => {
-        if (enableAutoStroll) {
-            const height = document.getElementById("preview").getBoundingClientRect().height
-            document.getElementById("preview").scrollTop = (document.getElementById("preview").scrollHeight - height) * percent
-        }
-    }
-
     useEffect(() => {
         queryPostById(_id).then((res) => {
             if (typeof res === 'object' && res != null && '_content' in res) {
@@ -269,7 +262,7 @@ function Post() {
         postRef.current = p
     }, []);
 
-    const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
+    // const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
 
 
 
@@ -304,7 +297,7 @@ function Post() {
                 {/* 博客发布按钮 */}
                 <Col span={4} offset={7} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 20 }}>
                     <ButtonGroup>
-                        <Button type={!enableAutoStroll ? 'dashed' : 'outline'} icon={<IconSort />} onClick={() => setEnableAutoStroll(!enableAutoStroll)} />
+                        <Button type={!enableAutoStrol ? 'dashed' : 'outline'} icon={<IconSort />} onClick={() => setEnableAutoStroll(!enableAutoStrol)} />
                         <Button type={!lineNumber ? 'dashed' : 'outline'} icon={<IconOrderedList />} onClick={() => setLineNumber(!lineNumber)} />
                         <Button type='outline' icon={<IconSettings />} onClick={() => setVisible(true)} />
                         {
@@ -336,24 +329,24 @@ function Post() {
                 </Col>
             </Row>
             <Row style={{ boxSizing: 'border-box', margin: 0, backgroundColor: 'white', height: "100vh", overflow: 'hidden', width: "100%" }}>
-                <Row id='editorWrapper' style={{ width: "100%" }}>
-                    <Col
-                        id="markdown"
+                {/* <Col
+                        id={'markdown'}
+                        className={styles.markdown}
                         span={12}
-                        ref={editorRef}
                         // onScroll={handleMarkdownScroll}
                         onMouseEnter={() => (mouseIsOn.current = 'markdown')}
-                    >
-                    </Col>
-                    <Col
-                        id="preview"
+                    > */}
+                <MarkDownEditor initialValue={doc} adminSettings={{ editor: { lineNumbers: true } }} handleChangeContent={handleChangeContent} enableAutoStroll={enableAutoStrol} forceLineNumbers={lineNumber} />
+                {/* </Col> */}
+                {/* <Col
+                        id={'preview'}
+                        className={styles.preview}
                         style={{ overflowY: 'scroll' }}
                         span={12}
                         // onScroll={handlePreviewScroll}
                         onMouseEnter={() => (mouseIsOn.current = 'preview')}
                         dangerouslySetInnerHTML={{ __html: md }}
-                    ></Col>
-                </Row>
+                    ></Col> */}
             </Row>
             <PostSettings
                 visible={visible}
