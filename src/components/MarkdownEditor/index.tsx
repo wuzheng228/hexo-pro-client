@@ -251,8 +251,8 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
 
     return (
 
-        <div>
-            <Row className={Styles.editorWrapper} style={{ width: "100%", height: '100vh' }}>
+        <div style={{ width: "100%", height: '100vh' }}>
+            <Row className={Styles.editorWrapper} >
                 <Col
                     id={'markdown'}
                     span={12}
