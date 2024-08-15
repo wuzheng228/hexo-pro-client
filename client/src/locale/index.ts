@@ -14,6 +14,9 @@ const i18n = {
         'navbar.modal.cancel': 'Cancel',
         'navbar.modal.submit': 'Submit',
         'navbar.modal.input.placeholder': 'Enter title',
+        'editor.header.pop.title': 'Confirm delete',
+        'page.editor.header.pop.des': 'Are you sure to delete the page?',
+        'post.editor.header.pop.des': 'Are you sure to delete the blog??'
     },
     'zh-CN': {
         'menu.posts': '文章',
@@ -30,6 +33,10 @@ const i18n = {
         'navbar.modal.cancel': '取消',
         'navbar.modal.submit': '提交',
         'navbar.modal.input.placeholder': '请输入标题',
+        'editor.header.pop.title': '确认删除',
+        'page.editor.header.pop.des': '确定删除页面吗?',
+        'post.editor.header.pop.des': '确定删除博客吗?'
+
     }
 }
 

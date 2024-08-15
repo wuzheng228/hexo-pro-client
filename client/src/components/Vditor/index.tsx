@@ -5,7 +5,7 @@ import "vditor/src/assets/less/index.less"
 import "./style/index.less"
 import service from '@/utils/api';
 
-export default function HexoProVditor({ handleChangeContent, handleUploadingImage }) {
+export default function HexoProVditor({ initValue, handleChangeContent, handleUploadingImage }) {
 
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
 
@@ -42,9 +42,36 @@ export default function HexoProVditor({ handleChangeContent, handleUploadingImag
             height: '100%',
             width: '100%',
             toolbarConfig: {
-                pin: true // 确保工具栏固定
+                pin: false // 确保工具栏固定
             },
             after: () => {
+                // 设置初始值
+                vditor.setValue(initValue)
+
+                // 固定toolbar
+                const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement;
+                const vditorElement = document.getElementById('vditor') as HTMLElement;
+                if (toolbar && vditorElement) {
+                    toolbar.style.width = `${vditorElement.clientWidth}px`;
+                }
+
+                const content = document.querySelector('vditor-content') as HTMLElement;
+                const editorHeader = document.querySelector('.editor-header') as HTMLElement;
+                console.log('editorHeader', editorHeader)
+                console.log("content", content)
+                if (content && toolbar && editorHeader) {
+                    console.log('走到这里了')
+                    content.style.cssText = `margin-top: ${toolbar.clientHeight + editorHeader.clientHeight}px !important;`;
+                }
+
+                window.addEventListener('resize', () => {
+                    if (toolbar && vditorElement) {
+                        toolbar.style.width = `${vditorElement.clientWidth}px`;
+                        if (content) {
+                            content.style.marginTop = `${toolbar.clientHeight + editorHeader.clientHeight}px !important;`;
+                        }
+                    }
+                });
                 // const vditorElement = document.querySelector('#vditor > div.vditor-content > div.vditor-ir > pre');
                 // console.log(vditorElement)
                 // if (vditorElement) {
@@ -217,13 +244,15 @@ export default function HexoProVditor({ handleChangeContent, handleUploadingImag
                 }
             ]
         });
+
+
         return () => {
             vd?.destroy();
             setVd(undefined);
         }
-    }, []);
+    }, [initValue]);
     return (
-        <div style={{ width: '100%', height: '100%', flex: 1, backgroundColor: 'blue', borderRadius: '0px' }}>
+        <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, backgroundColor: 'blue', borderRadius: '0px' }}>
             <div
                 style={{ width: '100%', height: '100%' }}
                 id='vditor'

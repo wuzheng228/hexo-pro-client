@@ -21,7 +21,6 @@ interface DataType {
 
 export default function Pages() {
     // const userInfo = useSelector((state: GlobalState) => state.posts);
-    const dispatch = useDispatch();
     const inputRef = useRef(null)
     const [pageList, setPageList] = useState([])
 

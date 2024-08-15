@@ -1,28 +1,16 @@
-
-import MarkDownEditor from '@/components/markdownEditor';
 import { service } from '@/utils/api';
 import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
-// import remarkParse from 'remark-parse'
-// import remarkRehype from 'remark-rehype'
-// import remarkGfm from 'remark-gfm'
-// import rehypeFormat from 'rehype-format'
-// import rehypeHighlight from 'rehype-highlight'
-// import rehypeReact from 'rehype-react';
-// import { remark } from 'remark';
 import { Button, Col, message, Popconfirm, Row } from 'antd'
-import styles from '../../style/index.module.less';
 import IconSort from '../../../../assets/sort.svg'
-import hljs from 'highlight.js';
-import 'highlight.js/styles/github.css';
-import moment from 'moment'
 import _ from 'lodash';
 import { PostSettings } from './postSetting';
 import { useNavigate } from "react-router-dom";
-import { marked, MarkedExtension, Renderer, Tokens } from 'marked';
-import { render } from 'react-dom';
 import { BarsOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import HexoProVditor from '@/components/Vditor';
+import EditorHeader from '../../components/EditorHeader';
+import useLocale from '@/hooks/useLocale';
+import styles from '../../style/index.module.less'
 
 
 const ButtonGroup = Button.Group;
@@ -31,10 +19,6 @@ type Post = {
     isDraft: boolean
     source: string
 }
-
-
-
-
 
 function Post() {
     const navigate = useNavigate();
@@ -51,6 +35,7 @@ function Post() {
     const [visible, setVisible] = useState(false)
     const [lineNumber, setLineNumber] = useState(false)
     const [enableAutoStrol, setEnableAutoStroll] = useState(false)
+    const t = useLocale()
 
     const queryPostById = (_id) => {
         return new Promise((resolve, reject) => {
@@ -264,53 +249,21 @@ function Post() {
     }, []);
 
     return (
-        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", backgroundColor: 'blue' }}>
-            <div>
-                <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid gray', backgroundColor: 'white' }} align='middle'>
-                    {/* 博客名称输入 */}
-                    <Col span={12}>
-                        <input
-                            style={{ width: "100%", height: 60, border: 'none', outline: 'none', boxSizing: 'border-box', fontSize: 28, fontWeight: 500, marginLeft: 10 }}
-                            value={title}
-                            onChange={(v) => handleChangeTitle(v)}
-                        />
-                    </Col>
-                    {/* 博客发布按钮 */}
-                    <Col span={4} offset={7} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 20 }}>
-                        <ButtonGroup>
-                            <Button type={!enableAutoStrol ? 'dashed' : 'default'} icon={<IconSort />} onClick={() => setEnableAutoStroll(!enableAutoStrol)} />
-                            <Button type={!lineNumber ? 'dashed' : 'default'} icon={<BarsOutlined />} onClick={() => setLineNumber(!lineNumber)} />
-                            <Button type='default' icon={<SettingOutlined />} onClick={() => setVisible(true)} />
-                            {
-                                post.isDraft ?
-                                    <Button type='primary' onClick={publish}>发布博客</Button>
-                                    : <Button type='default' onClick={unpublish}>转为草稿</Button>
-                            }
-                        </ButtonGroup>
-                    </Col>
-                    <Col span={1}>
-                        <Popconfirm
-                            title='确认删除'
-                            description='确认删除博客吗?'
-                            onConfirm={() => {
-                                message.info({
-                                    content: 'ok',
-                                });
-                                removeBlog()
-                            }}
-                            onCancel={() => {
-                                message.error({
-                                    content: 'cancel',
-                                });
-                            }}
-                        >
-                            <Button type='default' icon={<DeleteOutlined />} disabled={!post.isDraft} />
-                        </Popconfirm>
-                    </Col>
-                </Row>
-            </div>
+        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", backgroundColor: 'blue', overflowY: 'auto' }}>
+            <EditorHeader
+                isPage={false}
+                isDraft={post.isDraft}
+                handlePublish={publish}
+                className={styles['editor-header']}
+                initTitle={title}
+                popTitle={t['editor.header.pop.title']}
+                popDes={t['page.editor.header.pop.des']}
+                handleChangeTitle={handleChangeTitle}
+                handleSettingClick={(v) => setVisible(true)}
+                handleRemoveSource={removeBlog}
+            />
             <div style={{ backgroundColor: 'red', width: "100%", flex: 1, padding: 0, border: 'none' }}>
-                <HexoProVditor handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
+                <HexoProVditor initValue={doc} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
             </div>
             <PostSettings
                 visible={visible}
