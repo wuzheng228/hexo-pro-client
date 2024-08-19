@@ -1,17 +1,73 @@
 import { BarsOutlined, DeleteOutlined, SettingOutlined } from "@ant-design/icons";
 import { Button, Col, message, Popconfirm, Row } from "antd";
 import ButtonGroup from "antd/es/button/button-group";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import cs from 'classnames';
+import IconPin from "@/assets/pin.svg"
+import IconPinFill from "@/assets/pin-fill.svg"
+import { useDispatch, useSelector } from "react-redux";
+import { GlobalContext } from "@/context";
 
-export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', handleChangeTitle, handleSettingClick, handleRemoveSource, handlePublish }) {
+export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', handleChangeTitle, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
+
+    const [isPin, setIsPin] = useState(true)
+    const dispatch = useDispatch();
+
+    const themeStyles = {
+        light: {
+            backgroundColor: "white",
+            borderBottomColor: 'gray',
+            inputBackgroundColor: "white",
+            inputColor: "black",
+            buttonBackgroundColor: "white",
+            buttonColor: "black"
+        },
+        dark: {
+            backgroundColor: "#2e2e2e",
+            borderBottomColor: '#555',
+            inputBackgroundColor: "#2e2e2e",
+            inputColor: "white",
+            buttonBackgroundColor: "#555",
+            buttonColor: "white"
+        }
+    };
+
+    const { theme } = useContext(GlobalContext)
+
+    const currentTheme = themeStyles[theme];
+
+    const handlePinClick = () => {
+        setIsPin(!isPin)
+        dispatch({
+            type: 'toggle-vditor-toolbar-pin',
+            payload: {
+                vditorToolbarPin: isPin
+            },
+        })
+        return () => {
+            setIsPin(false)
+            dispatch({
+                type: 'toggle-vditor-toolbar-pin',
+                payload: {
+                    vditorToolbarPin: false
+                },
+            })
+        }
+    }
 
     return (
-        <Row style={{ width: "100%", borderBottomColor: 'black', borderBottom: '1px solid gray', backgroundColor: 'white' }} align='middle' className={cs("editor-header", className)}>
+        <Row style={{
+            width: "100%", borderBottomColor: currentTheme.borderBottomColor, borderBottom: '1px solid',
+            backgroundColor: currentTheme.backgroundColor,
+        }} align='middle' className={cs("editor-header", className)}>
             {/* 博客名称输入 */}
             <Col span={12}>
                 <input
-                    style={{ width: "100%", height: 60, border: 'none', outline: 'none', boxSizing: 'border-box', fontSize: 28, fontWeight: 500, marginLeft: 10 }}
+                    style={{
+                        width: "100%", height: 60, border: 'none', outline: 'none', boxSizing: 'border-box', fontSize: 28, fontWeight: 500, marginLeft: 10,
+                        backgroundColor: currentTheme.inputBackgroundColor,
+                        color: currentTheme.inputColor
+                    }}
                     value={initTitle}
                     onChange={(v) => {
                         handleChangeTitle(v.target.value)
@@ -21,11 +77,13 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
             {/* 博客发布按钮 */}
             <Col span={2} offset={9} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 50 }}>
                 <ButtonGroup>
-                    <Button type='default' icon={<SettingOutlined />} onClick={(e) => handleSettingClick(e)} />
+                    <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />} onClick={handlePinClick} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                    <Button type='default' icon={<SettingOutlined />} onClick={(e) => handleSettingClick(e)} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
                     {
-                        isDraft && !isPage ?
-                            <Button type='primary' onClick={handlePublish}>发布博客</Button>
-                            : <Button type='default' onClick={handlePublish}>转为草稿</Button>
+                        !isPage && (isDraft ?
+                            <Button type='primary' onClick={handlePublish} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}>发布博客</Button>
+                            : <Button type='default' onClick={handleUnpublish} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}>转为草稿</Button>
+                        )
                     }
                     <Popconfirm
                         title={popTitle}
@@ -42,7 +100,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             });
                         }}
                     >
-                        <Button type='default' icon={<DeleteOutlined />} />
+                        <Button type='default' icon={<DeleteOutlined />} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
                     </Popconfirm>
                 </ButtonGroup>
             </Col>

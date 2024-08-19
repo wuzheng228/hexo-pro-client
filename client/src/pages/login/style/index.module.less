@@ -8,9 +8,16 @@
     }
 
     .content {
-        display: flex;
         flex: 1;
+        position: relative;
         padding-bottom: 40px;
+    }
+
+    .footer {
+        width: 100%;
+        position: absolute;
+        bottom: 0;
+        right: 0;
     }
 }
 
@@ -21,6 +28,13 @@
     display: inline-flex;
     align-items: center;
     z-index: 1;
+
+    &-text {
+        margin-left: 4px;
+        margin-right: 4px;
+        font-size: 20px;
+        color: var(--color-fill-1);
+    }
 }
 
 .banner {
@@ -28,60 +42,78 @@
     justify-content: center;
     align-items: center;
 
-    .banner-inner {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    &-inner {
         height: 100%;
+        flex: 1;
     }
+}
+
+.content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.carousel {
+    display: flex;
+    justify-content: center; // 水平居中
+    align-items: center; // 垂直居中
+    height: 100%; // 确保容器高度为100%
 }
 
 .carousel-item {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-
-    .carousel-title {
-        font-weight: 500;
-        font-size: 20px;
-        line-height: 28px;
-        color: white;
-    }
-
-    .carousel-sub-title {
-        margin-top: 8px;
-        font-size: 14px;
-        line-height: 22px;
-        color: gray;
-    }
-
-    .carousel-image {
-        margin-top: 30px;
-        margin-bottom: 60px;
-        width: 320px;
-    }
+    align-items: center; // 水平居中
+    justify-content: center; // 垂直居中
+    text-align: center; // 文字居中
 }
 
-.content {
-    align-items: center;
-    justify-content: center;
+.carousel-title,
+.carousel-sub-title {
+    color: white; // 文字颜色为白色
+    margin-bottom: 20px;
+}
 
-    .login-form-wrapper {
+.carousel-image {
+    display: block; // 确保图片是块级元素
+    margin: 0 auto; // 水平居中
+    width: 320px;
+}
+
+
+
+
+.login-form {
+    &-wrapper {
         width: 320px;
+    }
 
-        .login-form-title {
-            font-size: 24px;
-            font-weight: 500;
-            color: black;
-            line-height: 32px;
-        }
+    &-title {
+        font-size: 24px;
+        font-weight: 500;
+        color: var(--color-text-1);
+        line-height: 32px;
+    }
 
-        .login-form-sub-title {
-            font-size: 16px;
-            line-height: 24px;
-            color: gray;
-        }
+    &-sub-title {
+        font-size: 16px;
+        line-height: 24px;
+        color: var(--color-text-3);
+    }
+
+    &-error-msg {
+        height: 32px;
+        line-height: 32px;
+        color: rgb(var(--red-6));
+    }
+
+    &-password-actions {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    &-register-btn {
+        color: var(--color-text-3) !important;
     }
 }

@@ -1,12 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import Vditor from 'vditor';
 import "vditor/src/assets/less/index.less"
 import "./style/index.less"
 import service from '@/utils/api';
+import { Skeleton, Spin } from 'antd';
+import { GlobalContext } from '@/context';
+import { use } from 'marked';
 
-export default function HexoProVditor({ initValue, handleChangeContent, handleUploadingImage }) {
-
+export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage }) {
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
 
     function uploadImage(image, filename) {
@@ -21,12 +23,14 @@ export default function HexoProVditor({ initValue, handleChangeContent, handleUp
         return promise
     }
 
-
     const [vd, setVd] = useState(undefined);
     const [isUploadingImage, setIsUPloadingImage] = useState(false)
 
     const [isEditorFocus, setIsEditorFocus] = useState(false)
 
+    const [isEditorLoaded, setIsEditorLoaded] = useState(false);
+
+    const { theme } = useContext(GlobalContext);
 
     useEffect(() => {
         handleUploadingImage(isUploadingImage)
@@ -35,9 +39,52 @@ export default function HexoProVditor({ initValue, handleChangeContent, handleUp
         }
     }, [isUploadingImage])
 
+    useEffect(() => {
+        console.log('isPinToolbar', isPinToolbar)
+        if (vd) {
+            console.log('isPinToolbar111', isPinToolbar)
+            vd.updateToolbarConfig({
+                pin: isPinToolbar
+            })
+        }
+    }, [vd, isPinToolbar])
+
+    useEffect(() => {
+        console.log('theme', theme)
+        if (vd) {
+            console.log('theme111', theme)
+            vd.setTheme(theme === 'dark' ? 'dark' : 'classic', theme == 'dark' ? 'dark' : 'light', theme == 'dark' ? 'native' : 'xcode')
+        }
+    }, [vd, theme])
+
+    useEffect(() => {
+        if (vd) {
+            const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement;
+            const vditorElement = document.getElementById('vditor') as HTMLElement;
+            if (toolbar && vditorElement) {
+                toolbar.style.width = `${vditorElement.clientWidth}px !important`;
+            }
+
+            const resizeHandler = () => {
+                if (toolbar && vditorElement) {
+                    toolbar.style.width = `${vditorElement.clientWidth}px`;
+                }
+            };
+
+            window.addEventListener('resize', resizeHandler);
+
+            // 返回销毁逻辑
+            return () => {
+                window.removeEventListener('resize', resizeHandler);
+            };
+        }
+    }, [vd]);
 
     useEffect(() => {
         const vditor = new Vditor('vditor', {
+            fullscreen: {
+                index: 100
+            },
             theme: 'classic',
             height: '100%',
             width: '100%',
@@ -47,18 +94,16 @@ export default function HexoProVditor({ initValue, handleChangeContent, handleUp
             after: () => {
                 // 设置初始值
                 vditor.setValue(initValue)
-
                 // 固定toolbar
                 const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement;
                 const vditorElement = document.getElementById('vditor') as HTMLElement;
                 if (toolbar && vditorElement) {
-                    toolbar.style.width = `${vditorElement.clientWidth}px`;
+                    toolbar.style.width = `${vditorElement.clientWidth}px !important`;
                 }
 
                 const content = document.querySelector('vditor-content') as HTMLElement;
                 const editorHeader = document.querySelector('.editor-header') as HTMLElement;
-                console.log('editorHeader', editorHeader)
-                console.log("content", content)
+
                 if (content && toolbar && editorHeader) {
                     console.log('走到这里了')
                     content.style.cssText = `margin-top: ${toolbar.clientHeight + editorHeader.clientHeight}px !important;`;
@@ -72,16 +117,8 @@ export default function HexoProVditor({ initValue, handleChangeContent, handleUp
                         }
                     }
                 });
-                // const vditorElement = document.querySelector('#vditor > div.vditor-content > div.vditor-ir > pre');
-                // console.log(vditorElement)
-                // if (vditorElement) {
-                //     vditorElement.addEventListener('focus', () => {
-                //         console.log('Vditor 编辑器已获得焦点1');
-                //     }, true);
-                //     vditorElement.addEventListener('blur', () => {
-                //         console.log('Vditor 编辑器失去焦点');
-                //     }, true);
-                // }
+                setIsEditorLoaded(true); // 编辑器完全加载后设置为 true
+                setVd(vditor);
             },
             focus: (v: string) => {
                 setIsEditorFocus(true)
@@ -158,6 +195,12 @@ export default function HexoProVditor({ initValue, handleChangeContent, handleUp
             },
             toolbar: [
                 {
+                    name: 'code-theme'
+                },
+                // {
+                //     name: 'content-theme'
+                // },
+                {
                     name: 'emoji'
                 },
                 {
@@ -232,7 +275,14 @@ export default function HexoProVditor({ initValue, handleChangeContent, handleUp
                 },
                 {
                     name: 'fullscreen',
-                    className: 'toolbar-right'
+                    className: 'toolbar-right',
+                    click() {
+                        const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement;
+                        const vditorElement = document.getElementById('vditor') as HTMLElement;
+                        if (toolbar && vditorElement) {
+                            toolbar.style.width = `${vditorElement.clientWidth}px`;
+                        }
+                    }
                 },
                 {
                     name: 'outline',
@@ -244,15 +294,14 @@ export default function HexoProVditor({ initValue, handleChangeContent, handleUp
                 }
             ]
         });
-
-
         return () => {
             vd?.destroy();
             setVd(undefined);
         }
     }, [initValue]);
+
     return (
-        <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, backgroundColor: 'blue', borderRadius: '0px' }}>
+        <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, borderRadius: '0px' }}>
             <div
                 style={{ width: '100%', height: '100%' }}
                 id='vditor'

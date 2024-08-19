@@ -22,6 +22,8 @@ const post = (url, data, config) => {
     return new Promise((f, r) => {
         service.post(url, data, config).then(res => {
             f(res)
+        }).catch(err => { // Add catch block for error handling
+            r(err)
         })
     })
 }
@@ -30,6 +32,8 @@ const get = (url, config) => {
     return new Promise((f, r) => {
         service.get(url, config).then(res => {
             f(res)
+        }).catch(err => { // Add catch block for error handling
+            r(err)
         })
     })
 }

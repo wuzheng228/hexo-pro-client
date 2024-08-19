@@ -1,7 +1,7 @@
 import { service } from '@/utils/api';
-import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode } from 'react';
+import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button, Col, message, Popconfirm, Row } from 'antd'
+import { Button, Col, message, Popconfirm, Row, Skeleton } from 'antd'
 import IconSort from '../../../../assets/sort.svg'
 import _ from 'lodash';
 import { PostSettings } from './postSetting';
@@ -11,6 +11,9 @@ import HexoProVditor from '@/components/Vditor';
 import EditorHeader from '../../components/EditorHeader';
 import useLocale from '@/hooks/useLocale';
 import styles from '../../style/index.module.less'
+import { useSelector } from 'react-redux';
+import { GlobalState } from '@/store';
+import { GlobalContext } from '@/context';
 
 
 const ButtonGroup = Button.Group;
@@ -23,6 +26,7 @@ type Post = {
 function Post() {
     const navigate = useNavigate();
     const postRef = useRef(null);
+    const editorWapperRef = useRef(null);
     const { _id } = useParams();
     const [post, setPost] = useState({ isDraft: true, source: null });
     const [tagsCatMeta, setTagsCatMeta] = useState({})
@@ -33,8 +37,24 @@ function Post() {
     const [rendered, setRendered] = useState('');
     const [update, setUpdate] = useState({});
     const [visible, setVisible] = useState(false)
-    const [lineNumber, setLineNumber] = useState(false)
-    const [enableAutoStrol, setEnableAutoStroll] = useState(false)
+
+    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' });
+
+    const [skeletonLoading, setSkeletonLoading] = useState(true)
+    const toolbarPin = useSelector((state: GlobalState) => {
+        return state.vditorToolbarPin
+    })
+
+    const { theme } = useContext(GlobalContext)
+
+    const skeletonStyle = theme === 'dark' ? {
+        backgroundColor: '#333', // 暗黑主题背景色
+        color: '#fff' // 暗黑主题文字颜色
+    } : {
+        backgroundColor: '#fff', // 明亮主题背景色
+        color: '#000' // 明亮主题文字颜色
+    };
+
     const t = useLocale()
 
     const queryPostById = (_id) => {
@@ -104,6 +124,8 @@ function Post() {
             setInitialRaw(raw)
             setRendered(raw)
             setPost(data)
+            const content = (data)._content;
+            setDoc(content)
         }
     }
 
@@ -120,16 +142,16 @@ function Post() {
         return promise
     }
 
-    const handleChangeTitle = (e) => {
-        if (e.target.value == title) {
+    const handleChangeTitle = (v) => {
+        if (v == title) {
             return
         }
-        setTitle(e.target.value)
+        setTitle(v)
         console.log(post.source)
         const parts = post.source.split('/')
-        parts[parts.length - 1] = e.target.value + '.md'
+        parts[parts.length - 1] = v + '.md'
         const newSource = parts.join('/')
-        postRef.current({ title: e.target.value, source: newSource })
+        postRef.current({ title: v, source: newSource })
     }
 
     const handleChangeContent = (text) => {
@@ -216,30 +238,49 @@ function Post() {
         console.log('handleUploadingImage', isUploading)
     }
 
-    useEffect(() => {
-        queryPostById(_id).then((res) => {
-            if (typeof res === 'object' && res != null && '_content' in res) {
-                const content = (res as { _content: string })._content;
-                setDoc(content)
-            }
-        }).catch(err => {
-            setDoc(err)
-        })
-    }, [])
+    const handleOnVidorMounted = (vditor: any) => {
+        console.log('handleOnVidorMounted', vditor)
+    }
 
     useEffect(() => {
-        const items = fetch()
-        Object.keys(items).forEach((name) => {
-            Promise.resolve(items[name]).then((data) => {
-                const update = {}
-                update[name] = data
-                setUpdate(update)
-                if (dataDidLoad) {
-                    dataDidLoad(name, data)
-                }
-            })
-        })
-    }, [])
+        const handleResize = () => {
+            if (editorWapperRef.current) {
+                const { clientWidth, clientHeight } = editorWapperRef.current;
+                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` });
+            }
+        };
+        handleResize(); // 初始化尺寸
+        // editorWapperRef.current.style.overfllow = 'auto';
+        window.addEventListener('resize', handleResize); // 监听窗口 resize 事件
+
+        return () => {
+            window.removeEventListener('resize', handleResize); // 清理事件监听
+        };
+    }, []);
+
+    useEffect(() => {
+        setSkeletonLoading(true);
+        const fetchData = async () => {
+            const items = fetch();
+            const promises = Object.keys(items).map((name) => {
+                return Promise.resolve(items[name]).then((data) => {
+                    const update = {};
+                    update[name] = data;
+                    setUpdate(update);
+                    if (dataDidLoad) {
+                        dataDidLoad(name, data);
+                    }
+                });
+            });
+            await Promise.all(promises);
+            // 添加延迟
+            setTimeout(() => {
+                setSkeletonLoading(false);
+            }, 800); // 这里的1000表示1000毫秒，即1秒的延迟
+        };
+
+        fetchData();
+    }, []);
 
     useEffect(() => {
         const p = _.debounce((update) => {
@@ -249,11 +290,13 @@ function Post() {
     }, []);
 
     return (
-        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", backgroundColor: 'blue', overflowY: 'auto' }}>
+        <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: 'auto', overflowX: 'hidden' }}>
+            <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
             <EditorHeader
                 isPage={false}
                 isDraft={post.isDraft}
                 handlePublish={publish}
+                handleUnpublish={unpublish}
                 className={styles['editor-header']}
                 initTitle={title}
                 popTitle={t['editor.header.pop.title']}
@@ -263,7 +306,7 @@ function Post() {
                 handleRemoveSource={removeBlog}
             />
             <div style={{ backgroundColor: 'red', width: "100%", flex: 1, padding: 0, border: 'none' }}>
-                <HexoProVditor initValue={doc} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
+                <HexoProVditor initValue={doc} isPinToolbar={toolbarPin} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
             </div>
             <PostSettings
                 visible={visible}

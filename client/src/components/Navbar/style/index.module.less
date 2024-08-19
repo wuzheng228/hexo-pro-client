@@ -1,13 +1,13 @@
 .navbar {
     display: flex;
     justify-content: space-between;
-    box-sizing: border-box;
-    border-bottom: 1px solid #e5e5e5;
-    background-color: #fff;
-    height: 100%;
+    padding: 0 20px;
+    height: 60px;
+    align-items: center;
 }
 
-.left {
+.left,
+.right {
     display: flex;
     align-items: center;
 }
@@ -15,17 +15,31 @@
 .logo {
     display: flex;
     align-items: center;
-    width: 200px;
-    padding-left: 20px;
-    box-sizing: border-box;
 }
 
 .logo-name {
-    color: var(--color-text-1);
-    font-weight: 500;
-    font-size: 20px;
     margin-left: 10px;
-    font-family: 'PingFang SC';
+    font-size: 20px;
+}
+
+// 明亮主题样式
+.navbar.light {
+    background-color: #fff;
+    color: #000;
+}
+
+.navbar.light .logo-name {
+    color: #000;
+}
+
+// 暗黑主题样式
+.navbar.dark {
+    background-color: #333;
+    color: #fff;
+}
+
+.navbar.dark .logo-name {
+    color: #fff;
 }
 
 .right {
@@ -42,5 +56,41 @@
     a {
         text-decoration: none;
         color: #293344;
+    }
+}
+
+.searchListItemWapper {
+    display: flex;
+    align-items: center;
+
+    .searchListTitlePrefix {
+        width: 10px;
+        height: 10px;
+        background-color: #4CAF50;
+        border-radius: 50%;
+        margin-right: 8px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        transition: background-color 0.2s ease-in-out;
+        /* 增加颜色渐变效果 */
+    }
+
+
+    .searchListTitle {
+        font-weight: bold;
+        transition: color 0.3s ease-in-out, text-shadow 0.3s ease-in-out;
+        /* 添加颜色和阴影渐变效果 */
+    }
+
+    .searchListTitle:hover {
+        color: #0004ff;
+        /* 替换为更亮的青色 */
+        cursor: pointer;
+        text-shadow: 1px 1px 5px rgba(0, 255, 255, 0.7);
+        /* 添加柔和的文字阴影 */
+    }
+
+    .searchListTitlePrefix:hover {
+        background-color: #001aff;
+        /* 圆点背景色变化 */
     }
 }
