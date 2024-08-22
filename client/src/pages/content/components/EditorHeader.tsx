@@ -75,7 +75,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                 />
             </Col>
             {/* 博客发布按钮 */}
-            <Col span={2} offset={9} style={{ alignItems: 'center', justifyContent: 'center', paddingLeft: 50 }}>
+            <Col span={2} offset={9} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: 50 }}>
                 <ButtonGroup>
                     <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />} onClick={handlePinClick} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
                     <Button type='default' icon={<SettingOutlined />} onClick={(e) => handleSettingClick(e)} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />

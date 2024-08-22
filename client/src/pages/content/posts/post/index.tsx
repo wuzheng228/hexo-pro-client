@@ -305,7 +305,7 @@ function Post() {
                 handleSettingClick={(v) => setVisible(true)}
                 handleRemoveSource={removeBlog}
             />
-            <div style={{ backgroundColor: 'red', width: "100%", flex: 1, padding: 0, border: 'none' }}>
+            <div style={{ width: "100%", flex: 1, padding: 0, border: 'none' }}>
                 <HexoProVditor initValue={doc} isPinToolbar={toolbarPin} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
             </div>
             <PostSettings
