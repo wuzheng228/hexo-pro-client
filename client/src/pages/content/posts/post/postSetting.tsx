@@ -15,6 +15,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
     const [fmOpenStat, setFmOpenStat] = useState(false)
     const [originFms, setOriginFms] = useState([])
 
+    console.log(postMeta)
 
     const tagClose = (v) => {
         const newTags = postMeta.tags.filter(item => item !== v)
@@ -37,6 +38,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
             newfmt[key] = postMeta.frontMatter[key]
         })
         const meta = { ...postMeta, frontMatter: newfmt }
+        console.log(meta)
         setPostMeta(meta)
     }
 
@@ -47,7 +49,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                     文章属性
                 </div>
             }
-            visible={visible}
+            open={visible}
             onCancel={() => {
                 setVisible(false);
                 console.log('cancel', originFms)
@@ -124,7 +126,6 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                                     <Tooltip key={item} title={!postMeta.frontMatter[item] ? 'unset' : postMeta.frontMatter[item]}>
                                         <Tag closable onClose={() => fmtClose(item)} key={item} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
                                     </Tooltip>
-
                                 )
                             })
                         }
@@ -136,7 +137,6 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                             }}
                         >+自定义frontMatter</Button>
                     </Space>
-
                     {
                         /* todo 打开添加标签的界面 */
                         <FrontMatterAdder existFrontMatter={originFms} onClose={() => { setFmOpenStat(false) }} visible={fmOpenStat} title={'Font-Matter'} frontMatter={postMeta.frontMatter} onChange={

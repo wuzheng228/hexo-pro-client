@@ -1,8 +1,9 @@
 import React, { useContext, useState } from "react";
 import styles from './style/index.module.less'
 import Logo from '@/assets/logo.svg'
-import { Avatar, Button, Dropdown, Input, List, MenuProps, Modal, theme as antTheme } from "antd";
+import { Avatar, Button, Dropdown, Input, List, MenuProps, Modal, Tag, theme as antTheme } from "antd";
 import { DownOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons";
+import IconLang from "@/assets/lang.svg"
 import useLocale from "@/hooks/useLocale";
 import { useSelector } from "react-redux";
 import { GlobalState } from "@/store";
@@ -11,11 +12,14 @@ import { parseDateTime } from "@/utils/dateTimeUtils";
 import { useNavigate } from "react-router-dom";
 import useStorage from "@/utils/useStorage";
 import { GlobalContext } from "@/context";
+import cs from 'classnames';
+import enUS from 'antd/locale/en_US'
+import zhCN from 'antd/locale/zh_CN'
 
 export default function Navbar() {
     const navigate = useNavigate()
     const userInfo = useSelector((state: GlobalState) => state.userInfo);
-    const { theme, setTheme } = useContext(GlobalContext);
+    const { theme, setTheme, setLang } = useContext(GlobalContext);
     const locale = useLocale()
     const [_, setUserStatus] = useStorage('userStatus');
 
@@ -25,13 +29,14 @@ export default function Navbar() {
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
     const [searchValue, setSearchValue] = useState('')
     const [searchInfoList, setSearchInfoList] = useState([])
+    const [searchLoading, setSearchLoading] = useState(false)
 
     const writeDropList: MenuProps['items'] = [
         {
             key: '1',
             label: (
                 <div>
-                    写文章
+                    {locale['navbar.create.post']}
                 </div>
             ),
         },
@@ -39,7 +44,26 @@ export default function Navbar() {
             key: '2',
             label: (
                 <div>
-                    新页面
+                    {locale['navbar.create.page']}
+                </div>
+            ),
+        }
+    ];
+
+    const langDropList: MenuProps['items'] = [
+        {
+            key: '1',
+            label: (
+                <div>
+                    {locale['navbar.lang.chinese']}
+                </div>
+            ),
+        },
+        {
+            key: '2',
+            label: (
+                <div>
+                    {locale['navbar.lang.english']}
                 </div>
             ),
         }
@@ -57,7 +81,6 @@ export default function Navbar() {
     ]
 
     const handleCreateBlog: MenuProps['onClick'] = ({ key }) => {
-        console.log('create blog')
         if (key === '1') {
             setOpen(true)
             setTarget('Post')
@@ -65,6 +88,14 @@ export default function Navbar() {
             console.log('create page')
             setOpen(true)
             setTarget('Page')
+        }
+    }
+
+    const handleToggleLang: MenuProps['onClick'] = ({ key }) => {
+        if (key === '1') {
+            setLang('zh-CN')
+        } else if (key === '2') {
+            setLang('en-US')
         }
     }
 
@@ -126,11 +157,8 @@ export default function Navbar() {
         setIsSearchModalOpen(true)
     }
 
-    const handleSearchModalOK = () => {
-
-    }
-
     function searchBlog(searchValue: string) {
+        setSearchLoading(true)
         service.post('/hexopro/api/blog/search', { searchPattern: searchValue })
             .then(res => {
                 const payLoad = res.data
@@ -139,6 +167,8 @@ export default function Navbar() {
                 }
             }).catch(err => {
 
+            }).finally(() => {
+                setSearchLoading(false)
             })
     }
 
@@ -159,6 +189,23 @@ export default function Navbar() {
         }
     }
 
+    const buildSearchResultTag = (item) => {
+        if (item.isPage) {
+            return (
+                <Tag color="orange">{locale['navbar.search.tag.page']}</Tag>
+            )
+        } else if (item.isDraft) {
+            return (
+                <Tag color="default">{locale['navbar.search.tag.draft']}</Tag>
+            )
+        } else {
+            return (
+                <Tag color="#2db7f5">{locale['navbar.search.tag.post']}</Tag>
+            )
+        }
+    }
+
+
     return (
         <div className={`${styles.navbar} ${styles[theme]}`}>
             {/* 左侧 */}
@@ -171,16 +218,21 @@ export default function Navbar() {
             {/* 右侧 */}
             <ul className={styles.right}>
                 <li>
-                    <Button type="default" shape="circle" icon={<SearchOutlined />} onClick={onSearchClick} />
+                    <Button type="default" shape="circle" icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} />
                 </li>
                 <li>
-                    <Button type="default" shape="circle" icon={theme === 'dark' ? <SunFilled /> : <MoonOutlined />}
+                    <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
+                        <Button type="default" shape="circle" icon={<IconLang />} className={`${styles.customButtonHover} ${styles[theme]}`} />
+                    </Dropdown>
+                </li>
+                <li>
+                    <Button type="default" shape="circle" icon={theme === 'dark' ? <SunFilled /> : <MoonOutlined />} className={`${styles.customButtonHover} ${styles[theme]}`}
                         onClick={theme === 'light' ? () => setTheme('dark') : () => setTheme('light')}
                     />
                 </li>
                 <li >
                     <Dropdown menu={{ items: writeDropList, onClick: handleCreateBlog }}>
-                        <Button type="default">{locale['navbar.create']}<DownOutlined /></Button>
+                        <Button type="primary" >{locale['navbar.create']}<DownOutlined /></Button>
                     </Dropdown>
                 </li>
                 {
@@ -204,22 +256,36 @@ export default function Navbar() {
             >
                 <Input placeholder={locale['navbar.modal.input.placeholder']} value={title} onChange={(e) => setTitle(e.target.value)} />
             </Modal>
-            <Modal width={700} title={locale['navbar.search.modal.title']} open={isSearchModalOpen} footer={[]} onCancel={() => setIsSearchModalOpen(false)}>
+            <Modal
+                className={`${styles[theme]}`}
+                width={700}
+                title={locale['navbar.search.modal.title']}
+                open={isSearchModalOpen}
+                footer={[]}
+                onCancel={() => setIsSearchModalOpen(false)}
+            >
                 <div>
                     <Input value={searchValue} placeholder={locale['navbar.search.modal.input.placeholder']}
+                        className={`${styles.searchModalInput} ${styles[theme]}`}
                         onChange={onSearchModalChange}
                         onInput={onSearchModalInput}
                     />
                 </div>
                 <div>
                     <List
+                        loading={searchLoading}
                         dataSource={searchInfoList}
                         renderItem={(item) => (
-                            <List.Item>
-                                <div>
+                            <List.Item className={`${styles.searchModalListItem} ${styles[theme]}`} onClick={() => onClickSerchitem(item)}>
+                                <div style={{ width: '100%' }}>
                                     <div className={styles.searchListItemWapper}>
-                                        <div className={styles.searchListTitlePrefix}></div>
-                                        <span className={styles.searchListTitle} onClick={() => onClickSerchitem(item)}>{item.title}</span>
+                                        <div className={styles.searchListItemLeft}>
+                                            <div className={styles.searchListTitlePrefix}></div>
+                                            <span className={`${styles.searchModalListItemTitle} ${styles.searchListTitle} ${styles[theme]}`} onClick={() => onClickSerchitem(item)}>{item.title}</span>
+                                        </div>
+                                        <div className={cs(`${styles.searchModalTag} ${styles[theme]}`, styles.searchListItemRight)}>
+                                            {buildSearchResultTag(item)}
+                                        </div>
                                     </div>
                                     <div dangerouslySetInnerHTML={{ __html: item.context }}></div>
                                 </div>

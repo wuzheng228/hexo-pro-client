@@ -14,6 +14,7 @@ import { GlobalContext } from "./context"
 import service from "./utils/api"
 import checkLogin from "./utils/checkLogin"
 import useStorage from "./utils/useStorage"
+import { use } from "marked"
 
 type Locale = ConfigProviderProps['locale'];
 
@@ -21,23 +22,23 @@ const store = createStore(rootReducer)
 
 function App() {
 
-    const setLang = () => { }
-
+    const [lang, setLang] = useStorage('hexo-pro-lang', 'zh-CN');
     const [theme, setTheme] = useStorage('hexo-pro-theme', 'light');
-    const [configProviderTheme, setConfigProviderTheme] = useState({
-        algorithm: antTheme.defaultAlgorithm,
-        token: {
-            colorPrimary: '#1890ff',
-            colorBgBase: '#ffffff',
-            colorTextBase: '#000000',
-            colorPrimaryBg: '#ffffff',
-            colorPrimaryText: '#000000',
-            colorPrimaryBorder: '#1890ff',
+    const [configProviderTheme, setConfigProviderTheme] = useState({})
+
+    function getLocale() {
+        switch (lang) {
+            case 'zh-CN':
+                return zhCN;
+            case 'en-US':
+                return enUS;
+            default:
+                return zhCN;
         }
-    })
+    }
 
     const contextValue = {
-        lang: "zh-CN",
+        lang: lang,
         setLang: setLang,
         theme,
         setTheme,
@@ -67,33 +68,63 @@ function App() {
         }
     }, [])
 
+
     useEffect(() => {
         if (theme === 'dark') {
             setConfigProviderTheme({
                 algorithm: antTheme.darkAlgorithm,
                 token: {
-                    colorPrimary: '#1890ff',
                     colorBgBase: '#141414',
                     colorTextBase: '#ffffff',
                     // Button specific styles
                     colorPrimaryBg: '#000000',
                     colorPrimaryText: '#ffffff',
                     colorPrimaryBorder: '#1890ff',
+                    defaultShadow: 'none',
+                    primaryShadow: 'none',
+                    boxShadow: 'none', // 移除所有组件的阴影
+                    btnBoxShadow: 'none', // 移除按钮的阴影
                     // 其他颜色和样式
+                },
+                components: {
+                    Button: {
+                        defaultShadow: 'none',
+                        primaryShadow: 'none',
+                        borderRadius: 'none',
+                        borderRadiusSM: 'none',
+                        borderRadiusLG: 'none',
+                        defaultBorderColor: 'none',
+                        defaultHoverBorderColor: 'none',
+                    },
                 }
             })
         } else {
             setConfigProviderTheme({
                 algorithm: antTheme.defaultAlgorithm,
                 token: {
-                    colorPrimary: '#1890ff',
                     colorBgBase: '#ffffff',
                     colorTextBase: '#000000',
                     // Button specific styles
                     colorPrimaryBg: '#ffffff',
                     colorPrimaryText: '#000000',
                     colorPrimaryBorder: '#1890ff',
+                    defaultShadow: 'none',
+                    primaryShadow: 'none',
+                    boxShadow: 'none', // 移除所有组件的阴影
+                    btnBoxShadow: 'none' // 移除按钮的阴影
+
                     // 其他颜色和样式
+                },
+                components: {
+                    Button: {
+                        defaultShadow: 'none',
+                        primaryShadow: 'none',
+                        borderRadius: 'none',
+                        borderRadiusSM: 'none',
+                        borderRadiusLG: 'none',
+                        defaultBorderColor: 'none',
+                        defaultHoverBorderColor: 'none',
+                    },
                 }
             })
         }
@@ -102,7 +133,7 @@ function App() {
     return (
         <BrowserRouter basename="/pro">
             <ConfigProvider
-                locale={zhCN}
+                locale={getLocale()}
                 theme={configProviderTheme}
             >
                 <Provider store={store}>

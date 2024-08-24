@@ -1,5 +1,5 @@
 const i18n = {
-    'en-Us': {
+    'en-US': {
         'menu.posts': 'Articles',
         'menu.posts.blogs': 'Blogs',
         'menu.posts.drafts': 'Drafts',
@@ -18,7 +18,30 @@ const i18n = {
         'page.editor.header.pop.des': 'Are you sure to delete the page?',
         'post.editor.header.pop.des': 'Are you sure to delete the blog?',
         'navbar.search.modal.title': 'Search',
-        'navbar.search.modal.input.placeholder': 'Search for articles, pages, drafts'
+        'navbar.search.modal.input.placeholder': 'Search for articles, pages, drafts',
+        'navbar.search.tag.page': 'Page',
+        'navbar.search.tag.draft': 'Draft',
+        'navbar.search.tag.post': 'Post',
+        'navbar.lang.chinese': 'Chinese',
+        'navbar.lang.english': 'English',
+        'navbar.create.post': 'Create a new blog',
+        'navbar.create.page': 'Create a new page',
+        'content.articleList.btn.edit': 'Edit',
+        'content.articleList.table.cover': 'Cover',
+        'content.articleList.table.title': 'Title',
+        'content.articleList.table.permalink': 'Permalink',
+        'content.articleList.table.date': 'Date',
+        'content.articleList.table.updated': 'Updated',
+        'content.articleList.table.option': 'Option',
+        'editor.header.publish': 'Publish',
+        'editor.header.unpublish': 'Unpublish',
+        'login.form.title': 'Login Hexo Pro',
+        'login.form.username': 'Username',
+        'login.form.password': 'Password',
+        'login.banner.subSlogan1': 'Your own blog editor backend',
+        'vditor.upload.error': 'Upload failed, please try again later',
+        'vditor.upload.success': 'Upload success',
+        'vditor.upload.invalidFileType': 'Only image upload is supported'
     },
     'zh-CN': {
         'menu.posts': '文章',
@@ -39,8 +62,30 @@ const i18n = {
         'page.editor.header.pop.des': '确定删除页面吗?',
         'post.editor.header.pop.des': '确定删除博客吗?',
         'navbar.search.modal.title': '搜索',
-        'navbar.search.modal.input.placeholder': '搜索文章、页面、草稿'
-
+        'navbar.search.modal.input.placeholder': '搜索文章、页面、草稿',
+        'navbar.search.tag.page': '页面',
+        'navbar.search.tag.draft': '草稿',
+        'navbar.search.tag.post': '文章',
+        'navbar.lang.chinese': '中文',
+        'navbar.lang.english': 'English',
+        'navbar.create.post': '写文章',
+        'navbar.create.page': '新页面',
+        'content.articleList.btn.edit': '编辑',
+        'content.articleList.table.cover': '封面',
+        'content.articleList.table.title': '标题',
+        'content.articleList.table.permalink': '链接',
+        'content.articleList.table.date': '日期',
+        'content.articleList.table.updated': '更新日期',
+        'content.articleList.table.option': '操作',
+        'editor.header.publish': '发布文章',
+        'editor.header.unpublish': '取消发布',
+        'login.form.title': '登录 Hexo Pro',
+        'login.form.username': '用户名',
+        'login.form.password': 'Password',
+        'login.banner.subSlogan1': '属于你自己的博客编辑后台',
+        'vditor.upload.error': '上传失败，请稍后再试',
+        'vditor.upload.success': '上传成功',
+        'vditor.upload.invalidFileType': '只支持图片上传'
     }
 }
 

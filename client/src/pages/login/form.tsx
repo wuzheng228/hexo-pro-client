@@ -73,7 +73,7 @@ export default function LoginForm() {
 
     return (
         <div className={styles['login-form-wrapper']}>
-            <div className={styles['login-form-title']}>登录 Hexo Pro</div>
+            <div className={styles['login-form-title']}>{t['login.form.title']}</div>
             <div className={styles['login-form-sub-title']}>Login Hexo Pro</div>
             <div>{errorMessage}</div>
             <Form
@@ -83,7 +83,7 @@ export default function LoginForm() {
             >
                 <Form.Item
                     rules={[{ required: true }]}
-                    label="用户名"
+                    label={t['login.form.username']}
                     name={"username"}
                 >
                     <Input
@@ -92,7 +92,7 @@ export default function LoginForm() {
                 </Form.Item>
                 <Form.Item
                     rules={[{ required: true }]}
-                    label="密码"
+                    label={t['login.form.password']}
                     name="password"
                 >
                     <Input.Password

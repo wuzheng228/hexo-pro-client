@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import _ from 'lodash';
 // import { GlobalState } from '@/store';
 import { Button, Card, Image, Input, Space, Table, TableColumnProps, TableProps } from 'antd';
+import useLocale from '@/hooks/useLocale';
 
 
 interface DataType {
@@ -23,6 +24,7 @@ export default function Pages() {
     // const userInfo = useSelector((state: GlobalState) => state.posts);
     const inputRef = useRef(null)
     const [pageList, setPageList] = useState([])
+    const t = useLocale()
 
     const queryPages = () => {
         service.get('/hexopro/api/pages/list?deleted=' + false)
@@ -36,14 +38,14 @@ export default function Pages() {
 
     const columns: TableProps<DataType>['columns'] = [
         {
-            title: '封面',
+            title: t['content.articleList.table.cover'],
             dataIndex: 'cover',
             render: (col, item, index) => {
                 return (<Image width={64} height={42.56} src={item.cover} />)
             }
         },
         {
-            title: '博客名称',
+            title: t['content.articleList.table.title'],
             dataIndex: 'title',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => {
                 return (
@@ -70,28 +72,28 @@ export default function Pages() {
             },
         },
         {
-            title: '链接',
+            title: t['content.articleList.table.permalink'],
             dataIndex: 'permalink',
             render: (col, item, index) => {
                 return (<a href={decodeURIComponent(item.permalink)} target='_blank'>{decodeURIComponent(item.permalink)}</a>)
             }
         },
         {
-            title: '发布时间',
+            title: t['content.articleList.table.date'],
             dataIndex: 'date',
         },
         {
-            title: '更新时间',
+            title: t['content.articleList.table.updated'],
             dataIndex: 'updated',
         },
         {
-            title: '操作',
+            title: t['content.articleList.table.option'],
             dataIndex: 'option',
             render: (col, item, index) => {
                 return (
                     <Space>
                         <Link to={`/page/${item._id}`}>
-                            <Button type='primary' >编辑</Button>
+                            <Button type='primary' >{t['content.articleList.btn.edit']}</Button>
                         </Link>
                     </Space>
 

@@ -4,6 +4,7 @@
     padding: 0 20px;
     height: 60px;
     align-items: center;
+
 }
 
 .left,
@@ -62,35 +63,182 @@
 .searchListItemWapper {
     display: flex;
     align-items: center;
+    justify-content: space-between;
 
-    .searchListTitlePrefix {
-        width: 10px;
-        height: 10px;
-        background-color: #4CAF50;
-        border-radius: 50%;
-        margin-right: 8px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-        transition: background-color 0.2s ease-in-out;
-        /* 增加颜色渐变效果 */
+    .searchListItemLeft {
+        display: flex;
+        align-items: center;
+
+        .searchListTitlePrefix {
+            width: 10px;
+            height: 10px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.2s ease-in-out;
+            /* 增加颜色渐变效果 */
+        }
+
+
+        .searchListTitle {
+            font-weight: bold;
+            transition: color 0.3s ease-in-out, text-shadow 0.3s ease-in-out;
+            /* 添加颜色和阴影渐变效果 */
+        }
+
+        .searchListTitle:hover {
+            color: #0004ff;
+            /* 替换为更亮的青色 */
+            cursor: pointer;
+            text-shadow: 1px 1px 5px rgba(0, 255, 255, 0.7);
+            /* 添加柔和的文字阴影 */
+        }
+
+        .searchListTitlePrefix:hover {
+            background-color: #001aff;
+            /* 圆点背景色变化 */
+        }
     }
 
-
-    .searchListTitle {
-        font-weight: bold;
-        transition: color 0.3s ease-in-out, text-shadow 0.3s ease-in-out;
-        /* 添加颜色和阴影渐变效果 */
+    .searchListItemRight {
+        display: flex;
+        align-items: center;
     }
 
-    .searchListTitle:hover {
-        color: #0004ff;
-        /* 替换为更亮的青色 */
-        cursor: pointer;
-        text-shadow: 1px 1px 5px rgba(0, 255, 255, 0.7);
-        /* 添加柔和的文字阴影 */
+}
+
+.searchModal {
+    padding: 20px;
+    border-radius: 10px;
+    background-color: var(--modal-bg);
+    /* Dynamic background color based on theme */
+    color: var(--modal-text);
+    /* Dynamic text color based on theme */
+}
+
+.searchModal.light {
+    --modal-bg: #f5f5f5;
+    --modal-text: #333;
+}
+
+.searchModal.dark {
+    --modal-bg: #1c1c1c;
+    --modal-text: #eaeaea;
+}
+
+.searchModalInput {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--input-border);
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 明亮主题 */
+.searchModalInput.light {
+    --input-bg: #fff;
+    --input-text: #333;
+    --input-border: #ccc;
+    --input-focus-border: #1890ff;
+    /* 改为更柔和的蓝色 */
+    --input-focus-shadow: rgba(24, 144, 255, 0.5);
+    /* 改为柔和的蓝色阴影 */
+}
+
+/* 暗黑主题 */
+.searchModalInput.dark {
+    --input-bg: #333;
+    --input-text: #eaeaea;
+    --input-border: #555;
+    --input-focus-border: #4c8ed9;
+    /* 改为更深的蓝色 */
+    --input-focus-shadow: rgba(76, 142, 217, 0.5);
+    /* 改为柔和的蓝色阴影 */
+}
+
+.searchModalInput:focus {
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 6px var(--input-focus-shadow);
+    outline: none;
+}
+
+.searchModalList {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.searchModalListItem {
+    padding: 10px 10px !important;
+    border-bottom: 1px solid var(--item-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.searchModalListItem.light {
+    --item-border: #ddd;
+}
+
+.searchModalListItem.dark {
+    --item-border: #444;
+}
+
+.searchModalListItem:hover {
+    background-color: var(--item-hover-bg);
+}
+
+.searchModalListItem.light:hover {
+    --item-hover-bg: #f0f8ff;
+}
+
+.searchModalListItem.dark:hover {
+    --item-hover-bg: #222;
+}
+
+.searchModalListItemTitle {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.searchModalListItemTitle.light {
+    color: #333;
+}
+
+.searchModalListItemTitle.dark {
+    color: #eaeaea;
+}
+
+// 明亮模式下的按钮hover样式
+.customButtonHover.light {
+    background-color: rgb(242, 243, 245) !important;
+
+    &:hover {
+        background-color: darken(#ffffff, 10%) !important; // 使背景色变深
+        border-color: #d9d9d9 !important; // 保持边框颜色不变
+        color: #000000 !important; // 保持文字颜色不变
     }
 
-    .searchListTitlePrefix:hover {
-        background-color: #001aff;
-        /* 圆点背景色变化 */
+    &:where {
+        border: 'none' !important; // 去掉边框
+        border-color: 'none' !important; // 去掉边框颜色
+    }
+}
+
+// 暗黑模式下的按钮hover样式
+.customButtonHover.dark {
+    &:hover {
+        background-color: darken(#000000, 10%) !important; // 使背景色变深
+        border-color: #303030 !important; // 保持边框颜色不变
+        color: #ffffff !important; // 保持文字颜色不变
+    }
+
+    &:where {
+        border: 'none' !important; // 去掉边框
+        border-color: 'none' !important; // 去掉边框颜色
     }
 }

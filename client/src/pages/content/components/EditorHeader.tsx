@@ -7,11 +7,13 @@ import IconPin from "@/assets/pin.svg"
 import IconPinFill from "@/assets/pin-fill.svg"
 import { useDispatch, useSelector } from "react-redux";
 import { GlobalContext } from "@/context";
+import useLocale from "@/hooks/useLocale";
 
 export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', handleChangeTitle, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
 
     const [isPin, setIsPin] = useState(true)
     const dispatch = useDispatch();
+    const locale = useLocale();
 
     const themeStyles = {
         light: {
@@ -78,11 +80,11 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
             <Col span={2} offset={9} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: 50 }}>
                 <ButtonGroup>
                     <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />} onClick={handlePinClick} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
-                    <Button type='default' icon={<SettingOutlined />} onClick={(e) => handleSettingClick(e)} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                    <Button type='default' icon={<SettingOutlined />} onClick={(e) => handleSettingClick(e)} style={{ borderRight: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
                     {
                         !isPage && (isDraft ?
-                            <Button type='primary' onClick={handlePublish} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}>发布博客</Button>
-                            : <Button type='default' onClick={handleUnpublish} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}>转为草稿</Button>
+                            <Button type='primary' onClick={handlePublish} style={{ zIndex: 2, border: '1px dashed', borderColor: 'gray', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}>{locale['editor.header.publish']}</Button>
+                            : <Button type='default' onClick={handleUnpublish} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}>{locale['editor.header.unpublish']}</Button>
                         )
                     }
                     <Popconfirm
@@ -100,7 +102,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             });
                         }}
                     >
-                        <Button type='default' icon={<DeleteOutlined />} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                        <Button type='default' icon={<DeleteOutlined />} style={{ borderLeft: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
                     </Popconfirm>
                 </ButtonGroup>
             </Col>

@@ -7,14 +7,16 @@ import service from '@/utils/api';
 import { Skeleton, Spin } from 'antd';
 import { GlobalContext } from '@/context';
 import { use } from 'marked';
+import useLocale from '@/hooks/useLocale';
 
 export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage }) {
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
 
+    const t = useLocale()
+
     function uploadImage(image, filename) {
         const promise = new Promise((f, r) => {
             service.post('/hexopro/api/images/upload', { data: image, filename: filename }).then(res => {
-                // console.log('image upload resp', res)
                 f(res.data)
             }).catch(err => {
                 r(err)
@@ -30,13 +32,18 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     const [isEditorLoaded, setIsEditorLoaded] = useState(false);
 
-    const { theme } = useContext(GlobalContext);
+    const { theme, lang } = useContext(GlobalContext);
+
+    function getLocale() {
+        if (lang === 'zh-CN') {
+            return 'zh_CN'
+        } else {
+            return 'en_US'
+        }
+    }
 
     useEffect(() => {
         handleUploadingImage(isUploadingImage)
-        return () => {
-            setIsUPloadingImage(undefined)
-        }
     }, [isUploadingImage])
 
     useEffect(() => {
@@ -85,6 +92,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             fullscreen: {
                 index: 100
             },
+            lang: getLocale(),
             theme: 'classic',
             height: '100%',
             width: '100%',
@@ -127,7 +135,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 setIsEditorFocus(false)
             },
             upload: {
-                multiple: false,
+                multiple: true,
                 error: (err: any) => {
                     console.log('err', err)
                 },
@@ -146,8 +154,18 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 },
                 handler: (files: File[]): Promise<string | null> => {
                     // 这里可以添加处理文件上传的逻辑
-                    console.log(files)
+                    console.log('files', files)
+
+                    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/bmp', 'image/webp'];
+
+                    const filteredFiles = files.filter(file => allowedTypes.includes(file.type));
                     for (let file of files) {
+                        if (!allowedTypes.includes(file.type)) {
+                            vditor.tip(`${t['vditor.upload.invalidFileType']}: ${file.name}`, 2000);
+                        }
+                    }
+
+                    for (let file of filteredFiles) {
                         setIsUPloadingImage(true)
                         const reader = new FileReader();
                         reader.onload = (event) => {
@@ -156,16 +174,6 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                 console.log('update=> ', res)
                                 res['code'] = 0
 
-                                let ans = {
-                                    "msg": res.msg,
-                                    "code": 0,
-                                    "data": {
-                                        "errFiles": [],
-                                        "succMap": {
-                                            filename: res.src,
-                                        }
-                                    }
-                                }
                                 setTimeout(() => {
                                     const currentValue = vditor.getValue();
                                     const cursorPosition = vditor.getCursorPosition();
@@ -176,10 +184,11 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                         vditor.insertValue(`\n![alt text](${res.src})`)
                                     }
                                     // 重新渲染编辑器内容（如果需要）
+                                    vditor.tip(`${t['vditor.upload.success']}: ${filename}`, 3000);
                                 }, 300);
                                 return null
                             }).catch((err) => {
-                                console.error('Image upload failed: ', err);
+                                vditor.tip(`${t['vditor.upload.error']}: ${err.message}`, 3000);
                                 return err
                             }).finally(() => {
                                 setIsUPloadingImage(false)
@@ -194,9 +203,9 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 handleChangeContent(vditor.getValue())
             },
             toolbar: [
-                {
-                    name: 'code-theme'
-                },
+                // {
+                //     name: 'code-theme'
+                // },
                 // {
                 //     name: 'content-theme'
                 // },
@@ -298,7 +307,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             vd?.destroy();
             setVd(undefined);
         }
-    }, [initValue]);
+    }, [initValue, lang]);
 
     return (
         <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, borderRadius: '0px' }}>

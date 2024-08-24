@@ -15,30 +15,28 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
 
     const exitsFontMatter = () => {
         const fmkeys = Object.keys(existFrontMatter)
+        const options = []
+
+        fmkeys.forEach((name, i) => {
+            options.push({
+                label: (
+                    <Tooltip key={i} title={!frontMatter[name] ? 'unset' : frontMatter[name]}>
+                        <Tag color={!frontMatter[name] ? 'default' : 'blue'}>{name}</Tag>
+                    </Tooltip>
+                ),
+                value: name
+            })
+        })
+
         return (
-            <CheckboxGroup onChange={(v) => {
+            <CheckboxGroup options={options} defaultValue={fmkeys} onChange={(v) => {
                 const newfmt = {}
                 v.forEach(name => {
-                    newfmt[name] = !exitsFontMatter[name] ? null : exitsFontMatter[name]
+                    newfmt[name] = !existFrontMatter[name] ? null : existFrontMatter[name]
                 })
+                console.log('newfmt', newfmt)
                 onChange(newfmt)
-            }} value={Object.keys(frontMatter)}>
-                {
-                    fmkeys.map((item, i) => {
-                        return (
-                            <Checkbox key={item} value={({ checked }) => {
-                                return (
-                                    <Tooltip key={item} title={!frontMatter[item] ? 'unset' : frontMatter[item]}>
-                                        <Tag key={item} color={checked ? 'purple' : ''} style={{ marginBottom: 5 }}>
-                                            {item}
-                                        </Tag>
-                                    </Tooltip>
-
-                                );
-                            }} />
-                        );
-                    })}
-            </CheckboxGroup>
+            }} />
         )
     }
 
