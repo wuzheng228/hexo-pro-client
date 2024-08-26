@@ -139,7 +139,11 @@ function Page() {
                 reject(err)
             })
         })
+<<<<<<< HEAD
         navigate(`/pages`)
+=======
+        navigate(`/content/pages`);
+>>>>>>> bf45c0915f0f3e265f34c277c77aadb476e22178
     }
 
     const handlePublish = () => {
