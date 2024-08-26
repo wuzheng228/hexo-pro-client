@@ -1,4 +1,4 @@
-import { Button, Card, Checkbox, Input, Space, Tag } from "antd";
+import { Button, Card, Checkbox, Input, Space, Tag } from "antd"
 import React, { useEffect, useState } from "react"
 
 const CheckboxGroup = Checkbox.Group
@@ -10,8 +10,8 @@ export function TagAdder({ existTags, tags, onchange, onClose, visible, cardTitl
 
     useEffect(() => {
         // 当外部的 visible 发生变化时，同步更新本地的状态
-        setLocalVisible(visible);
-    }, [visible]);
+        setLocalVisible(visible)
+    }, [visible])
 
     const addNewTag = (v) => {
         const inputValue = v.target.value

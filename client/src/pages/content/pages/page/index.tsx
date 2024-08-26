@@ -1,19 +1,19 @@
 
-import MarkDownEditor from '@/components/markdownEditor';
-import { service } from '@/utils/api';
-import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode, useContext } from 'react';
-import { useParams } from 'react-router-dom';
-import _ from 'lodash';
-import { PageSettings } from './pageSettings';
-import { useNavigate } from "react-router-dom";
-import HexoProVditor from '@/components/Vditor';
-import EditorHeader from '../../components/EditorHeader';
-import useLocale from '@/hooks/useLocale';
-import { Skeleton } from 'antd';
+import MarkDownEditor from '@/components/markdownEditor'
+import { service } from '@/utils/api'
+import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode, useContext } from 'react'
+import { useParams } from 'react-router-dom'
+import _ from 'lodash'
+import { PageSettings } from './pageSettings'
+import { useNavigate } from "react-router-dom"
+import HexoProVditor from '@/components/Vditor'
+import EditorHeader from '../../components/EditorHeader'
+import useLocale from '@/hooks/useLocale'
+import { Skeleton } from 'antd'
 import styles from '../../style/index.module.less'
-import { useSelector } from 'react-redux';
-import { GlobalState } from '@/store';
-import { GlobalContext } from '@/context';
+import { useSelector } from 'react-redux'
+import { GlobalState } from '@/store'
+import { GlobalContext } from '@/context'
 
 
 type Page = {
@@ -23,21 +23,21 @@ type Page = {
 }
 
 function Page() {
-    const navigate = useNavigate();
-    const postRef = useRef(null);
-    const editorWapperRef = useRef(null);
-    const { _id } = useParams();
-    const [page, setPage] = useState({ isDraft: true, source: null });
+    const navigate = useNavigate()
+    const postRef = useRef(null)
+    const editorWapperRef = useRef(null)
+    const { _id } = useParams()
+    const [page, setPage] = useState({ isDraft: true, source: null })
     const [pageMetaData, setPageMetadata] = useState({ tags: [], categories: [], frontMatter: {}, source: '' })
     const [fmtKeys, setFmtKeys] = useState([])
-    const [doc, setDoc] = useState('');
-    const [title, setTitle] = useState('');
-    const [initialRaw, setInitialRaw] = useState('');
+    const [doc, setDoc] = useState('')
+    const [title, setTitle] = useState('')
+    const [initialRaw, setInitialRaw] = useState('')
     // const [rendered, setRendered] = useState('');
-    const [update, setUpdate] = useState({});
+    const [update, setUpdate] = useState({})
     const [visible, setVisible] = useState(false)
     const t = useLocale()
-    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' });
+    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
     const [skeletonLoading, setSkeletonLoading] = useState(true)
 
     const { theme } = useContext(GlobalContext)
@@ -48,7 +48,7 @@ function Page() {
     } : {
         backgroundColor: '#fff', // 明亮主题背景色
         color: '#000' // 明亮主题文字颜色
-    };
+    }
 
 
     const toolbarPin = useSelector((state: GlobalState) => {
@@ -92,13 +92,13 @@ function Page() {
         if (name == 'page') {
             // console.log('dataLoad', data)
             const parts = data.raw.split('---')
-            const _slice = parts[0] === '' ? 2 : 1;
-            const raw = parts.slice(_slice).join('---').trim();
+            const _slice = parts[0] === '' ? 2 : 1
+            const raw = parts.slice(_slice).join('---').trim()
             setTitle(data.title)
             setInitialRaw(raw)
             // setRendered(raw)
             setPage(data)
-            const content = (data)._content;
+            const content = (data)._content
             setDoc(content)
         }
     }
@@ -139,7 +139,7 @@ function Page() {
                 reject(err)
             })
         })
-        navigate(`/pages`);
+        navigate(`/pages`)
     }
 
     const handlePublish = () => {
@@ -189,52 +189,52 @@ function Page() {
     useEffect(() => {
         const handleResize = () => {
             if (editorWapperRef.current) {
-                const { clientWidth, clientHeight } = editorWapperRef.current;
-                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` });
+                const { clientWidth, clientHeight } = editorWapperRef.current
+                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` })
             }
-        };
-        handleResize(); // 初始化尺寸
+        }
+        handleResize() // 初始化尺寸
         // editorWapperRef.current.style.overfllow = 'auto';
-        window.addEventListener('resize', handleResize); // 监听窗口 resize 事件
+        window.addEventListener('resize', handleResize) // 监听窗口 resize 事件
 
         return () => {
-            window.removeEventListener('resize', handleResize); // 清理事件监听
-        };
-    }, []);
+            window.removeEventListener('resize', handleResize) // 清理事件监听
+        }
+    }, [])
 
     useEffect(() => {
-        setSkeletonLoading(true);
+        setSkeletonLoading(true)
         const fetchData = async () => {
-            const items = fetch();
+            const items = fetch()
             const promises = Object.keys(items).map((name) => {
                 return Promise.resolve(items[name]).then((data) => {
-                    const update = {};
-                    update[name] = data;
-                    setUpdate(update);
+                    const update = {}
+                    update[name] = data
+                    setUpdate(update)
                     if (dataDidLoad) {
-                        dataDidLoad(name, data);
+                        dataDidLoad(name, data)
                     }
-                });
-            });
-            await Promise.all(promises);
+                })
+            })
+            await Promise.all(promises)
             // 添加延迟
             setTimeout(() => {
-                setSkeletonLoading(false);
-            }, 800); // 这里的1000表示1000毫秒，即1秒的延迟
-        };
-        fetchData();
-    }, []);
+                setSkeletonLoading(false)
+            }, 800) // 这里的1000表示1000毫秒，即1秒的延迟
+        }
+        fetchData()
+    }, [])
 
     useEffect(() => {
         const p = _.debounce((update) => {
             handleUpdate(update)
-        }, 1000, { trailing: true, loading: true });
+        }, 1000, { trailing: true, loading: true })
         postRef.current = p
-    }, []);
+    }, [])
 
     // const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
     return (
-        <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", backgroundColor: 'blue', overflowY: 'auto', overflowX: 'hidden' }}>
+        <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: 'auto', overflowX: 'hidden' }}>
             <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
             <EditorHeader
                 isPage={true}

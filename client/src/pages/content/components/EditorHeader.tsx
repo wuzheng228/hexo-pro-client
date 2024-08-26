@@ -1,19 +1,19 @@
-import { BarsOutlined, DeleteOutlined, SettingOutlined } from "@ant-design/icons";
-import { Button, Col, message, Popconfirm, Row } from "antd";
-import ButtonGroup from "antd/es/button/button-group";
-import React, { useContext, useState } from "react";
-import cs from 'classnames';
+import { BarsOutlined, DeleteOutlined, SettingOutlined } from "@ant-design/icons"
+import { Button, Col, message, Popconfirm, Row } from "antd"
+import ButtonGroup from "antd/es/button/button-group"
+import React, { useContext, useState } from "react"
+import cs from 'classnames'
 import IconPin from "@/assets/pin.svg"
 import IconPinFill from "@/assets/pin-fill.svg"
-import { useDispatch, useSelector } from "react-redux";
-import { GlobalContext } from "@/context";
-import useLocale from "@/hooks/useLocale";
+import { useDispatch, useSelector } from "react-redux"
+import { GlobalContext } from "@/context"
+import useLocale from "@/hooks/useLocale"
 
 export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', handleChangeTitle, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
 
     const [isPin, setIsPin] = useState(true)
-    const dispatch = useDispatch();
-    const locale = useLocale();
+    const dispatch = useDispatch()
+    const locale = useLocale()
 
     const themeStyles = {
         light: {
@@ -32,11 +32,11 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
             buttonBackgroundColor: "#555",
             buttonColor: "white"
         }
-    };
+    }
 
     const { theme } = useContext(GlobalContext)
 
-    const currentTheme = themeStyles[theme];
+    const currentTheme = themeStyles[theme]
 
     const handlePinClick = () => {
         setIsPin(!isPin)
@@ -93,13 +93,13 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                         onConfirm={() => {
                             message.info({
                                 content: 'ok',
-                            });
+                            })
                             handleRemoveSource()
                         }}
                         onCancel={() => {
                             message.error({
                                 content: 'cancel',
-                            });
+                            })
                         }}
                     >
                         <Button type='default' icon={<DeleteOutlined />} style={{ borderLeft: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />

@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import service from '@/utils/api';
-import { Link } from 'react-router-dom';
-import _ from 'lodash';
+import React, { useEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import service from '@/utils/api'
+import { Link } from 'react-router-dom'
+import _ from 'lodash'
 // import { GlobalState } from '@/store';
-import { Button, Card, Image, Input, Space, Table, TableColumnProps, TableProps } from 'antd';
-import useLocale from '@/hooks/useLocale';
+import { Button, Card, Image, Input, Space, Table, TableColumnProps, TableProps } from 'antd'
+import useLocale from '@/hooks/useLocale'
 
 
 interface DataType {
@@ -31,7 +31,7 @@ export default function Pages() {
             .then(res => {
                 const result = res.data.map((obj, i) => {
                     return { _id: obj._id, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, updated: obj.updated, key: i + 1 }
-                });
+                })
                 setPageList(result)
             })
     }
@@ -55,19 +55,19 @@ export default function Pages() {
                             placeholder='Please enter name'
                             value={selectedKeys[0] || ''}
                             onChange={(value) => {
-                                setSelectedKeys(value.target.value ? [value.target.value] : []);
+                                setSelectedKeys(value.target.value ? [value.target.value] : [])
                             }}
                             onSearch={() => {
-                                confirm();
+                                confirm()
                             }}
                         />
                     </div>
-                );
+                )
             },
             onFilter: (value, row) => (value ? row.title.indexOf(value as string) !== -1 : true),
             onFilterDropdownVisibleChange: (visible) => {
                 if (visible) {
-                    setTimeout(() => inputRef.current.focus(), 150);
+                    setTimeout(() => inputRef.current.focus(), 150)
                 }
             },
         },
@@ -75,7 +75,7 @@ export default function Pages() {
             title: t['content.articleList.table.permalink'],
             dataIndex: 'permalink',
             render: (col, item, index) => {
-                return (<a href={decodeURIComponent(item.permalink)} target='_blank'>{decodeURIComponent(item.permalink)}</a>)
+                return (<a href={decodeURIComponent(item.permalink)} target='_blank' rel="noreferrer">{decodeURIComponent(item.permalink)}</a>)
             }
         },
         {
@@ -106,8 +106,8 @@ export default function Pages() {
         queryPages()
         return () => {
             // 在组件卸载时执行清理操作，取消异步任务等
-        };
-    }, []);
+        }
+    }, [])
 
     return (
         <div>
@@ -116,6 +116,6 @@ export default function Pages() {
             </Card>
         </div>
 
-    );
+    )
 
 }

@@ -41,7 +41,8 @@ const i18n = {
         'login.banner.subSlogan1': 'Your own blog editor backend',
         'vditor.upload.error': 'Upload failed, please try again later',
         'vditor.upload.success': 'Upload success',
-        'vditor.upload.invalidFileType': 'Only image upload is supported'
+        'vditor.upload.invalidFileType': 'Only image upload is supported',
+        'error.title': 'Error',
     },
     'zh-CN': {
         'menu.posts': '文章',
@@ -85,7 +86,8 @@ const i18n = {
         'login.banner.subSlogan1': '属于你自己的博客编辑后台',
         'vditor.upload.error': '上传失败，请稍后再试',
         'vditor.upload.success': '上传成功',
-        'vditor.upload.invalidFileType': '只支持图片上传'
+        'vditor.upload.invalidFileType': '只支持图片上传',
+        'error.title': '错误',
     }
 }
 

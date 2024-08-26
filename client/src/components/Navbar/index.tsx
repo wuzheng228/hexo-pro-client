@@ -1,27 +1,25 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState } from "react"
 import styles from './style/index.module.less'
 import Logo from '@/assets/logo.svg'
-import { Avatar, Button, Dropdown, Input, List, MenuProps, Modal, Tag, theme as antTheme } from "antd";
-import { DownOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons";
+import { Avatar, Button, Dropdown, Input, List, MenuProps, Modal, Tag, notification } from "antd"
+import { DownOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
-import useLocale from "@/hooks/useLocale";
-import { useSelector } from "react-redux";
-import { GlobalState } from "@/store";
-import service from "@/utils/api";
-import { parseDateTime } from "@/utils/dateTimeUtils";
-import { useNavigate } from "react-router-dom";
-import useStorage from "@/utils/useStorage";
-import { GlobalContext } from "@/context";
-import cs from 'classnames';
-import enUS from 'antd/locale/en_US'
-import zhCN from 'antd/locale/zh_CN'
+import useLocale from "@/hooks/useLocale"
+import { useSelector } from "react-redux"
+import { GlobalState } from "@/store"
+import service from "@/utils/api"
+import { parseDateTime } from "@/utils/dateTimeUtils"
+import { useNavigate } from "react-router-dom"
+import useStorage from "@/utils/useStorage"
+import { GlobalContext } from "@/context"
+import cs from 'classnames'
 
 export default function Navbar() {
     const navigate = useNavigate()
-    const userInfo = useSelector((state: GlobalState) => state.userInfo);
-    const { theme, setTheme, setLang } = useContext(GlobalContext);
+    const userInfo = useSelector((state: GlobalState) => state.userInfo)
+    const { theme, setTheme, setLang } = useContext(GlobalContext)
     const locale = useLocale()
-    const [_, setUserStatus] = useStorage('userStatus');
+    const [_, setUserStatus] = useStorage('userStatus')
 
     const [open, setOpen] = useState(false)
     const [title, setTitle] = useState('')
@@ -30,6 +28,7 @@ export default function Navbar() {
     const [searchValue, setSearchValue] = useState('')
     const [searchInfoList, setSearchInfoList] = useState([])
     const [searchLoading, setSearchLoading] = useState(false)
+    const [api, contextHolder] = notification.useNotification();
 
     const writeDropList: MenuProps['items'] = [
         {
@@ -48,7 +47,7 @@ export default function Navbar() {
                 </div>
             ),
         }
-    ];
+    ]
 
     const langDropList: MenuProps['items'] = [
         {
@@ -67,7 +66,7 @@ export default function Navbar() {
                 </div>
             ),
         }
-    ];
+    ]
 
     const settingDropList: MenuProps['items'] = [
         {
@@ -102,8 +101,8 @@ export default function Navbar() {
     const handleLogout: MenuProps['onClick'] = ({ key }) => {
         if (key === '1') {
             console.log('logout')
-            setUserStatus('logout');
-            window.location.href = '/pro/login';
+            setUserStatus('logout')
+            window.location.href = '/pro/login'
         }
     }
 
@@ -126,7 +125,7 @@ export default function Navbar() {
             const post = res.data
             post.date = parseDateTime(post.date)
             post.updated = parseDateTime(post.updated)
-            navigate(`/post/${post._id}`);
+            navigate(`/post/${post._id}`)
         })
         setOpen(false)
     }
@@ -134,10 +133,14 @@ export default function Navbar() {
     function newPage() {
         if (!checkTitle(title)) return
         service.post('/hexopro/api/pages/new', { title: title }).then((res) => {
-            const post = res.data
-            post.date = parseDateTime(post.date)
-            post.updated = parseDateTime(post.updated)
-            navigate(`/page/${post._id}`);
+            if (res.status === 200) {
+                const post = res.data
+                post.date = parseDateTime(post.date)
+                post.updated = parseDateTime(post.updated)
+                navigate(`/page/${post._id}`)
+            }
+        }).catch(err => {
+            api.error({ message: locale['error.title'], description: err.message });
         })
         setOpen(false)
     }
@@ -162,10 +165,10 @@ export default function Navbar() {
         service.post('/hexopro/api/blog/search', { searchPattern: searchValue })
             .then(res => {
                 const payLoad = res.data
-                if (res.status == 200 && payLoad.code == 0) {
+                if (res.status === 200 && payLoad.code === 0) {
                     setSearchInfoList(payLoad.data)
                 }
-            }).catch(err => {
+            }).catch(_ => {
 
             }).finally(() => {
                 setSearchLoading(false)
@@ -183,9 +186,9 @@ export default function Navbar() {
 
     const onClickSerchitem = (item) => {
         if (!item.isPage) {
-            navigate(`/post/${item.id}`);
+            navigate(`/post/${item.id}`)
         } else {
-            navigate(`/page/${item.id}`);
+            navigate(`/page/${item.id}`)
         }
     }
 

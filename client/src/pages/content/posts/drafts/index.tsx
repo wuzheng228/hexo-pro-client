@@ -1,6 +1,6 @@
-import React from 'react';
-import _ from 'lodash';
-import ArticleList from '../../components/ArticleList';
+import React from 'react'
+import _ from 'lodash'
+import ArticleList from '../../components/ArticleList'
 function Drafts() {
 
     return (
@@ -10,7 +10,7 @@ function Drafts() {
             </div>
         </div>
 
-    );
+    )
 }
 
-export default Drafts;
+export default Drafts

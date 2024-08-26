@@ -1,7 +1,7 @@
-import React from "react";
-import { Carousel } from "antd";
-import styles from './style/index.module.less';
-import useLocale from "@/hooks/useLocale";
+import React from "react"
+import { Carousel } from "antd"
+import styles from './style/index.module.less'
+import useLocale from "@/hooks/useLocale"
 
 export default function LoginBanner() {
     const t = useLocale()
@@ -12,7 +12,7 @@ export default function LoginBanner() {
             image:
                 'http://p1-arco.byteimg.com/tos-cn-i-uwbnlip3yd/6c85f43aed61e320ebec194e6a78d6d3.png~tplv-uwbnlip3yd-png.png',
         }
-    ];
+    ]
 
     return (
         <Carousel className={styles["carousel"]} dots={false}>
@@ -32,5 +32,5 @@ export default function LoginBanner() {
                 ))
             }
         </Carousel>
-    );
+    )
 }

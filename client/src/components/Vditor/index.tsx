@@ -1,13 +1,11 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react'
 
-import Vditor from 'vditor';
+import Vditor from 'vditor'
 import "vditor/src/assets/less/index.less"
 import "./style/index.less"
-import service from '@/utils/api';
-import { Skeleton, Spin } from 'antd';
-import { GlobalContext } from '@/context';
-import { use } from 'marked';
-import useLocale from '@/hooks/useLocale';
+import service from '@/utils/api'
+import { GlobalContext } from '@/context'
+import useLocale from '@/hooks/useLocale'
 
 export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage }) {
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
@@ -25,14 +23,13 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         return promise
     }
 
-    const [vd, setVd] = useState(undefined);
+    const [vd, setVd] = useState(undefined)
     const [isUploadingImage, setIsUPloadingImage] = useState(false)
 
     const [isEditorFocus, setIsEditorFocus] = useState(false)
 
-    const [isEditorLoaded, setIsEditorLoaded] = useState(false);
 
-    const { theme, lang } = useContext(GlobalContext);
+    const { theme, lang } = useContext(GlobalContext)
 
     function getLocale() {
         if (lang === 'zh-CN') {
@@ -44,7 +41,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     useEffect(() => {
         handleUploadingImage(isUploadingImage)
-    }, [isUploadingImage])
+    }, [isUploadingImage, handleUploadingImage])
 
     useEffect(() => {
         console.log('isPinToolbar', isPinToolbar)
@@ -60,32 +57,32 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         console.log('theme', theme)
         if (vd) {
             console.log('theme111', theme)
-            vd.setTheme(theme === 'dark' ? 'dark' : 'classic', theme == 'dark' ? 'dark' : 'light', theme == 'dark' ? 'native' : 'xcode')
+            vd.setTheme(theme === 'dark' ? 'dark' : 'classic', theme === 'dark' ? 'dark' : 'light', theme === 'dark' ? 'native' : 'xcode')
         }
     }, [vd, theme])
 
     useEffect(() => {
         if (vd) {
-            const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement;
-            const vditorElement = document.getElementById('vditor') as HTMLElement;
+            const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement
+            const vditorElement = document.getElementById('vditor') as HTMLElement
             if (toolbar && vditorElement) {
-                toolbar.style.width = `${vditorElement.clientWidth}px !important`;
+                toolbar.style.width = `${vditorElement.clientWidth}px !important`
             }
 
             const resizeHandler = () => {
                 if (toolbar && vditorElement) {
-                    toolbar.style.width = `${vditorElement.clientWidth}px`;
+                    toolbar.style.width = `${vditorElement.clientWidth}px`
                 }
-            };
+            }
 
-            window.addEventListener('resize', resizeHandler);
+            window.addEventListener('resize', resizeHandler)
 
             // 返回销毁逻辑
             return () => {
-                window.removeEventListener('resize', resizeHandler);
-            };
+                window.removeEventListener('resize', resizeHandler)
+            }
         }
-    }, [vd]);
+    }, [vd])
 
     useEffect(() => {
         const vditor = new Vditor('vditor', {
@@ -103,30 +100,29 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 // 设置初始值
                 vditor.setValue(initValue)
                 // 固定toolbar
-                const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement;
-                const vditorElement = document.getElementById('vditor') as HTMLElement;
+                const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement
+                const vditorElement = document.getElementById('vditor') as HTMLElement
                 if (toolbar && vditorElement) {
-                    toolbar.style.width = `${vditorElement.clientWidth}px !important`;
+                    toolbar.style.width = `${vditorElement.clientWidth}px !important`
                 }
 
-                const content = document.querySelector('vditor-content') as HTMLElement;
-                const editorHeader = document.querySelector('.editor-header') as HTMLElement;
+                const content = document.querySelector('vditor-content') as HTMLElement
+                const editorHeader = document.querySelector('.editor-header') as HTMLElement
 
                 if (content && toolbar && editorHeader) {
                     console.log('走到这里了')
-                    content.style.cssText = `margin-top: ${toolbar.clientHeight + editorHeader.clientHeight}px !important;`;
+                    content.style.cssText = `margin-top: ${toolbar.clientHeight + editorHeader.clientHeight}px !important;`
                 }
 
                 window.addEventListener('resize', () => {
                     if (toolbar && vditorElement) {
-                        toolbar.style.width = `${vditorElement.clientWidth}px`;
+                        toolbar.style.width = `${vditorElement.clientWidth}px`
                         if (content) {
-                            content.style.marginTop = `${toolbar.clientHeight + editorHeader.clientHeight}px !important;`;
+                            content.style.marginTop = `${toolbar.clientHeight + editorHeader.clientHeight}px !important;`
                         }
                     }
-                });
-                setIsEditorLoaded(true); // 编辑器完全加载后设置为 true
-                setVd(vditor);
+                })
+                setVd(vditor)
             },
             focus: (v: string) => {
                 setIsEditorFocus(true)
@@ -146,7 +142,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 format: (files: File[], responseText: string): string => {
                     // 这里可以添加处理文件格式化的逻辑
                     console.log('format', files)
-                    return responseText;
+                    return responseText
                 },
                 file: (files: File[]): File[] | Promise<File[]> => {
                     console.log('file', files)
@@ -156,27 +152,27 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     // 这里可以添加处理文件上传的逻辑
                     console.log('files', files)
 
-                    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/bmp', 'image/webp'];
+                    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/bmp', 'image/webp']
 
-                    const filteredFiles = files.filter(file => allowedTypes.includes(file.type));
-                    for (let file of files) {
+                    const filteredFiles = files.filter(file => allowedTypes.includes(file.type))
+                    for (const file of files) {
                         if (!allowedTypes.includes(file.type)) {
-                            vditor.tip(`${t['vditor.upload.invalidFileType']}: ${file.name}`, 2000);
+                            vditor.tip(`${t['vditor.upload.invalidFileType']}: ${file.name}`, 2000)
                         }
                     }
 
-                    for (let file of filteredFiles) {
+                    for (const file of filteredFiles) {
                         setIsUPloadingImage(true)
-                        const reader = new FileReader();
+                        const reader = new FileReader()
                         reader.onload = (event) => {
-                            const filename = file.name;
+                            const filename = file.name
                             uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
                                 console.log('update=> ', res)
                                 res['code'] = 0
 
                                 setTimeout(() => {
-                                    const currentValue = vditor.getValue();
-                                    const cursorPosition = vditor.getCursorPosition();
+                                    const currentValue = vditor.getValue()
+                                    const cursorPosition = vditor.getCursorPosition()
                                     console.log('cursorPosition', cursorPosition)
                                     if (isEditorFocus) {
                                         vditor.setValue(currentValue + `\n![alt text](${res.src})`)
@@ -184,19 +180,19 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                         vditor.insertValue(`\n![alt text](${res.src})`)
                                     }
                                     // 重新渲染编辑器内容（如果需要）
-                                    vditor.tip(`${t['vditor.upload.success']}: ${filename}`, 3000);
-                                }, 300);
+                                    vditor.tip(`${t['vditor.upload.success']}: ${filename}`, 3000)
+                                }, 300)
                                 return null
                             }).catch((err) => {
-                                vditor.tip(`${t['vditor.upload.error']}: ${err.message}`, 3000);
+                                vditor.tip(`${t['vditor.upload.error']}: ${err.message}`, 3000)
                                 return err
                             }).finally(() => {
                                 setIsUPloadingImage(false)
-                            });
-                        };
-                        reader.readAsDataURL(file);
+                            })
+                        }
+                        reader.readAsDataURL(file)
                     }
-                    return null; // 确保函数返回一个值
+                    return null // 确保函数返回一个值
                 }
             },
             input: (v) => {
@@ -286,10 +282,10 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     name: 'fullscreen',
                     className: 'toolbar-right',
                     click() {
-                        const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement;
-                        const vditorElement = document.getElementById('vditor') as HTMLElement;
+                        const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement
+                        const vditorElement = document.getElementById('vditor') as HTMLElement
                         if (toolbar && vditorElement) {
-                            toolbar.style.width = `${vditorElement.clientWidth}px`;
+                            toolbar.style.width = `${vditorElement.clientWidth}px`
                         }
                     }
                 },
@@ -302,12 +298,12 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     className: 'toolbar-right'
                 }
             ]
-        });
+        })
         return () => {
-            vd?.destroy();
-            setVd(undefined);
+            vd?.destroy()
+            setVd(undefined)
         }
-    }, [initValue, lang]);
+    }, [initValue, lang])
 
     return (
         <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, borderRadius: '0px' }}>

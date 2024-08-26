@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { post } from "@/utils/api";
-import { Button, Col, Input, message, Modal, Row, Space, Tag, Tooltip } from "antd";
-import { FrontMatterAdder } from "../../components/frontMatterAdder";
+import React, { useEffect, useState } from "react"
+import { post } from "@/utils/api"
+import { Button, Col, Input, message, Modal, Row, Space, Tag, Tooltip } from "antd"
+import { FrontMatterAdder } from "../../components/frontMatterAdder"
 
 export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handleChange }) {
     // 添加使用的状态
@@ -22,8 +22,8 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
 
     function isPathValid(path) {
         // 匹配以.md为扩展名的文件名，并且路径只包含合法字符（字母、数字、斜杠、下划线和短横线）
-        const regex = /^([a-zA-Z0-9-_\/]+)\/([a-zA-Z0-9-_]+\.md)$/i; // i标志表示不区分大小写
-        return regex.test(path);
+        const regex = /^([a-zA-Z0-9-_\/]+)\/([a-zA-Z0-9-_]+\.md)$/i // i标志表示不区分大小写
+        return regex.test(path)
     }
 
     return (
@@ -35,19 +35,19 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
             }
             visible={visible}
             onCancel={() => {
-                setPageMeta({ ...pageMeta, tags: [], categories: [], frontMatter: originFms });
-                setVisible(false);
+                setPageMeta({ ...pageMeta, tags: [], categories: [], frontMatter: originFms })
+                setVisible(false)
             }}
             onOk={() => {
                 if (!isPathValid(pageMeta.source)) {
                     message.error('配置的页面路径非法请检查！')
                 } else {
-                    setVisible(false);
+                    setVisible(false)
                     handleChange({ frontMatter: pageMeta.frontMatter, source: pageMeta.source })
                 }
             }}
             afterOpenChange={() => {
-                setOriginFms(pageMeta.frontMatter);
+                setOriginFms(pageMeta.frontMatter)
             }}
             style={{ width: 800 }}
         >

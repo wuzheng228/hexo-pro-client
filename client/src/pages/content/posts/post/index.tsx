@@ -1,22 +1,22 @@
-import { service } from '@/utils/api';
-import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode, useContext } from 'react';
-import { useParams } from 'react-router-dom';
+import { service } from '@/utils/api'
+import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode, useContext } from 'react'
+import { useParams } from 'react-router-dom'
 import { Button, Col, message, Popconfirm, Row, Skeleton } from 'antd'
 import IconSort from '../../../../assets/sort.svg'
-import _ from 'lodash';
-import { PostSettings } from './postSetting';
-import { useNavigate } from "react-router-dom";
-import { BarsOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
-import HexoProVditor from '@/components/Vditor';
-import EditorHeader from '../../components/EditorHeader';
-import useLocale from '@/hooks/useLocale';
+import _ from 'lodash'
+import { PostSettings } from './postSetting'
+import { useNavigate } from "react-router-dom"
+import { BarsOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons'
+import HexoProVditor from '@/components/Vditor'
+import EditorHeader from '../../components/EditorHeader'
+import useLocale from '@/hooks/useLocale'
 import styles from '../../style/index.module.less'
-import { useSelector } from 'react-redux';
-import { GlobalState } from '@/store';
-import { GlobalContext } from '@/context';
+import { useSelector } from 'react-redux'
+import { GlobalState } from '@/store'
+import { GlobalContext } from '@/context'
 
 
-const ButtonGroup = Button.Group;
+const ButtonGroup = Button.Group
 
 type Post = {
     isDraft: boolean
@@ -24,21 +24,21 @@ type Post = {
 }
 
 function Post() {
-    const navigate = useNavigate();
-    const postRef = useRef(null);
-    const editorWapperRef = useRef(null);
-    const { _id } = useParams();
-    const [post, setPost] = useState({ isDraft: true, source: null });
+    const navigate = useNavigate()
+    const postRef = useRef(null)
+    const editorWapperRef = useRef(null)
+    const { _id } = useParams()
+    const [post, setPost] = useState({ isDraft: true, source: null })
     const [tagsCatMeta, setTagsCatMeta] = useState({})
     const [postMetaData, setPostMetadata] = useState({ tags: [], categories: [], frontMatter: {} })
-    const [doc, setDoc] = useState('');
-    const [title, setTitle] = useState('');
-    const [initialRaw, setInitialRaw] = useState('');
-    const [rendered, setRendered] = useState('');
-    const [update, setUpdate] = useState({});
+    const [doc, setDoc] = useState('')
+    const [title, setTitle] = useState('')
+    const [initialRaw, setInitialRaw] = useState('')
+    const [rendered, setRendered] = useState('')
+    const [update, setUpdate] = useState({})
     const [visible, setVisible] = useState(false)
 
-    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' });
+    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
 
     const [skeletonLoading, setSkeletonLoading] = useState(true)
     const toolbarPin = useSelector((state: GlobalState) => {
@@ -53,7 +53,7 @@ function Post() {
     } : {
         backgroundColor: '#fff', // 明亮主题背景色
         color: '#000' // 明亮主题文字颜色
-    };
+    }
 
     const t = useLocale()
 
@@ -118,13 +118,13 @@ function Post() {
         if (name == 'post') {
             // console.log('dataLoad', data)
             const parts = data.raw.split('---')
-            const _slice = parts[0] === '' ? 2 : 1;
-            const raw = parts.slice(_slice).join('---').trim();
+            const _slice = parts[0] === '' ? 2 : 1
+            const raw = parts.slice(_slice).join('---').trim()
             setTitle(data.title)
             setInitialRaw(raw)
             setRendered(raw)
             setPost(data)
-            const content = (data)._content;
+            const content = (data)._content
             setDoc(content)
         }
     }
@@ -171,9 +171,9 @@ function Post() {
             })
         })
         if (post.isDraft) {
-            navigate(`/posts/drafts`);
+            navigate(`/posts/drafts`)
         } else {
-            navigate(`/posts/blogs`);
+            navigate(`/posts/blogs`)
         }
     }
 
@@ -245,49 +245,49 @@ function Post() {
     useEffect(() => {
         const handleResize = () => {
             if (editorWapperRef.current) {
-                const { clientWidth, clientHeight } = editorWapperRef.current;
-                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` });
+                const { clientWidth, clientHeight } = editorWapperRef.current
+                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` })
             }
-        };
-        handleResize(); // 初始化尺寸
+        }
+        handleResize() // 初始化尺寸
         // editorWapperRef.current.style.overfllow = 'auto';
-        window.addEventListener('resize', handleResize); // 监听窗口 resize 事件
+        window.addEventListener('resize', handleResize) // 监听窗口 resize 事件
 
         return () => {
-            window.removeEventListener('resize', handleResize); // 清理事件监听
-        };
-    }, []);
+            window.removeEventListener('resize', handleResize) // 清理事件监听
+        }
+    }, [])
 
     useEffect(() => {
-        setSkeletonLoading(true);
+        setSkeletonLoading(true)
         const fetchData = async () => {
-            const items = fetch();
+            const items = fetch()
             const promises = Object.keys(items).map((name) => {
                 return Promise.resolve(items[name]).then((data) => {
-                    const update = {};
-                    update[name] = data;
-                    setUpdate(update);
+                    const update = {}
+                    update[name] = data
+                    setUpdate(update)
                     if (dataDidLoad) {
-                        dataDidLoad(name, data);
+                        dataDidLoad(name, data)
                     }
-                });
-            });
-            await Promise.all(promises);
+                })
+            })
+            await Promise.all(promises)
             // 添加延迟
             setTimeout(() => {
-                setSkeletonLoading(false);
-            }, 800); // 这里的1000表示1000毫秒，即1秒的延迟
-        };
+                setSkeletonLoading(false)
+            }, 800) // 这里的1000表示1000毫秒，即1秒的延迟
+        }
 
-        fetchData();
-    }, []);
+        fetchData()
+    }, [])
 
     useEffect(() => {
         const p = _.debounce((update) => {
             handleUpdate(update)
-        }, 1000, { trailing: true, loading: true });
+        }, 1000, { trailing: true, loading: true })
         postRef.current = p
-    }, []);
+    }, [])
 
     return (
         <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: 'auto', overflowX: 'hidden' }}>

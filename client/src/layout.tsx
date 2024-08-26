@@ -1,14 +1,13 @@
-import { Button, Menu, MenuProps } from 'antd'
+import { Button, Menu, MenuProps, message } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import Layout, { Content } from 'antd/es/layout/layout'
-import React, { Children, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './style/layout.module.less'
 import useRoute, { IRoute } from './routes'
-import { EditOutlined, MailOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { EditOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import useLocale from './hooks/useLocale'
-import { ItemType, MenuItemType } from 'antd/es/menu/interface'
 import lazyload from './utils/lazyload'
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import qs from 'query-string'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -27,14 +26,13 @@ function getIconFromKey(key: string) {
 function getFlatternRoute(routes): any[] {
     const res = []
     function travel(_routes) {
-        console.log(routes)
         _routes.forEach((route) => {
             if (route.key && !route.children) {
                 try {
                     route.component = lazyload(() => import(`./pages/${route.key}`))
                     res.push(route)
                 } catch (e) {
-                    console.log(e)
+                    message.error(`页面${route.key}加载失败`)
                 }
             }
             if (route.children && route.children.length) {
@@ -60,7 +58,7 @@ export default function PageLayout() {
 
     const [selectedKeys, setSelectedKeys] = useState<string[]>(defaultSelectedKeys)
 
-    const flatternRoutes = useMemo(() => getFlatternRoute(routes) || [], routes)
+    const flatternRoutes = useMemo(() => getFlatternRoute(routes) || [], [routes])
 
     const menuMap = useRef<
         Map<string, { menuItem?: boolean; subMenu?: boolean }>
@@ -91,7 +89,6 @@ export default function PageLayout() {
     }
 
     function onClickItem(item) {
-        console.log('item ====>', item)
         const { key } = item
         const currentRoute = flatternRoutes.find((r) => r.key === key)
         const component = currentRoute.component
@@ -101,15 +98,15 @@ export default function PageLayout() {
         })
     }
 
-    function updateMenuStatus() {
+    const updateMenuStatus = useCallback(() => {
         const pathKeys = location.pathname.split('/')
         const newSelectedKeys: string[] = []
-        console.log("pathKeys ===>", pathKeys)
+        // console.log("pathKeys ===>", pathKeys)
         while (pathKeys.length > 0) {
             const currentRouteKey = pathKeys.join('/')
-            console.log('currentRouteKey', currentRouteKey)
+            // console.log('currentRouteKey', currentRouteKey)
             const menuKey = currentRouteKey.replace(/^\//, '') // 替换掉开头的下划线 /path ==> path
-            console.log('menuKey===>', menuKey)
+            // console.log('menuKey===>', menuKey)
             const menuType = menuMap.current.get(menuKey)
             if (menuType && menuType.menuItem) {
                 newSelectedKeys.push(menuKey)
@@ -118,7 +115,7 @@ export default function PageLayout() {
             pathKeys.pop()
         }
         setSelectedKeys(newSelectedKeys)
-    }
+    }, [location.pathname])
 
     function toggleCollapsed() {
         setCollapsed(!collapsed)
@@ -126,7 +123,7 @@ export default function PageLayout() {
 
     useEffect(() => {
         updateMenuStatus()
-    }, [location.pathname])
+    }, [location.pathname, updateMenuStatus])
 
     return (
         <Layout className={styles.layout}>
@@ -158,7 +155,7 @@ export default function PageLayout() {
                                             path={`/${route.key}`}
                                             element={route.component.render()}
                                         />)
-                                        console.log('rout ===>', route, 'path===>', `/${route.key}`)
+                                        // console.log('rout ===>', route, 'path===>', `/${route.key}`)
                                         return rout
                                     })
                                 }

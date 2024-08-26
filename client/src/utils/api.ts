@@ -6,11 +6,11 @@ service.interceptors.request.use(config => {
     // 在这里可以为每个请求添加请求头
     // if (localStorage.getItem('hexoProToken'))
     config.headers['Authorization'] = 'Bearer ' + localStorage.getItem('hexoProToken')
-    return config;
-});
+    return config
+})
 service.interceptors.response.use((resp) => {
     if (resp.data && resp.data.code && resp.data.code == 401) {
-        window.location.pathname = '/pro/login';
+        window.location.pathname = '/pro/login'
         localStorage.removeItem('userStatus')
     }
     return resp

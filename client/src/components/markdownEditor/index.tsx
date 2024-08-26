@@ -1,24 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { EditorView, basicSetup } from 'codemirror';
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import React, { useEffect, useRef, useState } from 'react'
+import { EditorView, basicSetup } from 'codemirror'
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { Col, Row } from 'antd'
 // import { history, historyKeymap } from '@codemirror/history';
-import { syntaxHighlighting } from "@codemirror/language";
+import { syntaxHighlighting } from "@codemirror/language"
 import {
     lineNumbers,
     highlightActiveLine,
     highlightActiveLineGutter,
     keymap,
-} from '@codemirror/view';
-import { EditorState, Compartment, StateCommand } from '@codemirror/state';
-import { HighlightStyle } from '@codemirror/language';
-import { tags } from '@lezer/highlight';
-import { ayuLight } from 'thememirror';
+} from '@codemirror/view'
+import { EditorState, Compartment, StateCommand } from '@codemirror/state'
+import { HighlightStyle } from '@codemirror/language'
+import { tags } from '@lezer/highlight'
+import { ayuLight } from 'thememirror'
 import { defaultKeymap, indentMore, indentLess } from "@codemirror/commands"
-import service from '@/utils/api';
+import service from '@/utils/api'
 import Styles from './style/index.module.less'
-import { MarkedExtension, Tokens, marked } from 'marked';
-import hljs from 'highlight.js';
+import { MarkedExtension, Tokens, marked } from 'marked'
+import hljs from 'highlight.js'
 
 const markdownHighlighting = HighlightStyle.define(
     [
@@ -43,10 +43,10 @@ const markdownHighlighting = HighlightStyle.define(
 function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enableAutoStroll, forceLineNumbers }) {
 
     const editorRef = useRef(null)
-    const mouseIsOn = useRef(null);
+    const mouseIsOn = useRef(null)
     const previewRef = useRef(null)
-    const [md, setRenderedMarkdown] = useState('');
-    const [rendered, setRendered] = useState('');
+    const [md, setRenderedMarkdown] = useState('')
+    const [rendered, setRendered] = useState('')
 
     const handleScroll = (percent) => {
         if (enableAutoStroll) {
@@ -82,8 +82,8 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
 
     useEffect(() => {
         if (!editorRef) return
-        const lineNumberCpt = new Compartment();
-        const domEventHandlers = new Compartment();
+        const lineNumberCpt = new Compartment()
+        const domEventHandlers = new Compartment()
 
         const startState = EditorState.create({
             doc: initialValue,
@@ -109,7 +109,7 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
                 markdown({ base: markdownLanguage }),
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
-                        setRendered(update.state.doc.toString());
+                        setRendered(update.state.doc.toString())
                         handleChangeContent(update.state.doc.toString())
                     }
                 }),
@@ -121,26 +121,26 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
                     paste(event, view) {
                         // console.log(event)
                         // console.log(view)
-                        const items = (event.clipboardData).items;
+                        const items = (event.clipboardData).items
                         if (!items.length) return
-                        let blob;
+                        let blob
                         for (let i = items.length - 1; i >= 0; i--) {
                             if (items[i].kind == 'file') {
-                                blob = items[i].getAsFile();
-                                break;
+                                blob = items[i].getAsFile()
+                                break
                             }
                         }
                         if (!blob) return
-                        const reader = new FileReader();
+                        const reader = new FileReader()
                         reader.onload = (event) => {
-                            const filename = null;
+                            const filename = null
                             uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
                                 // console.log(res)
                                 const transaction = view.state.replaceSelection(`\n![${res.msg}](${res.src})`)
                                 view.update([view.state.update(transaction)])
-                            });
-                        };
-                        reader.readAsDataURL(blob);
+                            })
+                        }
+                        reader.readAsDataURL(blob)
                     }
                 }))
             ],
@@ -149,13 +149,13 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
         const view = new EditorView({
             parent: editorRef.current,
             state: startState,
-        });
+        })
 
         setEditorView(view)
         setLineNumberCpt(lineNumberCpt)
         setdomEventHandlers(domEventHandlers)
         return () => view.destroy()
-    }, [editorRef]);
+    }, [editorRef])
 
     useEffect(() => {
         if (!editorView || !lineNumberCptState) {
@@ -196,29 +196,29 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
                 code: ({ text, lang, escaped }: Tokens.Code) => {
                     if (!text) return ''
                     console.log('render', text)
-                    const validLanguage = hljs.getLanguage(lang) ? lang : 'plaintext';
+                    const validLanguage = hljs.getLanguage(lang) ? lang : 'plaintext'
                     return `<pre><code>${hljs.highlight(text, { language: validLanguage }).value}</code></pre>`
                 }
             }
-        };
+        }
 
-        marked.use(renderer);
+        marked.use(renderer)
         marked.use({
             pedantic: false,
             gfm: true,
             breaks: true
-        });
+        })
 
         const renderMarkdown = async () => {
-            const parsedMarkdown = await marked.parse(rendered);
-            setRenderedMarkdown(parsedMarkdown);
-        };
+            const parsedMarkdown = await marked.parse(rendered)
+            setRenderedMarkdown(parsedMarkdown)
+        }
 
         renderMarkdown()
     }, [rendered])
 
     useEffect(() => {
-        if (!editorView) return;
+        if (!editorView) return
 
         const transaction = editorView.state.update({
             effects: domEventHandlersState.reconfigure(EditorView.domEventHandlers({
@@ -228,33 +228,33 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
                 paste(event, view) {
                     // console.log(event)
                     // console.log(view)
-                    const items = (event.clipboardData).items;
+                    const items = (event.clipboardData).items
                     if (!items.length) return
-                    let blob;
+                    let blob
                     for (let i = items.length - 1; i >= 0; i--) {
                         if (items[i].kind == 'file') {
-                            blob = items[i].getAsFile();
-                            break;
+                            blob = items[i].getAsFile()
+                            break
                         }
                     }
                     if (!blob) return
-                    const reader = new FileReader();
+                    const reader = new FileReader()
                     reader.onload = (event) => {
-                        const filename = null;
+                        const filename = null
                         uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
                             // console.log(res)
                             const transaction = view.state.replaceSelection(`\n![${res.msg}](${res.src})`)
                             view.update([view.state.update(transaction)])
-                        });
-                    };
-                    reader.readAsDataURL(blob);
+                        })
+                    }
+                    reader.readAsDataURL(blob)
                 }
             }))
         })
 
         // 更新 EditorView
-        editorView.dispatch(transaction);
-    }, [editorView, enableAutoStroll]);
+        editorView.dispatch(transaction)
+    }, [editorView, enableAutoStroll])
 
     return (
 

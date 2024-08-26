@@ -13,9 +13,9 @@ export default function LoginForm() {
     const [errorMessage, setErrorMessage] = useState('')
     const [loading, setLoading] = useState(false)
     const [loginParams, setLoginParams, removeLoginParams] =
-        useStorage('loginParams');
+        useStorage('loginParams')
 
-    const [rememberPassword, setRememberPassword] = useState(!!loginParams);
+    const [rememberPassword, setRememberPassword] = useState(!!loginParams)
 
     const t = useLocale()
 
@@ -23,19 +23,19 @@ export default function LoginForm() {
     function afterLoginSuccess(params, token) {
         // 记住密码
         if (rememberPassword) {
-            setLoginParams(JSON.stringify(params));
+            setLoginParams(JSON.stringify(params))
         } else {
-            removeLoginParams();
+            removeLoginParams()
         }
         // 记录登录状态
         if (token) {
-            localStorage.setItem('userStatus', 'login');
+            localStorage.setItem('userStatus', 'login')
             localStorage.setItem('hexoProToken', token)
         } else {
-            localStorage.setItem('userStatus', 'unsafe');
+            localStorage.setItem('userStatus', 'unsafe')
         }
         // 跳转首页
-        window.location.href = '/pro';
+        window.location.href = '/pro'
     }
 
     function login(params) {
@@ -43,21 +43,21 @@ export default function LoginForm() {
         service
             .post('/hexopro/api/login', params)
             .then((res) => {
-                const { code, msg, token } = res.data;
+                const { code, msg, token } = res.data
                 if (code === 0) {
-                    afterLoginSuccess(params, token);
+                    afterLoginSuccess(params, token)
                 } else if (code === -2) {
-                    afterLoginSuccess(params, null);
+                    afterLoginSuccess(params, null)
                 } else if (code === -1) {
-                    setErrorMessage(t['login.form.login.errMsg']);
+                    setErrorMessage(t['login.form.login.errMsg'])
                 }
                 else {
-                    setErrorMessage(msg || t['login.form.login.errMsg']);
+                    setErrorMessage(msg || t['login.form.login.errMsg'])
                 }
             })
             .finally(() => {
-                setLoading(false);
-            });
+                setLoading(false)
+            })
     }
 
     function onSubmitClick() {
@@ -68,8 +68,8 @@ export default function LoginForm() {
     }
 
     const onFinishFailed = () => {
-        message.error('Submit failed!');
-    };
+        message.error('Submit failed!')
+    }
 
     return (
         <div className={styles['login-form-wrapper']}>

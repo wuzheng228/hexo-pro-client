@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { TagAdder } from "./tagAdder";
-import { FrontMatterAdder } from "../../components/frontMatterAdder";
-import { Button, Checkbox, Col, Modal, Row, Space, Tag, Tooltip } from "antd";
+import React, { useEffect, useState } from "react"
+import { TagAdder } from "./tagAdder"
+import { FrontMatterAdder } from "../../components/frontMatterAdder"
+import { Button, Checkbox, Col, Modal, Row, Space, Tag, Tooltip } from "antd"
 
 
 const CheckboxGroup = Checkbox.Group
@@ -51,12 +51,12 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
             }
             open={visible}
             onCancel={() => {
-                setVisible(false);
+                setVisible(false)
                 console.log('cancel', originFms)
                 setPostMeta({ ...postMeta, tags: originTags, categories: originCats, frontMatter: originFms })
             }}
             onOk={() => {
-                setVisible(false);
+                setVisible(false)
                 handleChange({ tags: postMeta.tags, categories: postMeta.categories, frontMatter: postMeta.frontMatter })
             }}
             afterOpenChange={() => {

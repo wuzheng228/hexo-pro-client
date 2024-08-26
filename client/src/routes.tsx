@@ -33,7 +33,7 @@ export const routes: IRoute[] = [
 // 自定义钩子函数
 const useRoute = (): [IRoute[], string] => {
 
-    const [finalRoutes, _] = useState(routes)
+    const [finalRoutes] = useState(routes)
 
     const defaultRoute = useMemo(() => {
         const first = finalRoutes[0]

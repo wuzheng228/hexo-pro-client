@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"
 import { Footer as Foo } from 'antd/es/layout/layout'
 import styles from './style/index.module.less'
 

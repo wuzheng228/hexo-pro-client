@@ -1,8 +1,8 @@
-import { Button, Image, Space, Table, TableProps } from "antd";
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import service from "@/utils/api";
-import useLocale from "@/hooks/useLocale";
+import { Button, Image, Space, Table, TableProps } from "antd"
+import React, { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import service from "@/utils/api"
+import useLocale from "@/hooks/useLocale"
 
 
 interface DataType {
@@ -43,7 +43,7 @@ function ArticleList({ published }) {
             title: t['content.articleList.table.permalink'],
             dataIndex: 'permalink',
             render: (col, item, index) => {
-                return (<a href={decodeURIComponent(item.permalink)} target='_blank'>{decodeURIComponent(item.permalink)}</a>)
+                return (<a href={decodeURIComponent(item.permalink)} target='_blank' rel="noreferrer">{decodeURIComponent(item.permalink)}</a>)
             }
         },
         {
@@ -78,7 +78,7 @@ function ArticleList({ published }) {
             .then(res => {
                 const result = res.data.map((obj, i) => {
                     return { _id: obj._id, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, updated: obj.updated, key: i + 1 }
-                });
+                })
                 setPostList(result)
             })
     }

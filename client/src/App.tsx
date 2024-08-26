@@ -6,7 +6,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import rootReducer from './store'
 import Login from "./pages/login"
 import PageLayout from "./layout"
-import { ConfigProvider, ConfigProviderProps, theme as antTheme } from "antd"
+import { ConfigProvider, theme as antTheme, message } from "antd"
 
 import enUS from 'antd/locale/en_US'
 import zhCN from 'antd/locale/zh_CN'
@@ -14,26 +14,24 @@ import { GlobalContext } from "./context"
 import service from "./utils/api"
 import checkLogin from "./utils/checkLogin"
 import useStorage from "./utils/useStorage"
-import { use } from "marked"
 
-type Locale = ConfigProviderProps['locale'];
 
 const store = createStore(rootReducer)
 
 function App() {
 
-    const [lang, setLang] = useStorage('hexo-pro-lang', 'zh-CN');
-    const [theme, setTheme] = useStorage('hexo-pro-theme', 'light');
+    const [lang, setLang] = useStorage('hexo-pro-lang', 'zh-CN')
+    const [theme, setTheme] = useStorage('hexo-pro-theme', 'light')
     const [configProviderTheme, setConfigProviderTheme] = useState({})
 
     function getLocale() {
         switch (lang) {
             case 'zh-CN':
-                return zhCN;
+                return zhCN
             case 'en-US':
-                return enUS;
+                return enUS
             default:
-                return zhCN;
+                return zhCN
         }
     }
 
@@ -48,23 +46,23 @@ function App() {
         store.dispatch({
             type: 'update-userInfo',
             payload: { userLoading: true },
-        });
+        })
         service.get('/hexopro/api/userInfo').then((res) => {
             store.dispatch({
                 type: 'update-userInfo',
                 payload: { userInfo: res.data, userLoading: false },
-            });
+            })
         }).catch(err => {
-            console.log(err)
+            message.error(err.message)
         }
-        );
+        )
     }
 
     useEffect(() => {
         if (checkLogin()) {
             fetchUserInfo()
         } else if (window.location.pathname.replace(/\//g, '') !== 'prologin') {
-            window.location.pathname = '/pro/login';
+            window.location.pathname = '/pro/login'
         }
     }, [])
 
