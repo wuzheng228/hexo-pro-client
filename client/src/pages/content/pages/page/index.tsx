@@ -139,7 +139,7 @@ function Page() {
                 reject(err)
             })
         })
-        navigate(`/pages`);
+        navigate(`/content/pages`);
     }
 
     const handlePublish = () => {
