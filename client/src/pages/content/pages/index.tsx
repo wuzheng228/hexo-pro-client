@@ -4,7 +4,7 @@ import service from '@/utils/api'
 import { Link } from 'react-router-dom'
 import _ from 'lodash'
 // import { GlobalState } from '@/store';
-import { Button, Card, Image, Input, Space, Table, TableColumnProps, TableProps } from 'antd'
+import { Button, Card, Image, Input, Popconfirm, Space, Table, TableColumnProps, TableProps, message } from 'antd'
 import useLocale from '@/hooks/useLocale'
 
 
@@ -25,6 +25,32 @@ export default function Pages() {
     const inputRef = useRef(null)
     const [pageList, setPageList] = useState([])
     const t = useLocale()
+    const [currentPage, setCurrentPage] = useState(1)
+
+    const handleTableChange = (pagination) => {
+        setCurrentPage(pagination.current)
+    }
+
+    const removeSource = async (item) => {
+        try {
+            // 执行删除操作
+            await service.get('/hexopro/api/pages/' + item._id + '/remove');
+
+            // 重新查询数据并更新列表
+            const res = await service.get('/hexopro/api/pages/list?deleted=' + false)
+            const result = res.data.map((obj, i) => {
+                return { _id: obj._id, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, updated: obj.updated, key: i + 1 }
+            })
+
+            // 更新列表
+            setPageList(result);
+
+            // 保持当前页码
+            setCurrentPage(currentPage);
+        } catch (err) {
+            message.error(err.message)
+        }
+    }
 
     const queryPages = () => {
         service.get('/hexopro/api/pages/list?deleted=' + false)
@@ -93,8 +119,25 @@ export default function Pages() {
                 return (
                     <Space>
                         <Link to={`/page/${item._id}`}>
-                            <Button type='primary' >{t['content.articleList.btn.edit']}</Button>
+                            <Button type='primary' size="small">{t['content.articleList.btn.edit']}</Button>
                         </Link>
+                        <Popconfirm
+                            title={t['editor.header.pop.title']}
+                            description={t['page.editor.header.pop.des']}
+                            onConfirm={() => {
+                                message.info({
+                                    content: 'ok',
+                                })
+                                removeSource(item,)
+                            }}
+                            onCancel={() => {
+                                message.error({
+                                    content: 'cancel',
+                                })
+                            }}
+                        >
+                            <Button type='dashed' size="small">{t['content.articleList.btn.delete']}</Button>
+                        </Popconfirm>
                     </Space>
 
                 )
@@ -112,7 +155,7 @@ export default function Pages() {
     return (
         <div>
             <Card style={{ height: '100%' }}>
-                <Table columns={columns} dataSource={pageList} />
+                <Table columns={columns} dataSource={pageList} pagination={{ current: currentPage }} onChange={handleTableChange} />
             </Card>
         </div>
 

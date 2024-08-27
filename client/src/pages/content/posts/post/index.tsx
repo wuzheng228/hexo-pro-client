@@ -162,7 +162,7 @@ function Post() {
         postRef.current({ _content: text })
     }
 
-    const removeBlog = () => {
+    const removeBlog = async () => {
         const promise = new Promise((resolve, reject) => {
             service.get('/hexopro/api/posts/' + _id + '/remove').then((res) => {
                 resolve(res.data)
@@ -170,10 +170,11 @@ function Post() {
                 reject(err)
             })
         })
+        await promise
         if (post.isDraft) {
-            navigate(`/posts/drafts`)
+            navigate(`/content/posts/drafts`)
         } else {
-            navigate(`/posts/blogs`)
+            navigate(`/content/posts/blogs`)
         }
     }
 

@@ -43,6 +43,8 @@ const i18n = {
         'vditor.upload.success': 'Upload success',
         'vditor.upload.invalidFileType': 'Only image upload is supported',
         'error.title': 'Error',
+        'content.articleList.btn.delete': 'Delete',
+        'list.editor.header.pop.des': 'Are you sure to delete the article?',
     },
     'zh-CN': {
         'menu.posts': '文章',
@@ -62,6 +64,7 @@ const i18n = {
         'editor.header.pop.title': '确认删除',
         'page.editor.header.pop.des': '确定删除页面吗?',
         'post.editor.header.pop.des': '确定删除博客吗?',
+        'list.editor.header.pop.des': '确定删除吗?',
         'navbar.search.modal.title': '搜索',
         'navbar.search.modal.input.placeholder': '搜索文章、页面、草稿',
         'navbar.search.tag.page': '页面',
@@ -88,6 +91,7 @@ const i18n = {
         'vditor.upload.success': '上传成功',
         'vditor.upload.invalidFileType': '只支持图片上传',
         'error.title': '错误',
+        'content.articleList.btn.delete': '删除',
     }
 }
 

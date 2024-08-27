@@ -131,7 +131,7 @@ function Page() {
         postRef.current({ _content: text })
     }
 
-    const removePage = () => {
+    const removePage = async () => {
         const promise = new Promise((resolve, reject) => {
             service.get('/hexopro/api/pages/' + _id + '/remove').then((res) => {
                 resolve(res.data)
@@ -139,11 +139,8 @@ function Page() {
                 reject(err)
             })
         })
-<<<<<<< HEAD
-        navigate(`/pages`)
-=======
+        await promise
         navigate(`/content/pages`);
->>>>>>> bf45c0915f0f3e265f34c277c77aadb476e22178
     }
 
     const handlePublish = () => {
