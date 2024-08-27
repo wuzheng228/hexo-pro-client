@@ -33,7 +33,7 @@ module.exports = {
     // 输出
     output: {
         publicPath: '/pro/',
-        path: path.resolve(__dirname, '../www'),
+        path: path.resolve(__dirname, '../hexo-pro/www'),
         filename: 'static/js/[name][contenthash:10].js',
         chunkFilename: 'static/js/[name][contenthash:10].chunk.js',
         assetModuleFilename: 'static/media/[hash:10][ext][query]',
