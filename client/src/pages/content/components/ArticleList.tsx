@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import service from "@/utils/api"
 import useLocale from "@/hooks/useLocale"
-import { DeleteOutlined } from "@ant-design/icons"
 
 
 interface DataType {
@@ -29,19 +28,19 @@ function ArticleList({ published }) {
     const removeSource = async (item) => {
         try {
             // 执行删除操作
-            await service.get('/hexopro/api/posts/' + item._id + '/remove');
+            await service.get('/hexopro/api/posts/' + item._id + '/remove')
 
             // 重新查询数据并更新列表
-            const res = await service.get('/hexopro/api/posts/list?published=' + published);
+            const res = await service.get('/hexopro/api/posts/list?published=' + published)
             const result = res.data.map((obj, i) => {
-                return { _id: obj._id, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, updated: obj.updated, key: i + 1 };
-            });
+                return { _id: obj._id, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, updated: obj.updated, key: i + 1 }
+            })
 
             // 更新列表
-            setPostList(result);
+            setPostList(result)
 
             // 保持当前页码
-            setCurrentPage(currentPage);
+            setCurrentPage(currentPage)
         } catch (err) {
             message.error(err.message)
         }

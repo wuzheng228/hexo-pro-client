@@ -1,12 +1,10 @@
 import { service } from '@/utils/api'
-import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode, useContext } from 'react'
+import React, { useEffect, useRef, useState, useContext } from 'react'
 import { useParams } from 'react-router-dom'
-import { Button, Col, message, Popconfirm, Row, Skeleton } from 'antd'
-import IconSort from '../../../../assets/sort.svg'
+import { message, Skeleton } from 'antd'
 import _ from 'lodash'
 import { PostSettings } from './postSetting'
 import { useNavigate } from "react-router-dom"
-import { BarsOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons'
 import HexoProVditor from '@/components/Vditor'
 import EditorHeader from '../../components/EditorHeader'
 import useLocale from '@/hooks/useLocale'
@@ -15,8 +13,6 @@ import { useSelector } from 'react-redux'
 import { GlobalState } from '@/store'
 import { GlobalContext } from '@/context'
 
-
-const ButtonGroup = Button.Group
 
 type Post = {
     isDraft: boolean
@@ -107,15 +103,15 @@ function Post() {
     }
 
     const dataDidLoad = (name, data) => {
-        if (name == 'postMeta') {
+        if (name === 'postMeta') {
             setPostMetadata(data)
             return
         }
-        if (name == 'tagsCategoriesAndMetadata') {
+        if (name === 'tagsCategoriesAndMetadata') {
             setTagsCatMeta(data)
             return
         }
-        if (name == 'post') {
+        if (name === 'post') {
             // console.log('dataLoad', data)
             const parts = data.raw.split('---')
             const _slice = parts[0] === '' ? 2 : 1
@@ -130,7 +126,7 @@ function Post() {
     }
 
     const handleChange = (update) => {
-        console.log('update', update)
+        // console.log('update', update)
         // var now = moment()
         const promise = new Promise((resolve, reject) => {
             service.post('/hexopro/api/posts/' + _id, update).then((res) => {
@@ -143,11 +139,10 @@ function Post() {
     }
 
     const handleChangeTitle = (v) => {
-        if (v == title) {
+        if (v === title) {
             return
         }
         setTitle(v)
-        console.log(post.source)
         const parts = post.source.split('/')
         parts[parts.length - 1] = v + '.md'
         const newSource = parts.join('/')
@@ -183,7 +178,7 @@ function Post() {
         res.then((data: Post) => {
             setPost(data)
         }).catch(err => {
-            console.log(err)
+            message.error(err.message)
         })
     }
 
@@ -192,7 +187,6 @@ function Post() {
             return
         }
         return new Promise((resolve, reject) => {
-            console.log('publish blog')
             service.post('/hexopro/api/posts/' + _id + '/publish').then((res) => {
                 resolve(res.data)
             }).catch(err => {
@@ -206,7 +200,7 @@ function Post() {
         res.then((data: Post) => {
             setPost(data)
         }).catch(err => {
-            console.log(err)
+            message.error(err.message)
         })
     }
 
@@ -215,7 +209,6 @@ function Post() {
             return
         }
         return new Promise((resolve, reject) => {
-            console.log('unpublish blog')
             service.post('/hexopro/api/posts/' + _id + '/unpublish').then((res) => {
                 resolve(res.data)
             }).catch(err => {
@@ -225,7 +218,7 @@ function Post() {
     }
 
     const handleUpdate = (update) => {
-        console.log(update)
+        // console.log(update)
         return new Promise((resolve, reject) => {
             service.post('/hexopro/api/posts/' + _id, update).then((res) => {
                 resolve(res.data)
@@ -235,12 +228,8 @@ function Post() {
         })
     }
 
-    const handleUploadingImage = (isUploading: boolean) => {
-        console.log('handleUploadingImage', isUploading)
-    }
-
-    const handleOnVidorMounted = (vditor: any) => {
-        console.log('handleOnVidorMounted', vditor)
+    const handleUploadingImage = (_: boolean) => {
+        // console.log('handleUploadingImage', isUploading)
     }
 
     useEffect(() => {
@@ -303,7 +292,7 @@ function Post() {
                 popTitle={t['editor.header.pop.title']}
                 popDes={t['page.editor.header.pop.des']}
                 handleChangeTitle={handleChangeTitle}
-                handleSettingClick={(v) => setVisible(true)}
+                handleSettingClick={(_) => setVisible(true)}
                 handleRemoveSource={removeBlog}
             />
             <div style={{ width: "100%", flex: 1, padding: 0, border: 'none' }}>

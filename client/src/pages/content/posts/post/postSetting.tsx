@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { TagAdder } from "./tagAdder"
 import { FrontMatterAdder } from "../../components/frontMatterAdder"
-import { Button, Checkbox, Col, Modal, Row, Space, Tag, Tooltip } from "antd"
+import { Button, Col, Modal, Row, Space, Tag, Tooltip } from "antd"
 
-
-const CheckboxGroup = Checkbox.Group
 
 export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, postMeta, setPostMeta, handleChange }) {
     // 添加标签使用的状态
@@ -15,7 +13,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
     const [fmOpenStat, setFmOpenStat] = useState(false)
     const [originFms, setOriginFms] = useState([])
 
-    console.log(postMeta)
+    // console.log(postMeta)
 
     const tagClose = (v) => {
         const newTags = postMeta.tags.filter(item => item !== v)

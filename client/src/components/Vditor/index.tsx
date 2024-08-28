@@ -7,7 +7,14 @@ import service from '@/utils/api'
 import { GlobalContext } from '@/context'
 import useLocale from '@/hooks/useLocale'
 
-export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage }) {
+interface HexoProVditorProps {
+    initValue: string;
+    isPinToolbar: boolean;
+    handleChangeContent: (content: string) => void;
+    handleUploadingImage: (isUploading: boolean) => void;
+}
+
+export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage }: HexoProVditorProps) {
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
 
     const t = useLocale()
@@ -44,9 +51,9 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     }, [isUploadingImage, handleUploadingImage])
 
     useEffect(() => {
-        console.log('isPinToolbar', isPinToolbar)
+        // console.log('isPinToolbar', isPinToolbar)
         if (vd) {
-            console.log('isPinToolbar111', isPinToolbar)
+            // console.log('isPinToolbar111', isPinToolbar)
             vd.updateToolbarConfig({
                 pin: isPinToolbar
             })
@@ -54,9 +61,9 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     }, [vd, isPinToolbar])
 
     useEffect(() => {
-        console.log('theme', theme)
+        // console.log('theme', theme)
         if (vd) {
-            console.log('theme111', theme)
+            // console.log('theme111', theme)
             vd.setTheme(theme === 'dark' ? 'dark' : 'classic', theme === 'dark' ? 'dark' : 'light', theme === 'dark' ? 'native' : 'xcode')
         }
     }, [vd, theme])
@@ -110,7 +117,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 const editorHeader = document.querySelector('.editor-header') as HTMLElement
 
                 if (content && toolbar && editorHeader) {
-                    console.log('走到这里了')
+                    // console.log('走到这里了')
                     content.style.cssText = `margin-top: ${toolbar.clientHeight + editorHeader.clientHeight}px !important;`
                 }
 
@@ -132,25 +139,9 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             },
             upload: {
                 multiple: true,
-                error: (err: any) => {
-                    console.log('err', err)
-                },
-                validate: (files) => {
-                    console.log('validate', files)
-                    return true
-                },
-                format: (files: File[], responseText: string): string => {
-                    // 这里可以添加处理文件格式化的逻辑
-                    console.log('format', files)
-                    return responseText
-                },
-                file: (files: File[]): File[] | Promise<File[]> => {
-                    console.log('file', files)
-                    return null
-                },
                 handler: (files: File[]): Promise<string | null> => {
                     // 这里可以添加处理文件上传的逻辑
-                    console.log('files', files)
+                    // console.log('files', files)
 
                     const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/bmp', 'image/webp']
 
@@ -167,7 +158,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                         reader.onload = (event) => {
                             const filename = file.name
                             uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
-                                console.log('update=> ', res)
+                                // console.log('update=> ', res)
                                 res['code'] = 0
 
                                 setTimeout(() => {
@@ -181,7 +172,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                     }
                                     // 重新渲染编辑器内容（如果需要）
                                     vditor.tip(`${t['vditor.upload.success']}: ${filename}`, 3000)
-                                }, 300)
+                                }, 600)
                                 return null
                             }).catch((err) => {
                                 vditor.tip(`${t['vditor.upload.error']}: ${err.message}`, 3000)
@@ -195,7 +186,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     return null // 确保函数返回一个值
                 }
             },
-            input: (v) => {
+            input: (_) => {
                 handleChangeContent(vditor.getValue())
             },
             toolbar: [

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react"
 import styles from './style/index.module.less'
 import Logo from '@/assets/logo.svg'
-import { Avatar, Button, Dropdown, Input, List, MenuProps, Modal, Tag, notification } from "antd"
+import { Avatar, Button, Dropdown, Input, List, MenuProps, Modal, Tag, message, notification } from "antd"
 import { DownOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
 import useLocale from "@/hooks/useLocale"
@@ -19,7 +19,7 @@ export default function Navbar() {
     const userInfo = useSelector((state: GlobalState) => state.userInfo)
     const { theme, setTheme, setLang } = useContext(GlobalContext)
     const locale = useLocale()
-    const [_, setUserStatus] = useStorage('userStatus')
+    const [, setUserStatus] = useStorage('userStatus')
 
     const [open, setOpen] = useState(false)
     const [title, setTitle] = useState('')
@@ -28,7 +28,7 @@ export default function Navbar() {
     const [searchValue, setSearchValue] = useState('')
     const [searchInfoList, setSearchInfoList] = useState([])
     const [searchLoading, setSearchLoading] = useState(false)
-    const [api, contextHolder] = notification.useNotification();
+    const [api,] = notification.useNotification()
 
     const writeDropList: MenuProps['items'] = [
         {
@@ -84,7 +84,6 @@ export default function Navbar() {
             setOpen(true)
             setTarget('Post')
         } else if (key === '2') {
-            console.log('create page')
             setOpen(true)
             setTarget('Page')
         }
@@ -100,7 +99,6 @@ export default function Navbar() {
 
     const handleLogout: MenuProps['onClick'] = ({ key }) => {
         if (key === '1') {
-            console.log('logout')
             setUserStatus('logout')
             window.location.href = '/pro/login'
         }
@@ -112,6 +110,7 @@ export default function Navbar() {
 
     const checkTitle = (title: string) => {
         if (!title || title.trim() === '' || title.length > 100) {
+            message.error(locale['navbar.modal.error.title'])
             return false
         }
         return true
@@ -140,7 +139,7 @@ export default function Navbar() {
                 navigate(`/page/${post._id}`)
             }
         }).catch(err => {
-            api.error({ message: locale['error.title'], description: err.message });
+            api.error({ message: locale['error.title'], description: err.message })
         })
         setOpen(false)
     }
@@ -148,10 +147,8 @@ export default function Navbar() {
     const onSubmit = () => {
         console.log('submit', title)
         if (target === 'Post') {
-            console.log('create article')
             newPost()
         } else if (target === 'Page') {
-            console.log('create page')
             newPage()
         }
     }
@@ -168,8 +165,8 @@ export default function Navbar() {
                 if (res.status === 200 && payLoad.code === 0) {
                     setSearchInfoList(payLoad.data)
                 }
-            }).catch(_ => {
-
+            }).catch(err => {
+                api.error({ message: locale['error.title'], description: err.message })
             }).finally(() => {
                 setSearchLoading(false)
             })

@@ -10,7 +10,7 @@ import {
     highlightActiveLineGutter,
     keymap,
 } from '@codemirror/view'
-import { EditorState, Compartment, StateCommand } from '@codemirror/state'
+import { EditorState, Compartment } from '@codemirror/state'
 import { HighlightStyle } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 import { ayuLight } from 'thememirror'
@@ -115,7 +115,7 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
                 }),
                 domEventHandlers.of(EditorView.domEventHandlers({
                     scroll(event, view) {
-                        console.log(enableAutoStroll)
+                        // console.log(enableAutoStroll)
                         handleScroll(editorRef.current.scrollTop / editorRef.current.scrollHeight)
                     },
                     paste(event, view) {
@@ -195,7 +195,7 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
             renderer: {
                 code: ({ text, lang, escaped }: Tokens.Code) => {
                     if (!text) return ''
-                    console.log('render', text)
+                    // console.log('render', text)
                     const validLanguage = hljs.getLanguage(lang) ? lang : 'plaintext'
                     return `<pre><code>${hljs.highlight(text, { language: validLanguage }).value}</code></pre>`
                 }

@@ -45,6 +45,7 @@ const i18n = {
         'error.title': 'Error',
         'content.articleList.btn.delete': 'Delete',
         'list.editor.header.pop.des': 'Are you sure to delete the article?',
+        'navbar.modal.error.title': 'Title cannot be empty or longer than 100',
     },
     'zh-CN': {
         'menu.posts': '文章',
@@ -92,6 +93,7 @@ const i18n = {
         'vditor.upload.invalidFileType': '只支持图片上传',
         'error.title': '错误',
         'content.articleList.btn.delete': '删除',
+        'navbar.modal.error.title': '标题不能为空或长度超过100',
     }
 }
 

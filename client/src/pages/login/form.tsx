@@ -3,7 +3,6 @@ import { Button, Form, Input, message } from "antd"
 import React, { useRef, useState } from "react"
 import styles from './style/index.module.less'
 import useLocale from "@/hooks/useLocale"
-import localeValues from "antd/locale/en_US"
 import service from "@/utils/api"
 import useStorage from "@/utils/useStorage"
 
@@ -15,7 +14,7 @@ export default function LoginForm() {
     const [loginParams, setLoginParams, removeLoginParams] =
         useStorage('loginParams')
 
-    const [rememberPassword, setRememberPassword] = useState(!!loginParams)
+    const [rememberPassword,] = useState(!!loginParams)
 
     const t = useLocale()
 
@@ -63,7 +62,8 @@ export default function LoginForm() {
     function onSubmitClick() {
         formRef.current.validateFields().then((values) => {
             login(values)
-        }).catch((ignore) => {
+        }).catch((_) => {
+            message.error(t['login.form.validate.errMsg'])
         })
     }
 

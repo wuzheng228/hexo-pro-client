@@ -34,5 +34,6 @@ module.exports = {
         "no-var": 2, // 不能使用 var 定义变量
         "@typescript-eslint/no-explicit-any": "off", // 禁用 @typescript-eslint/no-explicit-any 规则
         "no-console": "error", // 禁用 console.log
+        "react/prop-types": "off", // 禁用所有的 props validation
     },
 }

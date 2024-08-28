@@ -1,7 +1,6 @@
 
-import MarkDownEditor from '@/components/markdownEditor'
 import { service } from '@/utils/api'
-import React, { useEffect, useRef, useState, createElement, Fragment, ReactNode, useContext } from 'react'
+import React, { useEffect, useRef, useState, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import _ from 'lodash'
 import { PageSettings } from './pageSettings'
@@ -83,13 +82,13 @@ function Page() {
     }
 
     const dataDidLoad = (name, data) => {
-        if (name == 'pageMeta') {
+        if (name === 'pageMeta') {
             setPageMetadata(data)
             setFmtKeys(Object.keys(data.frontMatter))
             return
         }
 
-        if (name == 'page') {
+        if (name === 'page') {
             // console.log('dataLoad', data)
             const parts = data.raw.split('---')
             const _slice = parts[0] === '' ? 2 : 1
@@ -116,7 +115,7 @@ function Page() {
     }
 
     const handleChangeTitle = (v) => {
-        if (v == title) {
+        if (v === title) {
             return
         }
         setTitle(v)
@@ -140,35 +139,7 @@ function Page() {
             })
         })
         await promise
-        navigate(`/content/pages`);
-    }
-
-    const handlePublish = () => {
-        if (!page.isDraft) {
-            return
-        }
-        return new Promise((resolve, reject) => {
-            console.log('publish blog')
-            service.post('/hexopro/api/pages/' + _id + '/publish').then((res) => {
-                resolve(res.data)
-            }).catch(err => {
-                reject(err)
-            })
-        })
-    }
-
-    const handleUnpublish = () => {
-        if (page.isDraft) {
-            return
-        }
-        return new Promise((resolve, reject) => {
-            console.log('unpublish blog')
-            service.post('/hexopro/api/pages/' + _id + '/unpublish').then((res) => {
-                resolve(res.data)
-            }).catch(err => {
-                reject(err)
-            })
-        })
+        navigate(`/content/pages`)
     }
 
     const handleUpdate = (update) => {
@@ -182,8 +153,8 @@ function Page() {
     }
 
 
-    const handleUploadingImage = (isUploading: boolean) => {
-        console.log('handleUploadingImage', isUploading)
+    const handleUploadingImage = (_: boolean) => {
+        // console.log('handleUploadingImage', isUploading)
     }
 
 

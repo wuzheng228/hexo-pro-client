@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 import service from '@/utils/api'
 import { Link } from 'react-router-dom'
 import _ from 'lodash'
@@ -34,7 +33,7 @@ export default function Pages() {
     const removeSource = async (item) => {
         try {
             // 执行删除操作
-            await service.get('/hexopro/api/pages/' + item._id + '/remove');
+            await service.get('/hexopro/api/pages/' + item._id + '/remove')
 
             // 重新查询数据并更新列表
             const res = await service.get('/hexopro/api/pages/list?deleted=' + false)
@@ -43,10 +42,10 @@ export default function Pages() {
             })
 
             // 更新列表
-            setPageList(result);
+            setPageList(result)
 
             // 保持当前页码
-            setCurrentPage(currentPage);
+            setCurrentPage(currentPage)
         } catch (err) {
             message.error(err.message)
         }

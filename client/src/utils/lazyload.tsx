@@ -18,7 +18,6 @@ function LoadingComponent(props: {
     pastDelay: boolean;
 }) {
     if (props.error) {
-        console.error(props.error)
         return null
     }
     return (

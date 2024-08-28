@@ -1,11 +1,11 @@
-import { BarsOutlined, DeleteOutlined, SettingOutlined } from "@ant-design/icons"
+import { DeleteOutlined, SettingOutlined } from "@ant-design/icons"
 import { Button, Col, message, Popconfirm, Row } from "antd"
 import ButtonGroup from "antd/es/button/button-group"
 import React, { useContext, useState } from "react"
 import cs from 'classnames'
 import IconPin from "@/assets/pin.svg"
 import IconPinFill from "@/assets/pin-fill.svg"
-import { useDispatch, useSelector } from "react-redux"
+import { useDispatch } from "react-redux"
 import { GlobalContext } from "@/context"
 import useLocale from "@/hooks/useLocale"
 
