@@ -125,7 +125,7 @@ function MarkdownEditor({ initialValue, adminSettings, handleChangeContent, enab
                         if (!items.length) return
                         let blob
                         for (let i = items.length - 1; i >= 0; i--) {
-                            if (items[i].kind == 'file') {
+                            if (items[i].kind === 'file') {
                                 blob = items[i].getAsFile()
                                 break
                             }

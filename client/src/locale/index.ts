@@ -86,7 +86,7 @@ const i18n = {
         'editor.header.unpublish': '取消发布',
         'login.form.title': '登录 Hexo Pro',
         'login.form.username': '用户名',
-        'login.form.password': 'Password',
+        'login.form.password': '密码',
         'login.banner.subSlogan1': '属于你自己的博客编辑后台',
         'vditor.upload.error': '上传失败，请稍后再试',
         'vditor.upload.success': '上传成功',

@@ -93,6 +93,69 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     useEffect(() => {
         const vditor = new Vditor('vditor', {
+            keydown(event) {
+                if (event.shiftKey && event.key === 'Tab') {
+                    // 阻止默认行为
+                    event.preventDefault()
+                    // 去除前方的空格如果前方大于4个空格则最多删除4个空格
+                    const selection = window.getSelection()
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0)
+                        const startContainer = range.startContainer
+                        const parentElement = startContainer.parentElement
+                        if (parentElement && parentElement.tagName === 'P') {
+                            const currentContent = parentElement.textContent
+                            const cursorPosition = range.startOffset
+                            if (currentContent.slice(cursorPosition - 4, cursorPosition) === '\u00A0\u00A0\u00A0\u00A0') {
+                                const newContent = currentContent.slice(0, cursorPosition - 4) + currentContent.slice(cursorPosition)
+                                parentElement.textContent = newContent
+                                // 保存光标位置
+                                const newCursorPosition = cursorPosition - 4
+                                // 重新选中编辑器并恢复光标位置
+                                handleChangeContent(vditor.getValue())
+                                range.setStart(parentElement.firstChild, newCursorPosition) // 设置新的光标位置
+                                range.collapse(true)
+                                selection.removeAllRanges() // 清除所有选区
+                                selection.addRange(range) // 重新选中编辑器并恢复光标位置
+                            }
+                        }
+                    }
+                    return
+                }
+                if (!event.shiftKey && event.key === 'Tab') {
+                    event.preventDefault() // 阻止默认行为
+
+                    const selection = window.getSelection()
+
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0)
+                        const startContainer = range.startContainer
+                        const parentElement = startContainer.parentElement
+
+                        if (parentElement && parentElement.tagName === 'P') {
+                            // 插入4个空格
+                            const spaces = '\u00A0\u00A0\u00A0\u00A0'
+                            const currentContent = parentElement.textContent // 使用textContent而不是innerHTML
+                            const cursorPosition = range.startOffset
+
+                            // 插入空格
+                            const newContent = currentContent.slice(0, cursorPosition) + spaces + currentContent.slice(cursorPosition)
+                            parentElement.textContent = newContent
+
+                            // 保存光标位置
+                            const newCursorPosition = cursorPosition + 4
+
+                            // 重新选中编辑器并恢复光标位置
+                            handleChangeContent(vditor.getValue())
+                            range.setStart(parentElement.firstChild, newCursorPosition) // 设置新的光标位置
+                            range.collapse(true)
+
+                            selection.removeAllRanges() // 清除所有选区
+                            selection.addRange(range) // 重新选中编辑器并恢复光标位置
+                        }
+                    }
+                }
+            },
             fullscreen: {
                 index: 100
             },
@@ -164,7 +227,6 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                 setTimeout(() => {
                                     const currentValue = vditor.getValue()
                                     const cursorPosition = vditor.getCursorPosition()
-                                    console.log('cursorPosition', cursorPosition)
                                     if (isEditorFocus) {
                                         vditor.setValue(currentValue + `\n![alt text](${res.src})`)
                                     } else {
@@ -233,10 +295,8 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     name: 'indent'
                 },
                 {
-                    name: 'code'
-                },
-                {
-                    name: 'inline-code'
+                    name: 'code',
+                    hotkey: 'Ctrl-E'
                 },
                 {
                     name: 'inline-code'
