@@ -113,6 +113,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                 parentElement.textContent = newContent
                                 // 保存光标位置
                                 const newCursorPosition = cursorPosition - 24
+
                                 // 重新选中编辑器并恢复光标位置
                                 handleChangeContent(vditor.getValue())
                                 range.setStart(parentElement.firstChild, newCursorPosition) // 设置新的光标位置
@@ -133,11 +134,11 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                         const range = selection.getRangeAt(0)
                         const startContainer = range.startContainer
                         const parentElement = startContainer.parentElement
-                        console.log('parentElement', parentElement.tagName)
 
                         if (parentElement && (parentElement.tagName === 'P' || parentElement.tagName === 'SPAN')) {
                             // 插入4个空格
                             const spaces = '&nbsp;&nbsp;&nbsp;&nbsp;'
+
                             const currentContent = parentElement.textContent // 使用textContent而不是innerHTML
                             const cursorPosition = range.startOffset
 
