@@ -145,7 +145,6 @@ export default function Navbar() {
     }
 
     const onSubmit = () => {
-        console.log('submit', title)
         if (target === 'Post') {
             newPost()
         } else if (target === 'Page') {
