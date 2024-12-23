@@ -6,6 +6,7 @@ import "./style/index.less"
 import service from '@/utils/api'
 import { GlobalContext } from '@/context'
 import useLocale from '@/hooks/useLocale'
+import { use } from 'marked'
 
 interface HexoProVditorProps {
     initValue: string;
@@ -92,6 +93,12 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     }, [vd])
 
     useEffect(() => {
+        if (vd) {
+            vd.setValue(initValue)
+        }
+    }, [vd, initValue])
+
+    useEffect(() => {
         const vditor = new Vditor('vditor', {
             keydown(event) {
                 if (event.shiftKey && event.key === 'Tab') {
@@ -172,7 +179,9 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             },
             after: () => {
                 // 设置初始值
-                vditor.setValue(initValue)
+                if (!initValue && initValue !== '') {
+                    vditor.setValue(initValue)
+                }
                 // 固定toolbar
                 const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement
                 const vditorElement = document.getElementById('vditor') as HTMLElement
