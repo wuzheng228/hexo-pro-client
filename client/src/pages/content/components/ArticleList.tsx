@@ -1,12 +1,16 @@
 import { Button, Image, Popconfirm, Space, TableProps, message, Row, Col, Card, Pagination, Dropdown, Typography } from "antd"
-import { EllipsisOutlined, LinkOutlined } from "@ant-design/icons"
-import React, { useEffect, useState } from "react"
+import { EllipsisOutlined } from "@ant-design/icons"
+import React, { useContext, useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import service from "@/utils/api"
 import useLocale from "@/hooks/useLocale"
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import { use } from "marked"
-
+import { GlobalContext } from "@/context"
+import IconLink from "@/assets/link.svg"
+import IconLinkLight from "@/assets/linkLight.svg"
+import Iconllipsis from "@/assets/ellipsis.svg"
+import IconllipsisLight from "@/assets/ellipsisLight.svg"
 
 const { Text } = Typography;
 
@@ -31,6 +35,7 @@ interface DataType {
 
 function ArticleList({ published, isPage = false, showPublishStatus = true }) {
     const isMobile = useDeviceDetect()
+    const { theme } = useContext(GlobalContext)
     const [postList, setPostList] = useState([])
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(isMobile ? 6 : 12) // 移动端使用较小的 pageSize
@@ -132,7 +137,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                             event.stopPropagation();
                                             window.open(item.permalink, '_blank');
                                         }}
-                                        icon={<LinkOutlined />}
+                                        icon={theme === 'dark' ? <IconLinkLight /> : <IconLink />}
                                     >
                                     </Button>
                                     <Dropdown
@@ -153,9 +158,9 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                                             <Popconfirm
                                                                 title={t['editor.header.pop.title']}
                                                                 description={t['list.editor.header.pop.des']}
-                                                                onConfirm={(event) => { 
-                                                                    if(event && event.stopPropagation) event.stopPropagation();
-                                                                    removeSource(item) 
+                                                                onConfirm={(event) => {
+                                                                    if (event && event.stopPropagation) event.stopPropagation();
+                                                                    removeSource(item)
                                                                 }}
                                                             >
                                                                 <Text type="danger" onClick={(event) => {
@@ -174,8 +179,8 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                     >
                                         <Button
                                             type="text"
-                                            icon={<EllipsisOutlined />}
-                                            style={{ color: 'rgba(0, 0, 0, 0.45)' }}
+                                            icon={theme === 'dark' ? <IconllipsisLight /> : <Iconllipsis />}
+                                            // style={{ color: 'rgba(0, 0, 0, 0.45)' }}
                                             onClick={(event) => {
                                                 event.stopPropagation();
                                             }}
@@ -185,7 +190,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                             </div>
 
                             <Card.Meta
-                                title={<Text ellipsis={{tooltip: item.title}} style={{maxWidth: 'calc(100% - 80px)'}}>{item.title}</Text>}
+                                title={<Text ellipsis={{ tooltip: item.title }} style={{ maxWidth: 'calc(100% - 80px)' }}>{item.title}</Text>}
                                 description={
                                     <div style={{ marginTop: 8 }}>
                                         <div>{t['content.articleList.table.date']}: {item.date}</div>
