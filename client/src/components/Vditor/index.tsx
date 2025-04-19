@@ -6,7 +6,10 @@ import "./style/index.less"
 import service from '@/utils/api'
 import { GlobalContext } from '@/context'
 import useLocale from '@/hooks/useLocale'
-import { use } from 'marked'
+// 移除未使用的导入
+// import { use } from 'marked'
+// import { useDeviceDetect } from 'use-device-detection'
+import useDeviceDetect from '@/hooks/useDeviceDetect'
 
 interface HexoProVditorProps {
     initValue: string;
@@ -38,6 +41,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
 
     const { theme, lang } = useContext(GlobalContext)
+    const { isMobile } = useDeviceDetect(); // 添加设备检测
 
     function getLocale() {
         if (lang === 'zh-CN') {
@@ -168,7 +172,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 }
             },
             fullscreen: {
-                index: 100
+                index: 9999
             },
             lang: getLocale(),
             theme: 'classic',
@@ -187,6 +191,18 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 const vditorElement = document.getElementById('vditor') as HTMLElement
                 if (toolbar && vditorElement) {
                     toolbar.style.width = `${vditorElement.clientWidth}px !important`
+
+                    // 为移动设备添加专用样式
+                    if (isMobile) {
+                        vditorElement.classList.add('vditor-mobile');
+                        toolbar.classList.add('vditor-toolbar-mobile');
+
+                        // 移动设备下优化工具栏布局
+                        const toolbarItems = toolbar.querySelectorAll('.vditor-toolbar__item');
+                        toolbarItems.forEach((item) => {
+                            (item as HTMLElement).style.margin = '2px';
+                        });
+                    }
                 }
 
                 const content = document.querySelector('vditor-content') as HTMLElement
@@ -264,13 +280,48 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             input: (_) => {
                 handleChangeContent(vditor.getValue())
             },
-            toolbar: [
-                // {
-                //     name: 'code-theme'
-                // },
-                // {
-                //     name: 'content-theme'
-                // },
+            toolbar: isMobile ? [
+                // 移动设备上使用简化的工具栏
+                {
+                    name: 'headings'
+                },
+                {
+                    name: 'bold'
+                },
+                {
+                    name: 'italic'
+                },
+                {
+                    name: 'strike'
+                },
+                {
+                    name: 'line'
+                },
+                {
+                    name: 'quote'
+                },
+                {
+                    name: 'list'
+                },
+                {
+                    name: 'ordered-list'
+                },
+                {
+                    name: 'check'
+                },
+                {
+                    name: 'code',
+                    hotkey: 'Ctrl-E'
+                },
+                {
+                    name: 'upload'
+                },
+                {
+                    name: 'preview',
+                    className: 'toolbar-right'
+                }
+            ] : [
+                // 桌面设备使用完整工具栏
                 {
                     name: 'emoji'
                 },
@@ -367,7 +418,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             vd?.destroy()
             setVd(undefined)
         }
-    }, [initValue, lang])
+    }, [initValue, lang, isMobile]) // 添加 isMobile 作为依赖
 
     return (
         <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, borderRadius: '0px' }}>

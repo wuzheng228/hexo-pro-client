@@ -2,6 +2,7 @@ import { service } from '@/utils/api'
 import React, { useEffect, useRef, useState, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import { message, Skeleton } from 'antd'
+import ErrorDisplay from '@/components/ErrorDisplay'
 import _ from 'lodash'
 import { PostSettings } from './postSetting'
 import { useNavigate } from "react-router-dom"
@@ -37,6 +38,7 @@ function Post() {
     const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
 
     const [skeletonLoading, setSkeletonLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
     const toolbarPin = useSelector((state: GlobalState) => {
         return state.vditorToolbarPin
     })
@@ -53,6 +55,7 @@ function Post() {
 
     const t = useLocale()
 
+    // permailink base64位编码作为id
     const queryPostById = (_id) => {
         return new Promise((resolve, reject) => {
             service.get('/hexopro/api/posts/' + _id).then((res) => {
@@ -248,9 +251,14 @@ function Post() {
         }
     }, [])
 
-    useEffect(() => {
-        setSkeletonLoading(true)
-        const fetchData = async () => {
+    const retryFetch = () => {
+        setError(null)
+        fetchData()
+    }
+
+    const fetchData = async () => {
+        try {
+            setSkeletonLoading(true)
             const items = fetch()
             const promises = Object.keys(items).map((name) => {
                 return Promise.resolve(items[name]).then((data) => {
@@ -260,15 +268,26 @@ function Post() {
                     if (dataDidLoad) {
                         dataDidLoad(name, data)
                     }
+                }).catch(err => {
+                    // 捕获单个API错误但继续执行其他请求
+                    console.error(`API ${name} error:`, err)
+                    throw err
                 })
             })
+
             await Promise.all(promises)
-            // 添加延迟
+            setError(null)
+        } catch (err) {
+            setError(err as Error)
+            message.error('加载失败: ' + (err as Error).message)
+        } finally {
             setTimeout(() => {
                 setSkeletonLoading(false)
-            }, 800) // 这里的1000表示1000毫秒，即1秒的延迟
+            }, 800)
         }
+    }
 
+    useEffect(() => {
         fetchData()
     }, [])
 
@@ -281,32 +300,38 @@ function Post() {
 
     return (
         <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: 'auto', overflowX: 'hidden' }}>
-            <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
-            <EditorHeader
-                isPage={false}
-                isDraft={post.isDraft}
-                handlePublish={publish}
-                handleUnpublish={unpublish}
-                className={styles['editor-header']}
-                initTitle={title}
-                popTitle={t['editor.header.pop.title']}
-                popDes={t['page.editor.header.pop.des']}
-                handleChangeTitle={handleChangeTitle}
-                handleSettingClick={(_) => setVisible(true)}
-                handleRemoveSource={removeBlog}
-            />
-            <div style={{ width: "100%", flex: 1, padding: 0, border: 'none' }}>
-                <HexoProVditor initValue={doc} isPinToolbar={toolbarPin} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
-            </div>
-            <PostSettings
-                visible={visible}
-                setVisible={setVisible}
-                tagCatMeta={tagsCatMeta}
-                setTagCatMeta={setTagsCatMeta}
-                postMeta={postMetaData}
-                setPostMeta={setPostMetadata}
-                handleChange={handleChange}
-            />
+            {error ? (
+                <ErrorDisplay error={error} onRetry={retryFetch} />
+            ) : (
+                <>
+                    <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
+                    <EditorHeader
+                        isPage={false}
+                        isDraft={post.isDraft}
+                        handlePublish={publish}
+                        handleUnpublish={unpublish}
+                        className={styles['editor-header']}
+                        initTitle={title}
+                        popTitle={t['editor.header.pop.title']}
+                        popDes={t['page.editor.header.pop.des']}
+                        handleChangeTitle={handleChangeTitle}
+                        handleSettingClick={(_) => setVisible(true)}
+                        handleRemoveSource={removeBlog}
+                    />
+                    <div style={{ width: "100%", flex: 1, padding: 0, border: 'none' }}>
+                        <HexoProVditor initValue={doc} isPinToolbar={toolbarPin} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
+                    </div>
+                    <PostSettings
+                        visible={visible}
+                        setVisible={setVisible}
+                        tagCatMeta={tagsCatMeta}
+                        setTagCatMeta={setTagsCatMeta}
+                        postMeta={postMetaData}
+                        setPostMeta={setPostMetadata}
+                        handleChange={handleChange}
+                    />
+                </>
+            )}
         </div >
     )
 }

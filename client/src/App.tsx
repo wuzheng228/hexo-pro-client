@@ -94,6 +94,7 @@ function App() {
                         defaultBorderColor: 'none',
                         defaultHoverBorderColor: 'none',
                     },
+
                 }
             })
         } else {

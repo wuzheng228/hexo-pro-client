@@ -11,6 +11,8 @@ import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import qs from 'query-string'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import useDeviceDetect from './hooks/useDeviceDetect'
+import { GlobalContext } from './context'
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -45,9 +47,9 @@ function getFlatternRoute(routes): any[] {
 }
 
 export default function PageLayout() {
-    // 
     const navigate = useNavigate()
     const location = useLocation()
+    const { isMobile } = useDeviceDetect()
 
     const locale = useLocale()
 
@@ -125,29 +127,75 @@ export default function PageLayout() {
         updateMenuStatus()
     }, [location.pathname, updateMenuStatus])
 
+    // Add useEffect to automatically collapse sidebar on mobile
+    useEffect(() => {
+        if (isMobile) {
+            setCollapsed(true)
+        }
+    }, [isMobile])
+
+    // 添加自动折叠侧边栏的逻辑
+    useEffect(() => {
+        if (isMobile) {
+            setCollapsed(true)
+        } else {
+            setCollapsed(false)
+        }
+    }, [isMobile]);
+
     return (
         <Layout className={styles.layout}>
-            <div>
-                <Navbar />
-            </div>
-            <Layout>
-                <Sider className={styles['layout-sider']} collapsed={collapsed}>
-                    <Button type="default" onClick={toggleCollapsed} className={styles['collapse-btn']} size='small' >
-                        {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                    </Button>
-                    <Menu
-                        style={{ height: '100%' }}
-                        selectedKeys={selectedKeys}
-                        onClick={onClickItem}
-                        mode={"inline"}
-                        items={reanderRoutes()(routes, 1)}
+            <Navbar style={{
+                position: 'fixed',
+                top: 0,
+                width: '100%',
+                zIndex: 1000,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                height: 60  // 明确导航栏高度
+            }} />
+            <Layout className={styles['sub-layout-1']}>
+                {!isMobile && (
+                    <Sider
+                        collapsed={collapsed}
+                        theme="light"
+                        style={{
+                            position: 'fixed',
+                            top: 60,
+                            bottom: 40,
+                            left: 0,
+                            zIndex: 999
+                        }}
                     >
-                    </Menu>
-                </Sider>
-                <Layout className={styles['layout-content']}>
+
+                        <Button type="default" onClick={toggleCollapsed} className={styles['collapse-btn']} size='small' >
+                            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                        </Button>
+                        <Menu
+                            style={{ height: '100%' }}
+                            selectedKeys={selectedKeys}
+                            onClick={onClickItem}
+                            mode={"inline"}
+                            items={reanderRoutes()(routes, 1)}
+                        >
+                        </Menu>
+                    </Sider>
+                )
+                }
+                <Layout
+                    className={styles['layout-content']}
+                    style={{
+                        marginLeft: isMobile ? 0 : (collapsed ? 80 : 220),
+                        transition: 'all 0.2s',
+                        padding: isMobile ? '16px 12px' : '24px 32px',
+                        width: isMobile ? '100%' : `calc(100% - ${collapsed ? 80 : 220}px)`,
+                        boxSizing: 'border-box',
+                        minHeight: 'calc(100vh - 60px)',
+                    }}
+                >
                     <div className={styles['layout-content-wrapper']}>
                         <Content>
                             <Routes>
+                                {/* 路由部分保持不变 */}
                                 {
                                     flatternRoutes.map((route, index) => {
                                         const rout = (<Route
@@ -155,7 +203,6 @@ export default function PageLayout() {
                                             path={`/${route.key}`}
                                             element={route.component.render()}
                                         />)
-                                        // console.log('rout ===>', route, 'path===>', `/${route.key}`)
                                         return rout
                                     })
                                 }
@@ -175,8 +222,8 @@ export default function PageLayout() {
                                 />
                             </Routes>
                         </Content>
+                        <Footer />
                     </div>
-                    <Footer />
                 </Layout>
             </Layout>
         </Layout>

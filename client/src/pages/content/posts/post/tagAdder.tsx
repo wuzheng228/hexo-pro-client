@@ -1,10 +1,11 @@
 import { Button, Card, Checkbox, Input, Tag } from "antd"
 import React, { useEffect, useState } from "react"
+import useDeviceDetect from '../../../../hooks/useDeviceDetect';
 
 const CheckboxGroup = Checkbox.Group
 
 export function TagAdder({ existTags, tags, onchange, onClose, visible, cardTitle, placeholder }) {
-
+    const { isMobile } = useDeviceDetect();
     const [tagInputValue, setTagInputValue] = useState('')
     const [localVisible, setLocalVisible] = useState(visible)
 
@@ -13,9 +14,19 @@ export function TagAdder({ existTags, tags, onchange, onClose, visible, cardTitl
         setLocalVisible(visible)
     }, [visible])
 
+    const onInputEnterKeyPress = () => {
+        if (tagInputValue.trim() === '') {
+            return
+        }
+        const tagSet = new Set(tags)
+        tagSet.add(tagInputValue)
+        onchange(Array.from(tagSet))
+        setTagInputValue('')
+    }
+
     const addNewTag = (v) => {
         const inputValue = v.target.value
-        if (inputValue.trim() == '') {
+        if (inputValue.trim() === '') {
             setTagInputValue('')
             return
         }
@@ -49,40 +60,75 @@ export function TagAdder({ existTags, tags, onchange, onClose, visible, cardTitl
 
     function addTag() {
         return (
-            <div style={{ width: '100%', display: 'flex' }}>
-                <Input
-                    style={{ flex: 1 }}
-                    placeholder={placeholder}
-                    value={tagInputValue}
-                    onChange={(v) => setTagInputValue(v.target.value)}
-                    onPressEnter={(v) => { addNewTag(v) }}
-                />
-                <Button
-                    type="default"
-                    style={{ marginLeft: '5px' }}
-                    onClick={() => {
-                        setLocalVisible(!visible)
-                        onClose()
-                    }}
-                >
-                    X
-                </Button>
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                width: '100%'
+            }}>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr auto auto',
+                    gridTemplateRows: isMobile ? 'auto auto' : 'unset',
+                    gap: 8,
+                    alignItems: 'center'
+                }}>
+                    <Input
+                        placeholder={placeholder}
+                        value={tagInputValue}
+                        onChange={(v) => setTagInputValue(v.target.value)}
+                        onPressEnter={(v) => { addNewTag(v) }}
+                        status={!tagInputValue.trim() ? 'error' : undefined}
+                    />
+                    <Button
+                        type="primary"
+                        onClick={onInputEnterKeyPress}
+                        disabled={!tagInputValue.trim()}
+                        style={{ minWidth: isMobile ? '100%' : '100%' }}
+                    >
+                        添加
+                    </Button>
+                    <Button
+                        danger
+                        onClick={() => {
+                            setLocalVisible(false)
+                            onClose()
+                        }}
+                        style={{ minWidth: isMobile ? '100%' : '100%' }}
+                    >
+                        关闭
+                    </Button>
+                </div>
             </div>
         )
     }
 
     return (
-        localVisible &&
-        <Card
-            title={cardTitle}
-            bordered={true}
-            hoverable={true}
-            style={{ position: 'absolute', zIndex: 999, width: '350px' }}
-            extra={addTag()}
-        >
-            <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {tagModified()}
-            </div>
-        </Card>
-    )
+        localVisible ? (
+            <Card
+                title={cardTitle}
+                bordered={true}
+                hoverable={true}
+                style={{
+                    position: 'absolute',
+                    zIndex: 999,
+                    width: isMobile ? '100vw' : '600px',
+                    maxWidth: '100%',
+                    left: isMobile ? 0 : undefined,
+                    boxSizing: 'border-box',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}
+                extra={addTag()}
+                bodyStyle={{ padding: isMobile ? 12 : 24 }}
+            >
+                <div style={{
+                    maxHeight: '60vh',
+                    overflowY: 'auto',
+                    paddingRight: 8
+                }}>
+                    {tagModified()}
+                </div>
+            </Card>
+        ) : null
+    );
 }

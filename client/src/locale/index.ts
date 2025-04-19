@@ -46,6 +46,7 @@ const i18n = {
         'content.articleList.btn.delete': 'Delete',
         'list.editor.header.pop.des': 'Are you sure to delete the article?',
         'navbar.modal.error.title': 'Title cannot be empty or longer than 100',
+        'navbar.mobile.menu.title': 'Menu',
     },
     'zh-CN': {
         'menu.posts': '文章',
@@ -94,6 +95,7 @@ const i18n = {
         'error.title': '错误',
         'content.articleList.btn.delete': '删除',
         'navbar.modal.error.title': '标题不能为空或长度超过100',
+        'navbar.mobile.menu.title': '菜单',
     }
 }
 

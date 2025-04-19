@@ -1,23 +1,31 @@
-import React, { useContext, useState } from "react"
+import React, { useContext, useRef, useState, useEffect } from "react"
+import _ from 'lodash'
 import styles from './style/index.module.less'
 import Logo from '@/assets/logo.svg'
-import { Avatar, Button, Dropdown, Input, List, MenuProps, Modal, Tag, message, notification } from "antd"
-import { DownOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons"
+import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Tag, message, notification } from "antd"
+import { DownOutlined, EditOutlined, MenuOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
 import useLocale from "@/hooks/useLocale"
 import { useSelector } from "react-redux"
 import { GlobalState } from "@/store"
 import service from "@/utils/api"
 import { parseDateTime } from "@/utils/dateTimeUtils"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import useStorage from "@/utils/useStorage"
 import { GlobalContext } from "@/context"
 import cs from 'classnames'
+import useDeviceDetect from "@/hooks/useDeviceDetect"
+import useRoute from "@/routes"
 
-export default function Navbar() {
+type NavbarProps = {
+    style?: React.CSSProperties; // 增加style属性
+}
+
+export default function Navbar({ style }: NavbarProps) { // 使用props中的style属性
     const navigate = useNavigate()
     const userInfo = useSelector((state: GlobalState) => state.userInfo)
     const { theme, setTheme, setLang } = useContext(GlobalContext)
+    const { isMobile } = useDeviceDetect()
     const locale = useLocale()
     const [, setUserStatus] = useStorage('userStatus')
 
@@ -28,7 +36,8 @@ export default function Navbar() {
     const [searchValue, setSearchValue] = useState('')
     const [searchInfoList, setSearchInfoList] = useState([])
     const [searchLoading, setSearchLoading] = useState(false)
-    const [api,] = notification.useNotification()
+    const [api, contextHolder] = notification.useNotification()
+    const [drawerVisible, setDrawerVisible] = useState(false)
 
     const writeDropList: MenuProps['items'] = [
         {
@@ -134,11 +143,17 @@ export default function Navbar() {
         service.post('/hexopro/api/pages/new', { title: title }).then((res) => {
             if (res.status === 200) {
                 const post = res.data
+                console.log(post)
                 post.date = parseDateTime(post.date)
                 post.updated = parseDateTime(post.updated)
+
                 navigate(`/page/${post._id}`)
+            } else {
+                console.log(res)
+                api.error({ message: locale['error.title'], description: res.data })
             }
         }).catch(err => {
+            console.log(err)
             api.error({ message: locale['error.title'], description: err.message })
         })
         setOpen(false)
@@ -156,7 +171,7 @@ export default function Navbar() {
         setIsSearchModalOpen(true)
     }
 
-    function searchBlog(searchValue: string) {
+    const searchBlog = _.debounce((searchValue: string) => {
         setSearchLoading(true)
         service.post('/hexopro/api/blog/search', { searchPattern: searchValue })
             .then(res => {
@@ -169,7 +184,13 @@ export default function Navbar() {
             }).finally(() => {
                 setSearchLoading(false)
             })
-    }
+    }, 300)
+
+    useEffect(() => {
+        return () => {
+            searchBlog.cancel()
+        }
+    }, [])
 
     const onSearchModalChange = (v) => {
         setSearchValue(v.target.value)
@@ -204,9 +225,9 @@ export default function Navbar() {
         }
     }
 
-
     return (
-        <div className={`${styles.navbar} ${styles[theme]}`}>
+        <div className={`${styles.navbar} ${styles[theme]}`} style={style}>
+            {contextHolder}
             {/* 左侧 */}
             <div className={styles.left}>
                 <div className={styles.logo}>
@@ -216,6 +237,17 @@ export default function Navbar() {
             </div>
             {/* 右侧 */}
             <ul className={styles.right}>
+                {isMobile && (
+                    <li>
+                        <Button
+                            type="default"
+                            shape="circle"
+                            icon={<MenuOutlined />}
+                            onClick={() => setDrawerVisible(true)}
+                            className={`${styles.customButtonHover} ${styles[theme]}`}
+                        />
+                    </li>
+                )}
                 <li>
                     <Button type="default" shape="circle" icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} />
                 </li>
@@ -293,6 +325,99 @@ export default function Navbar() {
                     />
                 </div>
             </Modal >
-        </div >
+            <Drawer
+                title={locale['navbar.mobile.menu.title']}
+                placement="left"
+                closable={true}
+                onClose={() => setDrawerVisible(false)}
+                open={drawerVisible}
+                bodyStyle={{ padding: 0 }}
+                width={220}
+                className={`${styles.mobileMenuDrawer} ${styles[theme]}`}
+            >
+                <MenuItems />
+            </Drawer>
+        </div>
     )
+}
+
+// 从layout.tsx提取的菜单组件
+const MenuItems = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+    const locale = useLocale()
+    const [routes] = useRoute()
+    const menuMap = useRef<Map<string, { menuItem?: boolean; subMenu?: boolean }>>(new Map())
+
+    const renderRoutes = (routes: any[], level = 1) => {
+        return routes.map((route) => {
+            if (!route.children) {
+                menuMap.current.set(route.key, { menuItem: true })
+                return {
+                    key: route.key,
+                    label: locale[route.name],
+                    icon: getIconFromKey(route.key),
+                    children: undefined
+                }
+            } else {
+                menuMap.current.set(route.key, { subMenu: true })
+                return {
+                    key: route.key,
+                    label: locale[route.name],
+                    icon: getIconFromKey(route.key),
+                    children: renderRoutes(route.children, level + 1)
+                }
+            }
+        })
+    }
+
+    const onClickItem = (item) => {
+        const { key } = item
+        const currentRoute = getFlatternRoute(routes).find((r) => r.key === key)
+        currentRoute.component.preload().then(() => {
+            navigate(currentRoute.path ? currentRoute.path : `/${key}`)
+        })
+    }
+
+    return (
+        <Menu
+            mode="inline"
+            items={renderRoutes(routes)}
+            onClick={onClickItem}
+            selectedKeys={[location.pathname.replace(/^\//, '')]}
+            style={{ height: '100%', borderRight: 0 }}
+        />
+    )
+}
+
+// 类型定义
+interface RouteType {
+    key: string;
+    path?: string;
+    children?: RouteType[];
+    component?: any;
+}
+379
+// 辅助函数
+const getFlatternRoute = (routes) => {
+    const res = []
+    function travel(_routes) {
+        _routes.forEach((route) => {
+            if (route.key && !route.children) {
+                res.push(route)
+            }
+            if (route.children?.length) {
+                travel(route.children)
+            }
+        })
+    }
+    travel(routes)
+    return res
+}
+
+const getIconFromKey = (key: string) => {
+    switch (key) {
+        case 'posts': return <EditOutlined />
+        default: return <div className={styles['icon-empty']}></div>
+    }
 }

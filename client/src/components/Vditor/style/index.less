@@ -3,6 +3,15 @@
     border-top: 0px;
 }
 
+/* 定义移动端专用的工具栏样式 */
+.vditor-toolbar-mobile {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2px;
+}
+
 pre.vditor-reset {
     padding: 3px !important;
     height: 100%;
@@ -17,10 +26,11 @@ pre.vditor-reset code {
     z-index: 89;
     display: flex !important;
     align-items: center;
+    flex-wrap: wrap;
+    /* 允许工具栏换行 */
     // width: 100%;
     /* 垂直方向居中对齐 */
     padding: 5px !important;
-
 }
 
 .toolbar-right {
@@ -43,7 +53,50 @@ pre.vditor-reset code {
     right: calc(75px + 3px) !important; // 根据实际宽度调整
 }
 
+/* 移动设备适配 */
+@media screen and (max-width: 768px) {
+    .vditor-toolbar {
+        flex-wrap: wrap;
+        /* 确保在移动端工具栏可以换行 */
+        justify-content: center;
+        /* 工具栏居中 */
+        padding: 2px !important;
+        /* 减小内边距 */
+    }
+
+    /* 移动端下每个按钮使用更小的间距 */
+    .vditor-toolbar>div {
+        margin: 2px !important;
+    }
+
+    /* 在移动端下隐藏工具栏分隔线，节省空间 */
+    .vditor-toolbar__divider {
+        display: none !important;
+    }
+
+    /* 确保移动端下的预览按钮位置正确 */
+    .toolbar-right {
+        position: relative !important;
+        right: auto !important;
+        margin-left: auto !important;
+    }
+
+    /* 移动端下工具栏总高度固定，可滚动 */
+    .vditor-toolbar {
+        max-height: 80px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+    }
+
+    /* 移动端下工具栏按钮组样式 */
+    .vditor-toolbar>div.vditor-toolbar__item {
+        flex: 0 0 auto;
+    }
+}
+
 // .toolbar-item-left {}
+
 
 .vditor-content img {
     max-width: 100%;

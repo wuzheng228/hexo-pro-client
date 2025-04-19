@@ -8,12 +8,14 @@ import IconPinFill from "@/assets/pin-fill.svg"
 import { useDispatch } from "react-redux"
 import { GlobalContext } from "@/context"
 import useLocale from "@/hooks/useLocale"
+import useDeviceDetect from "@/hooks/useDeviceDetect"
 
 export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', handleChangeTitle, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
 
     const [isPin, setIsPin] = useState(true)
     const dispatch = useDispatch()
     const locale = useLocale()
+    const { isMobile } = useDeviceDetect()
 
     const themeStyles = {
         light: {
@@ -35,40 +37,63 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
     }
 
     const { theme } = useContext(GlobalContext)
-
     const currentTheme = themeStyles[theme]
 
+    // 响应式样式配置
+    const responsiveHeaderStyles: React.CSSProperties | null = isMobile ? {
+        flexWrap: 'wrap',
+        padding: '8px 0',
+    } : null;
+
+    const responsiveInputStyles = isMobile ? {
+        fontSize: 22,
+        marginLeft: 8,
+        marginRight: 8,
+        height: 50
+    } : null;
+
+    const responsiveButtonColStyles = isMobile ? {
+        fontSize: 22,
+        marginLeft: 8,
+        marginRight: 8,
+        height: 50,
+        whiteSpace: 'nowrap'
+    } : {
+        fontSize: 18,
+        height: 60,
+    };
+
     const handlePinClick = () => {
-        setIsPin(!isPin)
+        const newPinState = !isPin
+        setIsPin(newPinState)
         dispatch({
             type: 'toggle-vditor-toolbar-pin',
             payload: {
-                vditorToolbarPin: isPin
+                vditorToolbarPin: newPinState
             },
         })
-        return () => {
-            setIsPin(false)
-            dispatch({
-                type: 'toggle-vditor-toolbar-pin',
-                payload: {
-                    vditorToolbarPin: false
-                },
-            })
-        }
     }
 
     return (
         <Row style={{
-            width: "100%", borderBottomColor: currentTheme.borderBottomColor, borderBottom: '1px solid',
+            width: "100%",
+            borderBottomColor: currentTheme.borderBottomColor,
+            borderBottom: '1px solid',
             backgroundColor: currentTheme.backgroundColor,
+            ...responsiveHeaderStyles
         }} align='middle' className={cs("editor-header", className)}>
-            {/* 博客名称输入 */}
-            <Col span={12}>
+            {/* 标题输入 */}
+            <Col xs={23} md={16} lg={14}>
                 <input
                     style={{
-                        width: "100%", height: 60, border: 'none', outline: 'none', boxSizing: 'border-box', fontSize: 28, fontWeight: 500, marginLeft: 10,
+                        width: "100%",
+                        border: 'none',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        fontWeight: 500,
                         backgroundColor: currentTheme.inputBackgroundColor,
-                        color: currentTheme.inputColor
+                        color: currentTheme.inputColor,
+                        ...responsiveInputStyles
                     }}
                     value={initTitle}
                     onChange={(v) => {
@@ -76,33 +101,85 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     }}
                 />
             </Col>
-            {/* 博客发布按钮 */}
-            <Col span={2} offset={9} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: 50 }}>
-                <ButtonGroup>
-                    <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />} onClick={handlePinClick} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
-                    <Button type='default' icon={<SettingOutlined />} onClick={(e) => handleSettingClick(e)} style={{ borderRight: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
-                    {
-                        !isPage && (isDraft ?
-                            <Button type='primary' onClick={handlePublish} style={{ zIndex: 2, border: '1px dashed', borderColor: 'gray', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}>{locale['editor.header.publish']}</Button>
-                            : <Button type='default' onClick={handleUnpublish} style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}>{locale['editor.header.unpublish']}</Button>
-                        )
-                    }
+
+            {/* 操作按钮组 */}
+            <Col
+                xs={23}
+                md={8}
+                lg={10}
+                offset={isMobile ? 0 : 0}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    paddingRight: !isMobile ? '20px' : undefined,
+                    ...responsiveButtonColStyles
+                }}>
+                <ButtonGroup style={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    gap: '10px',
+                    flexWrap: isMobile ? 'nowrap' : 'wrap',
+                    overflowX: isMobile ? 'auto' : 'visible'
+                }}>
+                    {/* 移动端优先显示主要操作 */}
+                    {!isMobile && (
+                        <>
+                            <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />}
+                                onClick={handlePinClick}
+                                style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                        </>
+                    )}
+                    <Button type='default' icon={<SettingOutlined />}
+                        onClick={(e) => handleSettingClick(e)}
+                        style={{ borderRight: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                    {!isPage && (isDraft ?
+                        <Button type='primary'
+                            onClick={handlePublish}
+                            style={{
+                                zIndex: 2,
+                                border: '1px  dashed',
+                                borderColor: 'gray',
+                                backgroundColor: currentTheme.buttonBackgroundColor,
+                                color: currentTheme.buttonColor,
+                            }}>
+                            {isMobile ? '发布' : locale['editor.header.publish']}
+                        </Button>
+                        : <Button type='default'
+                            onClick={handleUnpublish}
+                            style={{
+                                backgroundColor: currentTheme.buttonBackgroundColor,
+                                color: currentTheme.buttonColor,
+                            }}>
+                            {locale['editor.header.unpublish']}
+                        </Button>
+                    )}
+
                     <Popconfirm
                         title={popTitle}
                         description={popDes}
                         onConfirm={() => {
-                            message.info({
-                                content: 'ok',
-                            })
+                            message.info({ content: 'ok' })
                             handleRemoveSource()
                         }}
                         onCancel={() => {
-                            message.error({
-                                content: 'cancel',
-                            })
+                            message.error({ content: 'cancel' })
                         }}
                     >
-                        <Button type='default' icon={<DeleteOutlined />} style={{ borderLeft: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                        <Button
+                            type='default'
+                            icon={<DeleteOutlined />}
+                            style={{
+                                paddingLeft: isMobile ? 0 : 30,
+                                backgroundColor: currentTheme.buttonBackgroundColor,
+                                color: currentTheme.buttonColor,
+                                width: isMobile ? 'auto' : 'auto',
+                                minWidth: isMobile ? '40px' : 'auto',
+                                padding: isMobile ? '0 8px' : undefined
+                            }} />
                     </Popconfirm>
                 </ButtonGroup>
             </Col>

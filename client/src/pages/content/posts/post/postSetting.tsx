@@ -64,11 +64,11 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
             }}
             style={{ width: 800 }}
         >
-            <Row>
+            <Row style={{ width: '100%' }}>
                 <Col>
                 </Col>
-                <Col >
-                    <Space style={{ width: '100', flexWrap: 'wrap' }}>
+                <Col style={{ width: '100%' }}>
+                    <Space style={{ width: '100%', flexWrap: 'wrap' }}>
                         {
                             // 循环填充当前已有的标签
                             postMeta.tags.map((item) => {
@@ -91,8 +91,8 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                     }
                 </Col>
             </Row>
-            <Row style={{ marginTop: 15, marginBottom: 15 }}>
-                <Col>
+            <Row style={{ width: '100%', marginTop: 15, marginBottom: 15 }}>
+                <Col style={{ width: '100%' }}>
                     <Space style={{ width: '100', flexWrap: 'wrap' }}>
                         {
                             postMeta.categories.map((item) => {

@@ -1,4 +1,12 @@
 :root {
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: inherit;
+        /* 统一盒模型 */
+    }
+
     --background-color: #f5f5f5;
     --text-color: #2c3e50;
     --banner-background: linear-gradient(163.85deg, #1d2129 0%, #00308f 100%);
@@ -57,21 +65,36 @@
 
 .container {
     display: flex;
-    height: 100vh;
+    flex-direction: row;
+    min-height: 100vh;
     background-color: var(--background-color);
     color: var(--text-color);
     box-shadow: 0 0 10px var(--shadow-color);
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        height: auto;
+        overflow-x: hidden;
+        /* 防止横向滚动 */
+    }
 
     .banner {
         width: 550px;
         background: var(--banner-background);
-        /* 使用线性渐变作为背景 */
         display: flex;
         justify-content: center;
         align-items: center;
         padding: 20px;
-    }
 
+        @media (max-width: 768px) {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            display: none;
+            /* 移动端默认隐藏 banner */
+        }
+    }
 
     .content {
         flex: 1;
@@ -80,13 +103,15 @@
         display: flex;
         justify-content: center;
         align-items: center;
-    }
 
-    .footer {
-        width: 100%;
-        position: absolute;
-        bottom: 0;
-        right: 0;
+        @media (max-width: 768px) {
+            padding: 20px 0;
+            width: 100%;
+            min-height: calc(100vh - 200px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     }
 }
 
@@ -157,14 +182,24 @@
     width: 320px;
 }
 
-
-
-
 .login-form {
     &-wrapper {
         width: 320px;
         background-color: var(--input-background);
+        flex-shrink: 0;
+        /* 防止表单缩放 */
         padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 15px var(--shadow-color);
+
+        @media (max-width: 768px) {
+            width: 100%;
+            max-width: 95%;
+            padding: 15px;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
         border-radius: 8px;
         box-shadow: 0 0 15px var(--shadow-color);
     }
@@ -206,6 +241,16 @@
     border: 1px solid var(--input-border-color);
     color: var(--text-color);
     border-radius: 4px;
+    height: 40px;
+    min-width: 240px;
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+        font-size: 14px;
+        height: auto;
+        min-height: 42px;
+        padding: 8px 12px;
+    }
 
     &:hover {
         border-color: var(--button-hover-background);
@@ -216,6 +261,16 @@
     background-color: var(--button-background);
     border-color: var(--button-background);
     color: var(--button-text-color);
+    height: 40px;
+    width: 100%;
+    font-size: 16px;
+
+    @media (max-width: 768px) {
+        height: auto;
+        min-height: 42px;
+        font-size: 16px;
+        padding: 8px 12px;
+    }
 
     &:hover {
         background-color: var(--button-hover-background);
