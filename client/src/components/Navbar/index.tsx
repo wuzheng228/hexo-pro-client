@@ -17,6 +17,7 @@ import { GlobalContext } from "@/context"
 import cs from 'classnames'
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import useRoute from "@/routes"
+import { base64Encode } from "@/utils/encodeUtils"
 
 type NavbarProps = {
     style?: React.CSSProperties; // 增加style属性
@@ -134,7 +135,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             const post = res.data
             post.date = parseDateTime(post.date)
             post.updated = parseDateTime(post.updated)
-            navigate(`/post/${post._id}`)
+            navigate(`/post/${base64Encode(post.permalink)}`)
         })
         setOpen(false)
     }
@@ -148,7 +149,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 post.date = parseDateTime(post.date)
                 post.updated = parseDateTime(post.updated)
 
-                navigate(`/page/${post._id}`)
+                navigate(`/page/${base64Encode(post.permalink)}`)
             } else {
                 console.log(res)
                 api.error({ message: locale['error.title'], description: res.data })
