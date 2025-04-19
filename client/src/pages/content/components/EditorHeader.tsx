@@ -50,7 +50,9 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
         marginLeft: 8,
         marginRight: 8,
         height: 50
-    } : null;
+    } : {
+        fontSize: 19,
+    };
 
     const responsiveButtonColStyles = isMobile ? {
         fontSize: 22,
