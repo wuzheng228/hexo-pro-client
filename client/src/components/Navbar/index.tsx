@@ -5,6 +5,7 @@ import Logo from '@/assets/logo.svg'
 import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Tag, message, notification } from "antd"
 import { DownOutlined, EditOutlined, MenuOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
+import IconLangLight from "@/assets/langLight.svg"
 import useLocale from "@/hooks/useLocale"
 import { useSelector } from "react-redux"
 import { GlobalState } from "@/store"
@@ -253,7 +254,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 </li>
                 <li>
                     <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
-                        <Button type="default" shape="circle" icon={<IconLang />} className={`${styles.customButtonHover} ${styles[theme]}`} />
+                        <Button type="default" shape="circle" icon={theme === 'dark' ? <IconLangLight /> : <IconLang />} className={`${styles.customButtonHover} ${styles[theme]}`} />
                     </Dropdown>
                 </li>
                 <li>
@@ -263,13 +264,13 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 </li>
                 <li >
                     <Dropdown menu={{ items: writeDropList, onClick: handleCreateBlog }}>
-                        <Button type="primary" >{locale['navbar.create']}<DownOutlined /></Button>
+                        <Button type="primary" className={`${styles.customButtonHover} ${styles[theme]}`}>{locale['navbar.create']}<DownOutlined /></Button>
                     </Dropdown>
                 </li>
                 {
                     userInfo && <li>
                         <Dropdown menu={{ items: settingDropList, onClick: handleLogout }}>
-                            <Avatar size={32} style={{ cursor: "pointer" }} src={userInfo.avatar} />
+                            <Avatar size={32} style={{ cursor: "pointer" }} className={`${styles.customAvatar} ${styles[theme]}`} src={userInfo.avatar} />
                         </Dropdown>
                     </li>
                 }
@@ -421,3 +422,4 @@ const getIconFromKey = (key: string) => {
         default: return <div className={styles['icon-empty']}></div>
     }
 }
+

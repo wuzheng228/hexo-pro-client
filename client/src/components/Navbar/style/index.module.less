@@ -1,3 +1,6 @@
+@white: #ffffff;
+@text-color: #000000; // 假设明亮模式下的文本颜色为黑色
+
 .navbar {
     position: fixed;
     top: 0;
@@ -14,6 +17,17 @@
     background-color: #fff;
     // border-bottom: 1px solid #f0f0f0;
 }
+
+// 暗黑模式下的图标颜色
+.dark {
+    color: @white;
+}
+
+// 明亮模式下的图标颜色
+.light {
+    color: @text-color;
+}
+
 
 .left,
 .right {
@@ -239,6 +253,8 @@
 
 // 暗黑模式下的按钮hover样式
 .customButtonHover.dark {
+    background: #1a1a1a; // 透明
+
     &:hover {
         background-color: darken(#000000, 10%) !important; // 使背景色变深
         border-color: #303030 !important; // 保持边框颜色不变
@@ -251,8 +267,16 @@
     }
 }
 
+// 暗黑模式下的头像适配
+.customAvatar.dark img {
+    filter: brightness(0.7) sepia(0.2) hue-rotate(180deg); // 更暗的色调
+    transition: all 0.3s ease; // 平滑过渡
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); // 更柔和的阴影
 
-/* 添加以下代码到文件末尾 */
+    &:hover {
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2); // 仅阴影轻微变化
+    }
+}
 
 /* 移动设备适配 */
 @media screen and (max-width: 768px) {

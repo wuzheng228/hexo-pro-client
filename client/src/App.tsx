@@ -75,9 +75,9 @@ function App() {
                     colorBgBase: '#141414',
                     colorTextBase: '#ffffff',
                     // Button specific styles
-                    colorPrimaryBg: '#000000',
+                    colorPrimaryBg: '#1a1a1a',
                     colorPrimaryText: '#ffffff',
-                    colorPrimaryBorder: '#1890ff',
+                    colorPrimaryBorder: '#2a2a2a',
                     defaultShadow: 'none',
                     primaryShadow: 'none',
                     boxShadow: 'none', // 移除所有组件的阴影
