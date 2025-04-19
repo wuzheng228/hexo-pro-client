@@ -15,7 +15,7 @@ export interface GlobalState {
 const initialState: GlobalState = {
     userInfo: {
     },
-    vditorToolbarPin: false,
+    vditorToolbarPin: true,
 }
 
 

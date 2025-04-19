@@ -130,11 +130,12 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     {/* 移动端优先显示主要操作 */}
                     {!isMobile && (
                         <>
-                            <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />}
-                                onClick={handlePinClick}
-                                style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+
                         </>
                     )}
+                    <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />}
+                        onClick={handlePinClick}
+                        style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
                     <Button type='default' icon={<SettingOutlined />}
                         onClick={(e) => handleSettingClick(e)}
                         style={{ borderRight: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />

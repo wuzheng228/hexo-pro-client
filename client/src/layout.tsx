@@ -1,7 +1,7 @@
 import { Button, Menu, MenuProps, message } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import Layout, { Content } from 'antd/es/layout/layout'
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './style/layout.module.less'
 import useRoute, { IRoute } from './routes'
 import { EditOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
@@ -12,7 +12,6 @@ import qs from 'query-string'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import useDeviceDetect from './hooks/useDeviceDetect'
-import { GlobalContext } from './context'
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -47,12 +46,12 @@ function getFlatternRoute(routes): any[] {
 }
 
 export default function PageLayout() {
+    // 
     const navigate = useNavigate()
     const location = useLocation()
     const { isMobile } = useDeviceDetect()
 
     const locale = useLocale()
-    const { theme } = useContext(GlobalContext)
 
     const currentComponent = qs.parseUrl(location.pathname).url.slice(1)
     const [routes, defaultRoute] = useRoute()
@@ -146,51 +145,34 @@ export default function PageLayout() {
 
     return (
         <Layout className={styles.layout}>
-            <Navbar style={{
-                position: 'fixed',
-                top: 0,
-                width: '100%',
-                zIndex: 1000,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                height: 60  // 明确导航栏高度
-            }} />
-            <Layout className={styles['sub-layout-1']}>
-                {!isMobile && (
-                    <Sider
-                        collapsed={collapsed}
-                        theme={theme === 'dark' ? 'dark' : 'light'}
-                        style={{
-                            position: 'fixed',
-                            top: 60,
-                            bottom: 40,
-                            left: 0,
-                            zIndex: 999
-                        }}
+            <Navbar />
+            <Layout>
+                <Sider
+                    className={styles['layout-sider']}
+                    collapsed={collapsed}
+                    collapsedWidth={isMobile ? 0 : 80}
+                    width={220}
+                    theme="light"
+                >
+                    <Button type="default" onClick={toggleCollapsed} className={styles['collapse-btn']} size='small' >
+                        {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                    </Button>
+                    <Menu
+                        style={{ height: '100%' }}
+                        selectedKeys={selectedKeys}
+                        onClick={onClickItem}
+                        mode={"inline"}
+                        items={reanderRoutes()(routes, 1)}
                     >
-
-                        <Button type="default" onClick={toggleCollapsed} className={styles['collapse-btn']} size='small' >
-                            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                        </Button>
-                        <Menu
-                            style={{ height: '100%' }}
-                            selectedKeys={selectedKeys}
-                            onClick={onClickItem}
-                            mode={"inline"}
-                            items={reanderRoutes()(routes, 1)}
-                        >
-                        </Menu>
-                    </Sider>
-                )
-                }
+                    </Menu>
+                </Sider>
                 <Layout
                     className={styles['layout-content']}
                     style={{
-                        marginLeft: isMobile ? 0 : (collapsed ? 80 : 220),
-                        transition: 'all 0.2s',
-                        padding: isMobile ? '16px 12px' : '24px 32px',
-                        width: isMobile ? '100%' : `calc(100% - ${collapsed ? 80 : 220}px)`,
-                        boxSizing: 'border-box',
-                        minHeight: 'calc(100vh - 60px)',
+                        paddingLeft: isMobile ? 0 : (collapsed ? 30 : 15),
+                        paddingRight: isMobile ? 0 : (collapsed ? 30 : 15),
+                        paddingTop: isMobile ? 0 : 15,
+                        paddingBottom: isMobile ? 0 : 15
                     }}
                 >
                     <div className={styles['layout-content-wrapper']}>
@@ -223,8 +205,8 @@ export default function PageLayout() {
                                 />
                             </Routes>
                         </Content>
-                        <Footer />
                     </div>
+                    <Footer />
                 </Layout>
             </Layout>
         </Layout>
