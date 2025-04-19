@@ -94,7 +94,17 @@ function App() {
                         defaultBorderColor: 'none',
                         defaultHoverBorderColor: 'none',
                     },
-
+                    Menu: {
+                        itemColor: '#ffffff',
+                        itemHoverColor: '#1890ff',
+                        itemSelectedColor: '#ffffff',  // 修改选中项字体颜色为白色
+                        itemSelectedBg: '#1f1f1f',
+                        itemBg: '#141414',
+                        subMenuItemBg: '#141414',
+                        itemActiveBg: '#1f1f1f',
+                        activeBarWidth: 0,  // 移除选中项的蓝色指示条
+                        activeBarBorderWidth: 0
+                    }
                 }
             })
         } else {

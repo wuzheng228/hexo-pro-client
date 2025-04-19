@@ -186,7 +186,7 @@ module.exports = {
         proxy: [
             {
                 context: ['/hexopro/api'],
-                target: 'http://localhost:4000',
+                target: 'http://localhost:8001',
                 timeout: 10000,
                 pathRewrite: {
                     '/hexopro/api': '/hexopro/api'
@@ -198,7 +198,7 @@ module.exports = {
             {
                 context: ['/images/'],
 
-                target: 'http://localhost:4000',
+                target: 'http://localhost:8001',
                 timeout: 10000,
                 pathRewrite: {
                     '/images/': '/images/'

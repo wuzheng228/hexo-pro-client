@@ -1,7 +1,7 @@
 import { Button, Menu, MenuProps, message } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import Layout, { Content } from 'antd/es/layout/layout'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './style/layout.module.less'
 import useRoute, { IRoute } from './routes'
 import { EditOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
@@ -52,6 +52,7 @@ export default function PageLayout() {
     const { isMobile } = useDeviceDetect()
 
     const locale = useLocale()
+    const { theme } = useContext(GlobalContext)
 
     const currentComponent = qs.parseUrl(location.pathname).url.slice(1)
     const [routes, defaultRoute] = useRoute()
@@ -157,7 +158,7 @@ export default function PageLayout() {
                 {!isMobile && (
                     <Sider
                         collapsed={collapsed}
-                        theme="light"
+                        theme={theme === 'dark' ? 'dark' : 'light'}
                         style={{
                             position: 'fixed',
                             top: 60,
