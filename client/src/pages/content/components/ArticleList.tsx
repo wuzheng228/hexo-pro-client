@@ -1,5 +1,5 @@
 import { Button, Image, Popconfirm, Space, TableProps, message, Row, Col, Card, Pagination, Dropdown, Typography, Modal, Form, Input } from "antd"
-import { EllipsisOutlined } from "@ant-design/icons"
+import { EllipsisOutlined, SendOutlined, RollbackOutlined } from "@ant-design/icons"
 import React, { useContext, useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import service from "@/utils/api"
@@ -107,6 +107,35 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
         })
     }
 
+    // 添加发布和撤销发布的处理函数
+    const handlePublish = async (item, e) => {
+        e.stopPropagation();
+        try {
+            const publishApiPath = '/hexopro/api/posts/' + base64Encode(item.permalink) + '/publish';
+            const res = await service.get(publishApiPath);
+            if (res.status === 200) {
+                message.success(t['content.articleList.publish.success'] || '文章发布成功');
+                queryPosts();
+            }
+        } catch (err) {
+            message.error(err.message || t['content.articleList.publish.error'] || '发布失败');
+        }
+    }
+
+    const handleUnpublish = async (item, e) => {
+        e.stopPropagation();
+        try {
+            const unpublishApiPath = '/hexopro/api/posts/' + base64Encode(item.permalink) + '/unpublish';
+            const res = await service.get(unpublishApiPath);
+            if (res.status === 200) {
+                message.success(t['content.articleList.unpublish.success'] || '文章已撤回到草稿箱');
+                queryPosts();
+            }
+        } catch (err) {
+            message.error(err.message || t['content.articleList.unpublish.error'] || '撤回失败');
+        }
+    }
+
     const queryPosts = () => {
         console.log('queryPosts', pageSize)
         const listApiPath = isPage ? '/hexopro/api/pages/list' : '/hexopro/api/posts/list';
@@ -169,6 +198,26 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                         >
                             <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
                                 <Space>
+                                    {/* 添加发布/撤销发布按钮 */}
+                                    {!isPage && (
+                                        published ? (
+                                            <Button
+                                                type="text"
+                                                style={{ color: 'rgba(0, 0, 0, 0.45)' }}
+                                                onClick={(e) => handleUnpublish(item, e)}
+                                                icon={<RollbackOutlined />}
+                                                title={t['content.articleList.btn.unpublish'] || '撤回到草稿箱'}
+                                            />
+                                        ) : (
+                                            <Button
+                                                type="text"
+                                                style={{ color: 'rgba(0, 0, 0, 0.45)' }}
+                                                onClick={(e) => handlePublish(item, e)}
+                                                icon={<SendOutlined />}
+                                                title={t['content.articleList.btn.publish'] || '发布文章'}
+                                            />
+                                        )
+                                    )}
                                     <Button
                                         type="text"
                                         style={{ color: 'rgba(0, 0, 0, 0.45)' }}
@@ -179,6 +228,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                         icon={theme === 'dark' ? <IconLinkLight /> : <IconLink />}
                                     >
                                     </Button>
+                                    {/* 其他按钮保持不变 */}
                                     <Dropdown
                                         menu={{
                                             items: [
@@ -194,7 +244,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                                     key: 'setCover',
                                                     label: (
                                                         <div onClick={(e) => openCoverModal(item, e)}>
-                                                            {t['content.articleList.btn.setCover'] || '设置'}
+                                                            {t['content.articleList.btn.setCover'] || '封面'}
                                                         </div>
                                                     )
                                                 },

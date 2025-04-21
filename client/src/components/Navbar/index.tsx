@@ -376,9 +376,16 @@ const MenuItems = () => {
     const onClickItem = (item) => {
         const { key } = item
         const currentRoute = getFlatternRoute(routes).find((r) => r.key === key)
-        currentRoute.component.preload().then(() => {
-            navigate(currentRoute.path ? currentRoute.path : `/${key}`)
-        })
+        
+        // 添加检查，确保找到了路由且路由的component存在并有preload方法
+        if (currentRoute && currentRoute.component && typeof currentRoute.component.preload === 'function') {
+            currentRoute.component.preload().then(() => {
+                navigate(currentRoute.path ? currentRoute.path : `/${key}`)
+            })
+        } else {
+            // 如果没有preload方法或找不到路由，直接导航
+            navigate(currentRoute?.path || `/${key}`)
+        }
     }
 
     return (

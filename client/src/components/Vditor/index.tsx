@@ -10,6 +10,11 @@ import useLocale from '@/hooks/useLocale'
 // import { use } from 'marked'
 // import { useDeviceDetect } from 'use-device-detection'
 import useDeviceDetect from '@/hooks/useDeviceDetect'
+import { Button, Modal, Pagination, Image, Spin, Empty, Select, Space, Row, Col, Card, Typography, Upload, Input, message } from 'antd'
+import { PictureOutlined, InboxOutlined } from '@ant-design/icons'
+
+const { Text } = Typography;
+const { Option } = Select;
 
 interface HexoProVditorProps {
     initValue: string;
@@ -18,14 +23,63 @@ interface HexoProVditorProps {
     handleUploadingImage: (isUploading: boolean) => void;
 }
 
+// 添加上传结果接口
+interface UploadResult {
+    url?: string;
+    src?: string;
+    msg?: string;
+    code?: number;
+}
+
+// 图片项接口
+interface ImageItem {
+    name: string;
+    path: string;
+    url: string;
+    size: number;
+    lastModified: string;
+}
+
+// 文件夹数据接口
+interface FolderData {
+    images: ImageItem[];
+    folders: string[];
+    total: number;
+    page: number;
+    pageSize: number;
+}
+
 export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage }: HexoProVditorProps) {
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
+    const { isMobile } = useDeviceDetect(); // 添加设备检测
+    const [imagePickerVisible, setImagePickerVisible] = useState(false);
+    const [imageData, setImageData] = useState<FolderData>({
+        images: [],
+        folders: [],
+        total: 0,
+        page: 1,
+        pageSize: 12
+    });
+    const [currentImagePage, setCurrentImagePage] = useState(1);
+    const [imagePageSize, setImagePageSize] = useState(isMobile ? 8 : 12);
+    const [currentImageFolder, setCurrentImageFolder] = useState('');
+    const [loadingImages, setLoadingImages] = useState(false);
+    // 添加上传图片相关状态
+    const [uploadModalVisible, setUploadModalVisible] = useState(false);
+    const [uploadFolder, setUploadFolder] = useState('');
+    const [uploadFileName, setUploadFileName] = useState('');
+
 
     const t = useLocale()
 
-    function uploadImage(image, filename) {
+    // 修改上传图片函数，添加文件夹参数
+    function uploadImage(image, filename, folder = '') {
         const promise = new Promise((f, r) => {
-            service.post('/hexopro/api/images/upload', { data: image, filename: filename }).then(res => {
+            service.post('/hexopro/api/images/upload', {
+                data: image,
+                filename: filename,
+                folder: folder
+            }).then(res => {
                 f(res.data)
             }).catch(err => {
                 r(err)
@@ -41,7 +95,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
 
     const { theme, lang } = useContext(GlobalContext)
-    const { isMobile } = useDeviceDetect(); // 添加设备检测
+
 
     function getLocale() {
         if (lang === 'zh-CN') {
@@ -50,6 +104,134 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             return 'en_US'
         }
     }
+
+    // 获取图片列表
+    const fetchImages = async () => {
+        setLoadingImages(true);
+        try {
+            const res = await service.get('/hexopro/api/images/list', {
+                params: {
+                    page: currentImagePage,
+                    pageSize: imagePageSize,
+                    folder: currentImageFolder
+                }
+            });
+            setImageData(res.data);
+        } catch (error) {
+            console.error('获取图片列表失败', error);
+        } finally {
+            setLoadingImages(false);
+        }
+    };
+
+    const fetchFolders = async () => {
+        try {
+            const res = await service.get('/hexopro/api/images/list', {
+                params: {
+                    page: 1,
+                    pageSize: 1
+                }
+            });
+            if (res.data && res.data.folders) {
+                setImageData(prevData => ({
+                    ...prevData,
+                    folders: res.data.folders
+                }));
+            }
+        } catch (error) {
+            console.error('获取文件夹列表失败', error);
+        }
+    };
+
+
+    // 处理自定义上传
+    const handleCustomUpload = async (file: File) => {
+        if (!file) return;
+
+        setIsUPloadingImage(true);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        reader.onload = async (event) => {
+            try {
+                // 处理SVG文件名问题
+                let filename = uploadFileName || file.name;
+                // 确保SVG文件有正确的扩展名
+                if (file.type === 'image/svg+xml' && !filename.toLowerCase().endsWith('.svg')) {
+                    filename = filename.replace(/\.[^/.]+$/, '') + '.svg';
+                }
+
+                const result = await uploadImage(event.target.result, filename, uploadFolder) as UploadResult;
+
+                console.log('result', result);
+
+                if (vd && result) {
+                    // 对图片 URL 进行编码处理
+                    const encodedSrc = encodeURI(result.url);
+                    vd.insertValue(`\n![${filename}](${encodedSrc})\n`);
+                    vd.tip(`${t['vditor.upload.success'] || '上传成功'}: ${filename}`, 3000);
+                    // 强制编辑器重新渲染
+                }
+
+                setUploadModalVisible(false);
+                setUploadFileName('');
+            } catch (err) {
+                vd?.tip(`${t['vditor.upload.error'] || '上传失败'}: ${err.message}`, 3000);
+            } finally {
+                setIsUPloadingImage(false);
+                setTimeout(() => {
+                    vd.setValue(vd.getValue());
+                }, 600);
+            }
+        };
+    };
+
+    // 处理图片选择
+    const handleSelectImage = (image: ImageItem) => {
+        if (vd) {
+            // 对图片 URL 进行编码处理
+            const encodedUrl = encodeURI(image.url);
+            vd.insertValue(`\n![${image.name}](${encodedUrl})\n`);
+            setImagePickerVisible(false);
+        }
+    };
+
+    // 处理页面变化
+    const handleImagePageChange = (page: number, pageSize?: number) => {
+        setCurrentImagePage(page);
+        if (pageSize) setImagePageSize(pageSize);
+    };
+
+    // 处理文件夹变化
+    const handleImageFolderChange = (folder: string) => {
+        setCurrentImageFolder(folder);
+        setCurrentImagePage(1);
+    };
+
+    // 格式化文件大小
+    const formatFileSize = (size: number) => {
+        if (size < 1024) {
+            return `${size} B`;
+        } else if (size < 1024 * 1024) {
+            return `${(size / 1024).toFixed(2)} KB`;
+        } else {
+            return `${(size / 1024 / 1024).toFixed(2)} MB`;
+        }
+    };
+
+    useEffect(() => {
+        if (uploadModalVisible) {
+            fetchFolders();
+        }
+    }, [uploadModalVisible]);
+
+
+    // 当图片选择器打开时加载图片
+    useEffect(() => {
+        if (imagePickerVisible) {
+            fetchImages();
+        }
+    }, [imagePickerVisible, currentImagePage, imagePageSize, currentImageFolder]);
 
     useEffect(() => {
         handleUploadingImage(isUploadingImage)
@@ -230,12 +412,10 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 setIsEditorFocus(false)
             },
             upload: {
+                url: '/api/upload/disabled', // 设置一个不存在的URL，禁用原生上传
                 multiple: true,
                 handler: (files: File[]): Promise<string | null> => {
-                    // 这里可以添加处理文件上传的逻辑
-                    // console.log('files', files)
-
-                    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/bmp', 'image/webp']
+                    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/bmp', 'image/webp', 'image/svg+xml']
 
                     const filteredFiles = files.filter(file => allowedTypes.includes(file.type))
                     for (const file of files) {
@@ -248,18 +428,25 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                         setIsUPloadingImage(true)
                         const reader = new FileReader()
                         reader.onload = (event) => {
-                            const filename = file.name
-                            uploadImage(event.target.result, filename).then((res: { src: string, msg: string }) => {
-                                // console.log('update=> ', res)
+                            // 处理SVG文件名问题
+                            let filename = file.name;
+                            // 确保SVG文件有正确的扩展名
+                            if (file.type === 'image/svg+xml' && !filename.toLowerCase().endsWith('.svg')) {
+                                filename = filename.replace(/\.[^/.]+$/, '') + '.svg';
+                            }
+
+                            // 粘贴图片默认上传到根目录（不指定文件夹）
+                            uploadImage(event.target.result, filename).then((res: UploadResult) => {
                                 res['code'] = 0
 
                                 setTimeout(() => {
                                     const currentValue = vditor.getValue()
-                                    const cursorPosition = vditor.getCursorPosition()
+                                    // 对图片 URL 进行编码处理
+                                    const encodedSrc = encodeURI(res.url || res.src);
                                     if (isEditorFocus) {
-                                        vditor.setValue(currentValue + `\n![alt text](${res.src})`)
+                                        vditor.setValue(currentValue + `\n![${filename}](${encodedSrc})`)
                                     } else {
-                                        vditor.insertValue(`\n![alt text](${res.src})`)
+                                        vditor.insertValue(`\n![${filename}](${encodedSrc})`)
                                     }
                                     // 重新渲染编辑器内容（如果需要）
                                     vditor.tip(`${t['vditor.upload.success']}: ${filename}`, 3000)
@@ -314,7 +501,22 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     hotkey: 'Ctrl-E'
                 },
                 {
-                    name: 'upload'
+                    name: 'custom-upload', // 修改名称，避免与原生upload冲突
+                    tip: t['vditor.upload'] || '上传',
+                    icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M512 928c-28.928 0-52.416-23.488-52.416-52.416V547.072H336.96c-18.944 0-36.096-10.112-45.376-26.56-9.28-16.448-8.544-36.224 1.92-52.032L468.48 218.624C477.952 203.84 494.88 195.584 512 195.584c17.12 0 34.048 8.256 43.52 23.04l174.976 249.856c10.464 15.808 11.2 35.584 1.92 52.032-9.28 16.448-26.432 26.56-45.376 26.56H564.416v328.512c0 28.928-23.488 52.416-52.416 52.416z" fill="currentColor"></path></svg>',
+                    click() {
+                        // 点击上传按钮时打开上传模态框
+                        setUploadModalVisible(true);
+                    }
+                },
+                // 添加图床选择按钮
+                {
+                    name: 'select-image',
+                    tip: t['vditor.selectImage'] || '从图床选择',
+                    icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M896 0H128C57.6 0 0 57.6 0 128v768c0 70.4 57.6 128 128 128h768c70.4 0 128-57.6 128-128V128c0-70.4-57.6-128-128-128zm0 896H128V128h768v768z"></path><path d="M288 384c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm0-128c17.7 0 32 14.3 32 32s-14.3 32-32 32-32-14.3-32-32 14.3-32 32-32zM704 576l-128-128-256 256-64-64L128 768h768z"></path></svg>',
+                    click() {
+                        setImagePickerVisible(true);
+                    }
                 },
                 {
                     name: 'preview',
@@ -378,7 +580,22 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     name: 'redo'
                 },
                 {
-                    name: 'upload'
+                    name: 'custom-upload', // 修改名称，避免与原生upload冲突
+                    tip: t['vditor.upload'] || '上传',
+                    icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M512 928c-28.928 0-52.416-23.488-52.416-52.416V547.072H336.96c-18.944 0-36.096-10.112-45.376-26.56-9.28-16.448-8.544-36.224 1.92-52.032L468.48 218.624C477.952 203.84 494.88 195.584 512 195.584c17.12 0 34.048 8.256 43.52 23.04l174.976 249.856c10.464 15.808 11.2 35.584 1.92 52.032-9.28 16.448-26.432 26.56-45.376 26.56H564.416v328.512c0 28.928-23.488 52.416-52.416 52.416z" fill="currentColor"></path></svg>',
+                    click() {
+                        // 点击上传按钮时打开上传模态框
+                        setUploadModalVisible(true);
+                    }
+                },
+                // 添加图床选择按钮
+                {
+                    name: 'select-image',
+                    tip: t['vditor.selectImage'] || '从图床选择',
+                    icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M896 0H128C57.6 0 0 57.6 0 128v768c0 70.4 57.6 128 128 128h768c70.4 0 128-57.6 128-128V128c0-70.4-57.6-128-128-128zm0 896H128V128h768v768z"></path><path d="M288 384c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm0-128c17.7 0 32 14.3 32 32s-14.3 32-32 32-32-14.3-32-32 14.3-32 32-32zM704 576l-128-128-256 256-64-64L128 768h768z"></path></svg>',
+                    click() {
+                        setImagePickerVisible(true);
+                    }
                 },
                 {
                     name: 'link'
@@ -427,7 +644,144 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 id='vditor'
                 className='vditor'>
             </div>
-        </div >
 
+            {/* 图片选择模态框 */}
+            <Modal
+                title={t['vditor.selectImage'] || '从图床选择图片'}
+                open={imagePickerVisible}
+                onCancel={() => setImagePickerVisible(false)}
+                footer={null}
+                width={isMobile ? '95%' : 800}
+                className="image-picker-modal"
+            >
+                <div className="image-picker-container">
+                    <div className="folder-selector">
+                        <Text strong>{t['content.images.currentFolder'] || '当前文件夹'}:</Text>
+                        <Select
+                            style={{ width: isMobile ? 200 : 300, marginLeft: 8 }}
+                            value={currentImageFolder}
+                            onChange={handleImageFolderChange}
+                            placeholder={t['content.images.selectFolder'] || '选择文件夹'}
+                        >
+                            <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
+                            {imageData.folders.map(folder => (
+                                <Option key={folder} value={folder}>{folder}</Option>
+                            ))}
+                        </Select>
+                    </div>
+
+                    <Spin spinning={loadingImages}>
+                        {imageData.images.length > 0 ? (
+                            <Row gutter={[16, 16]} className="image-grid">
+                                {imageData.images.map(image => (
+                                    <Col xs={12} sm={8} md={6} lg={6} xl={4} key={image.path}>
+                                        <Card
+                                            hoverable
+                                            cover={
+                                                <div className="image-container" onClick={() => handleSelectImage(image)}>
+                                                    <Image
+                                                        src={image.url}
+                                                        alt={image.name}
+                                                        preview={false}
+                                                        fallback="data:image/png;base64,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"
+                                                    />
+                                                </div>
+                                            }
+                                        >
+                                            <Card.Meta
+                                                title={
+                                                    <Text ellipsis={{ tooltip: image.name }}>
+                                                        {image.name}
+                                                    </Text>
+                                                }
+                                                description={formatFileSize(image.size)}
+                                            />
+                                        </Card>
+                                    </Col>
+                                ))}
+                            </Row>
+                        ) : (
+                            <Empty
+                                description={t['content.images.noImages'] || '暂无图片'}
+                                className="empty-images"
+                            />
+                        )}
+                    </Spin>
+
+                    {imageData.total > 0 && (
+                        <div className="image-pagination">
+                            <Pagination
+                                current={currentImagePage}
+                                pageSize={imagePageSize}
+                                total={imageData.total}
+                                onChange={handleImagePageChange}
+                                showSizeChanger={false}
+                                responsive
+                            />
+                        </div>
+                    )}
+                </div>
+            </Modal>
+            {/* 添加上传图片模态框 */}
+            <Modal
+                title={t['vditor.uploadImage'] || '上传图片'}
+                open={uploadModalVisible}
+                onCancel={() => setUploadModalVisible(false)}
+                footer={null}
+                width={isMobile ? '95%' : 520}
+                className="upload-image-modal"
+            >
+                <div className="upload-form">
+                    <div className="form-item" style={{ marginBottom: 16 }}>
+                        <Text strong>{t['content.images.targetFolder'] || '目标文件夹'}:</Text>
+                        <Select
+                            style={{ width: '100%', marginTop: 8 }}
+                            value={uploadFolder}
+                            onChange={setUploadFolder}
+                            placeholder={t['content.images.selectFolder'] || '选择文件夹'}
+                        >
+                            <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
+                            {imageData.folders.map(folder => (
+                                <Option key={folder} value={folder}>{folder}</Option>
+                            ))}
+                        </Select>
+                    </div>
+
+                    <div className="form-item" style={{ marginBottom: 16 }}>
+                        <Text strong>{t['content.images.customFileName'] || '自定义文件名'}:</Text>
+                        <Input
+                            style={{ marginTop: 8 }}
+                            value={uploadFileName}
+                            onChange={e => setUploadFileName(e.target.value)}
+                            placeholder={t['content.images.fileNamePlaceholder'] || '留空则使用原文件名'}
+                        />
+                    </div>
+
+                    <div className="form-item">
+                        <Upload.Dragger
+                            name="file"
+                            multiple={false}
+                            beforeUpload={(file) => {
+                                const isImage = file.type.startsWith('image/');
+                                if (!isImage) {
+                                    message.error(t['vditor.upload.invalidFileType'] || '只能上传图片文件');
+                                    return false;
+                                }
+                                handleCustomUpload(file);
+                                return false;
+                            }}
+                            showUploadList={false}
+                        >
+                            <p className="ant-upload-drag-icon">
+                                <InboxOutlined />
+                            </p>
+                            <p className="ant-upload-text">
+                                {t['content.images.dragHere'] || '拖拽图片到此处，或点击上传'}
+                            </p>
+                        </Upload.Dragger>
+                    </div>
+                </div>
+            </Modal>
+        </div>
     )
 }
