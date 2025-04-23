@@ -6,9 +6,10 @@ interface YamlEditorProps {
   initialValue: string;
   height: string;
   onChange?: (value: string) => void;
+  readOnly?: boolean; // 新增
 }
 
-const YamlEditor: React.FC<YamlEditorProps> = ({ id, initialValue, height, onChange }) => {
+const YamlEditor: React.FC<YamlEditorProps> = ({ id, initialValue, height, onChange, readOnly = false }) => {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [value, setValue] = useState(initialValue);
@@ -28,6 +29,7 @@ const YamlEditor: React.FC<YamlEditorProps> = ({ id, initialValue, height, onCha
         wordWrap: 'on',
         tabSize: 2,
         fontSize: window.innerWidth <= 768 ? 12 : 14, // 移动端字体更小
+        readOnly: readOnly // 新增
       });
 
       // 添加编辑器内容变化事件监听
@@ -72,11 +74,18 @@ const YamlEditor: React.FC<YamlEditorProps> = ({ id, initialValue, height, onCha
     return () => {
       // 组件卸载时清理编辑器实例
       if (editorRef.current) {
-        editorRef.current.dispose();
-        editorRef.current = null;
+        try {
+          // 判断编辑器是否已经被销毁
+          if (editorRef.current.getModel()) {
+            editorRef.current.dispose();
+          }
+          editorRef.current = null;
+        } catch (error) {
+          console.error('Error disposing Monaco editor:', error);
+        }
       }
     };
-  }, [id, initialValue]); // 添加initialValue作为依赖项，确保编辑器初始化时使用最新的initialValue
+  }, [id]); // 只依赖id，避免频繁销毁重建
 
   // 处理initialValue变化
   useEffect(() => {

@@ -19,6 +19,8 @@ import {
   DeleteOutlined,
   EditOutlined,
   ExportOutlined,
+  FullscreenExitOutlined,
+  FullscreenOutlined,
   ImportOutlined,
   PlusOutlined,
   SaveOutlined
@@ -27,6 +29,7 @@ import service from '@/utils/api';
 import useLocale from '@/hooks/useLocale';
 import YamlEditor from './YamlEditor';
 import yaml from 'js-yaml';
+import styles from '../style/index.module.less'
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -68,6 +71,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
   const [targetPath, setTargetPath] = useState('');
   const [editTemplateVisible, setEditTemplateVisible] = useState(false);
   const [editedTemplate, setEditedTemplate] = useState<YamlTemplate | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [previewFullscreen, setPreviewFullscreen] = useState(false);
 
   // 删除模板
   const handleDeleteTemplate = async (template: YamlTemplate) => {
@@ -304,19 +309,46 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
           ))}
 
           <Divider>{t['content.yaml.preview'] || '预览'}</Divider>
-          <div style={{ marginBottom: 16 }}>
-            <YamlEditor
-              id="template-preview"
-              // 优先转为YAML字符串，否则转为字符串
-              initialValue={
-                currentTemplate?.structure
-                  ? (typeof currentTemplate.structure === 'string'
-                    ? currentTemplate.structure
-                    : yaml.dump(currentTemplate.structure))
-                  : ''
-              }
-              height="200px"
-            />
+          <div style={{ position: 'relative', marginBottom: 16 }}>
+            {!previewFullscreen && (
+              <Button
+                className={styles.fullscreenBtn}
+                icon={<FullscreenOutlined />}
+                size="small"
+                style={{ position: 'absolute', right: 0, top: -36, zIndex: 10 }}
+                onClick={() => setPreviewFullscreen(true)}
+              >
+                全屏预览
+              </Button>
+            )}
+            <div
+              className={previewFullscreen ? styles.fullscreenContainer : ''}
+              style={previewFullscreen ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 2000, background: '#fff', padding: 24 } : {}}
+            >
+              {previewFullscreen && (
+                <Button
+                  className={styles.fullscreenBtn}
+                  icon={<FullscreenExitOutlined />}
+                  size="small"
+                  style={{ position: 'absolute', right: 24, top: 16, zIndex: 1101 }}
+                  onClick={() => setPreviewFullscreen(false)}
+                >
+                  退出全屏
+                </Button>
+              )}
+              <YamlEditor
+                id="template-preview"
+                initialValue={
+                  currentTemplate?.structure
+                    ? (typeof currentTemplate.structure === 'string'
+                      ? currentTemplate.structure
+                      : yaml.dump(currentTemplate.structure))
+                    : ''
+                }
+                height={previewFullscreen ? 'calc(100vh - 80px)' : '200px'}
+                readOnly={true}
+              />
+            </div>
           </div>
         </Form>
       </Modal>
@@ -326,13 +358,18 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         title={t['content.yaml.editTemplate'] || '编辑模板'}
         open={editTemplateVisible}
         onOk={handleEditTemplate}
-        onCancel={() => setEditTemplateVisible(false)}
+        onCancel={() => {
+          setEditTemplateVisible(false);
+          setFullscreen(false); // 关闭 Modal 时退出全屏
+        }}
         okText={t['content.yaml.ok'] || '确定'}
         cancelText={t['content.yaml.cancel'] || '取消'}
-        width={700}
+        width={700} // 移除 fullscreen ? '100vw' : 700
+      // 移除 style, bodyStyle, className
       >
         {editedTemplate && (
           <Form layout="vertical">
+            {/* Template Name and Description Form Items remain the same */}
             <Form.Item
               label={t['content.yaml.templateName'] || '模板名称'}
               required
@@ -353,67 +390,97 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                 rows={3}
               />
             </Form.Item>
+
             <Divider>{t['content.yaml.templateStructure'] || '模板结构'}</Divider>
-            <YamlEditor
-              id="edit-template-structure"
-              initialValue={
-                editedTemplate.structure
-                  ? (typeof editedTemplate.structure === 'string'
-                    ? editedTemplate.structure
-                    : yaml.dump(editedTemplate.structure))
-                  : ''
-              }
-              height="200px"
-              onChange={(value) => {
-                setEditedTemplate({ ...editedTemplate, structure: value });
-              }}
-            />
+            {/* 修改全屏容器和按钮逻辑 */}
+            <div style={{ position: 'relative', marginBottom: 16 }}>
+              {!fullscreen && (
+                <Button
+                  className={styles.fullscreenBtn}
+                  icon={<FullscreenOutlined />}
+                  size="small"
+                  style={{ position: 'absolute', right: 0, top: -36, zIndex: 10 }} // 调整按钮位置
+                  onClick={() => setFullscreen(true)}
+                >
+                  {t['content.yaml.fullscreenEdit'] || '全屏编辑'}
+                </Button>
+              )}
+              <div
+                className={fullscreen ? styles.fullscreenContainer : ''}
+                style={fullscreen ? { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1050, background: '#fff', padding: 24 } : {}} // 使用与预览一致的样式, 调整 zIndex
+              >
+                {fullscreen && (
+                  <Button
+                    className={styles.fullscreenBtn}
+                    icon={<FullscreenExitOutlined />}
+                    size="small"
+                    style={{ position: 'absolute', right: 24, top: 16, zIndex: 1101 }} // 使用与预览一致的样式
+                    onClick={() => setFullscreen(false)}
+                  >
+                    {t['content.yaml.exitFullscreen'] || '退出全屏'}
+                  </Button>
+                )}
+                <YamlEditor
+                  id="edit-template-structure"
+                  initialValue={
+                    editedTemplate.structure
+                      ? (typeof editedTemplate.structure === 'string'
+                        ? editedTemplate.structure
+                        : yaml.dump(editedTemplate.structure))
+                      : ''
+                  }
+                  height={fullscreen ? 'calc(100vh - 80px)' : '200px'} // 调整全屏高度
+                  onChange={(value) => {
+                    try {
+                      // 尝试解析 YAML 以确保其有效性，但仅在编辑时更新字符串状态
+                      yaml.load(value);
+                      setEditedTemplate({ ...editedTemplate, structure: value });
+                    } catch (e) {
+                      // 如果 YAML 无效，仍然更新编辑器的内容，但不改变状态中的 structure
+                      // 或者可以添加一个错误提示
+                      console.warn("Invalid YAML structure:", e);
+                      // 仅更新编辑器显示，不更新 state
+                      setEditedTemplate(prev => ({ ...prev, structure: value })); // 或者保持原样，让用户修复
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
             <Divider>{t['content.yaml.templateVariables'] || '模板变量'}</Divider>
+            {/* Form.List for variables remains the same */}
             <Form.List
               name="variables"
               initialValue={editedTemplate.variables}
             >
-              {(fields, { add, remove }) => (
+              {(fields, { add, remove }, { errors }) => (
                 <>
-                  {fields.map(field => (
-                    <Row key={field.key} gutter={16}>
-                      <Col span={6}>
+                  {fields.map((field, index) => ( // 使用 index
+                    <Row key={field.key} gutter={16} style={{ alignItems: 'flex-start' }}>
+                      <Col xs={24} sm={6}>
                         <Form.Item
                           {...field}
                           label={t['content.yaml.variableName'] || '变量名'}
                           name={[field.name, 'name']}
+                          fieldKey={[field.fieldKey, 'name']} // 添加 fieldKey
+                          rules={[{ required: true, message: '请输入变量名' }]}
                         >
                           <Input
                             placeholder="title"
-                            value={editedTemplate.variables[field.name]?.name}
-                            onChange={e => {
-                              const newVariables = [...editedTemplate.variables];
-                              newVariables[field.name] = {
-                                ...newVariables[field.name],
-                                name: e.target.value
-                              };
-                              setEditedTemplate({ ...editedTemplate, variables: newVariables });
-                            }}
+                          // 移除 value 和 onChange，让 Form.List 控制
                           />
                         </Form.Item>
                       </Col>
-                      <Col span={6}>
+                      <Col xs={24} sm={6}>
                         <Form.Item
                           {...field}
                           label={t['content.yaml.variableType'] || '类型'}
                           name={[field.name, 'type']}
+                          fieldKey={[field.fieldKey, 'type']} // 添加 fieldKey
+                          initialValue="string" // 设置默认值
                         >
                           <Select
-                            defaultValue="string"
-                            value={editedTemplate.variables[field.name]?.type}
-                            onChange={value => {
-                              const newVariables = [...editedTemplate.variables];
-                              newVariables[field.name] = {
-                                ...newVariables[field.name],
-                                type: value
-                              };
-                              setEditedTemplate({ ...editedTemplate, variables: newVariables });
-                            }}
+                          // 移除 value 和 onChange
                           >
                             <Option value="string">字符串</Option>
                             <Option value="number">数字</Option>
@@ -423,54 +490,35 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                           </Select>
                         </Form.Item>
                       </Col>
-                      <Col span={6}>
+                      <Col xs={24} sm={6}>
                         <Form.Item
                           {...field}
                           label={t['content.yaml.variableDefault'] || '默认值'}
                           name={[field.name, 'default']}
+                          fieldKey={[field.fieldKey, 'default']} // 添加 fieldKey
                         >
                           <Input
                             placeholder="默认值"
-                            value={editedTemplate.variables[field.name]?.default}
-                            onChange={e => {
-                              const newVariables = [...editedTemplate.variables];
-                              newVariables[field.name] = {
-                                ...newVariables[field.name],
-                                default: e.target.value
-                              };
-                              setEditedTemplate({ ...editedTemplate, variables: newVariables });
-                            }}
+                          // 移除 value 和 onChange
                           />
                         </Form.Item>
                       </Col>
-                      <Col span={5}>
+                      <Col xs={24} sm={5}>
                         <Form.Item
                           {...field}
                           label={t['content.yaml.variableDescription'] || '描述'}
                           name={[field.name, 'description']}
+                          fieldKey={[field.fieldKey, 'description']} // 添加 fieldKey
                         >
                           <Input
                             placeholder="变量描述"
-                            value={editedTemplate.variables[field.name]?.description}
-                            onChange={e => {
-                              const newVariables = [...editedTemplate.variables];
-                              newVariables[field.name] = {
-                                ...newVariables[field.name],
-                                description: e.target.value
-                              };
-                              setEditedTemplate({ ...editedTemplate, variables: newVariables });
-                            }}
+                          // 移除 value 和 onChange
                           />
                         </Form.Item>
                       </Col>
-                      <Col span={1} style={{ display: 'flex', alignItems: 'center', marginTop: 30 }}>
+                      <Col xs={24} sm={1} style={{ display: 'flex', alignItems: 'center', height: '32px', marginTop: '30px' }}>
                         <DeleteOutlined
-                          onClick={() => {
-                            const newVariables = [...editedTemplate.variables];
-                            newVariables.splice(field.name, 1);
-                            setEditedTemplate({ ...editedTemplate, variables: newVariables });
-                            remove(field.name);
-                          }}
+                          onClick={() => remove(field.name)} // 使用 Form.List 提供的 remove
                         />
                       </Col>
                     </Row>
@@ -478,19 +526,13 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                   <Form.Item>
                     <Button
                       type="dashed"
-                      onClick={() => {
-                        const newVariable = { name: '', description: '', type: 'string', default: '' };
-                        setEditedTemplate({
-                          ...editedTemplate,
-                          variables: [...editedTemplate.variables, newVariable]
-                        });
-                        add();
-                      }}
+                      onClick={() => add({ name: '', type: 'string', default: '', description: '' })} // 使用 Form.List 提供的 add
                       block
                       icon={<PlusOutlined />}
                     >
                       {t['content.yaml.addVariable'] || '添加变量'}
                     </Button>
+                    <Form.ErrorList errors={errors} />
                   </Form.Item>
                 </>
               )}
