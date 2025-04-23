@@ -1,0 +1,128 @@
+.yamlManager {
+  padding: 24px;
+  
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    
+    @media (max-width: 576px) {
+      flex-direction: column;
+      align-items: flex-start;
+      
+      :global(.ant-space) {
+        margin-top: 16px;
+      }
+    }
+  }
+  
+  .empty {
+    margin: 32px 0;
+  }
+  
+  .pagination {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .uploadForm {
+    .formItem {
+      margin-bottom: 16px;
+    }
+  }
+  
+  .yamlEditor {
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    min-height: 300px;
+  }
+  
+  .templateCard {
+    margin-bottom: 16px;
+  }
+  
+  .variableForm {
+    margin-top: 16px;
+  }
+  
+  .previewSection {
+    margin-top: 24px;
+    
+    .previewTitle {
+      margin-bottom: 8px;
+    }
+  }
+  
+  // 新增样式
+  .fileListColumn {
+    transition: all 0.3s;
+    
+    @media (max-width: 768px) {
+      margin-bottom: 16px;
+    }
+  }
+  
+  .editorColumn {
+    transition: all 0.3s;
+  }
+  
+  .fullscreenContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background: #fff;
+    padding: 16px;
+    margin: 0 !important;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+  }
+  
+  .fullscreenCard {
+    height: calc(100vh - 32px);
+    
+    :global(.ant-card-body) {
+      height: calc(100% - 57px);
+      padding: 12px;
+    }
+  }
+  
+  // 移动端适配
+  @media (max-width: 768px) {
+    :global(.ant-table) {
+      font-size: 12px;
+    }
+    
+    :global(.ant-btn) {
+      font-size: 12px;
+      padding: 0 8px;
+      height: 28px;
+    }
+    
+    :global(.ant-card-head-title) {
+      font-size: 14px;
+    }
+    
+    :global(.ant-tabs-tab) {
+      padding: 8px 12px;
+    }
+    
+    :global(.ant-form-item-label > label) {
+      font-size: 12px;
+    }
+    
+    :global(.ant-input),
+    :global(.ant-select-selector) {
+      font-size: 12px;
+    }
+  }
+}

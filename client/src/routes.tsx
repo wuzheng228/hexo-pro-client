@@ -74,6 +74,11 @@ export default function useRoute() {
     {
       name: 'menu.content.images',
       key: 'content/images',
+    },
+    // 添加YAML管理路由
+    {
+      name: 'menu.content.yaml',
+      key: 'content/yaml',
     }
   ]
 
