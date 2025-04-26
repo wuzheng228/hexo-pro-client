@@ -1,6 +1,7 @@
 import React from "react"
 import { useMemo, useState } from "react"
 import useLocale from "./hooks/useLocale"
+import Dashboard from "./pages/dashboard"
 
 export type IRoute = {
   name: string
@@ -53,6 +54,10 @@ export default function useRoute() {
   const t = useLocale()
   const routes = [
     {
+      key: 'dashboard',
+      name:'menu.dashboard',
+    },
+    {
       key: 'posts',
       name: 'menu.posts',
       children: [
@@ -79,6 +84,11 @@ export default function useRoute() {
     {
       name: 'menu.content.yaml',
       key: 'content/yaml',
+    },
+    // 添加部署管理路由
+    {
+      name: 'menu.deploy',
+      key: 'deploy',
     }
   ]
 

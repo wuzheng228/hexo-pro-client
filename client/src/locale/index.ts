@@ -207,6 +207,8 @@ const i18n = {
         'content.yaml.fetchTemplatesFailed': '获取模板列表失败',
         'content.yaml.applyTemplateFailed': '应用模板失败',
         'content.yaml.applyTemplateSuccess': '应用模板成功',
+        'menu.dashboard': '主页',
+        "menu.deploy": "部署管理"
     }
 }
 

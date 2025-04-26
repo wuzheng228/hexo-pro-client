@@ -1,0 +1,114 @@
+.dashboardContainer {
+  padding: 16px;
+  
+  @media (max-width: 768px) {
+    padding: 8px;
+  }
+}
+
+.dashboardCard {
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  
+  :global(.ant-card-head) {
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  :global(.ant-card-body) {
+    padding: 16px;
+  }
+}
+
+.welcomeMessage {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.categoriesContainer, .tagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.categoryTag, .tagItem {
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.tagItem {
+  font-size: 12px;
+  padding: 0 8px;
+  
+  &:nth-child(3n+1) {
+    font-size: 14px;
+  }
+  
+  &:nth-child(5n+1) {
+    font-size: 16px;
+  }
+}
+
+.calendarContainer {
+  margin-bottom: 16px;
+  
+  :global(.ant-picker-calendar-date-content) {
+    height: 20px;
+  }
+}
+
+// 暗色主题适配
+:global(.dark) {
+  .dashboardCard {
+    background-color: #1f1f1f;
+    border-color: #303030;
+    
+    :global(.ant-card-head) {
+      border-bottom-color: #303030;
+    }
+  }
+  
+  .categoryTag, .tagItem {
+    border-color: #303030;
+  }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .dashboardCard {
+    :global(.ant-card-head-title) {
+      font-size: 16px;
+    }
+    
+    :global(.ant-card-body) {
+      padding: 12px;
+    }
+  }
+  
+  .welcomeMessage {
+    h4 {
+      font-size: 18px;
+    }
+  }
+  
+  .categoriesContainer, .tagsContainer {
+    gap: 6px;
+  }
+  
+  .tagItem {
+    font-size: 11px;
+    
+    &:nth-child(3n+1) {
+      font-size: 12px;
+    }
+    
+    &:nth-child(5n+1) {
+      font-size: 13px;
+    }
+  }
+}
