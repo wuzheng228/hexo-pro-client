@@ -19,9 +19,164 @@
   }
 }
 
-.welcomeMessage {
-  text-align: center;
-  margin-bottom: 16px;
+// 欢迎卡片样式
+.welcomeCard {
+  background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
+  color: white;
+  
+  :global(.ant-card-body) {
+    padding: 24px;
+  }
+  
+  :global(.ant-typography) {
+    color: white;
+  }
+}
+
+.welcomeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.welcomeInfo {
+  flex: 1;
+}
+
+.quickActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    margin-top: 16px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  button {
+    margin-bottom: 8px;
+  }
+}
+
+// 核心指标卡片样式
+.metricsRow {
+  margin-bottom: 8px;
+}
+
+.metricCard {
+  height: 100%;
+  transition: all 0.3s;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.metricIcon {
+  font-size: 24px;
+  margin-right: 8px;
+  color: #1890ff;
+}
+
+.metricStatistic {
+  :global(.ant-statistic-title) {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  :global(.ant-statistic-content) {
+    font-size: 28px;
+    font-weight: bold;
+  }
+}
+
+// 趋势图表样式
+.trendsRow {
+  margin-bottom: 8px;
+}
+
+.calendarContainer {
+  :global(.ant-picker-calendar-date-content) {
+    height: 20px;
+  }
+}
+
+.chartContainer {
+  height: 300px;
+  
+  @media (max-width: 768px) {
+    height: 200px;
+  }
+}
+
+// 系统信息区域样式
+.systemRow {
+  margin-bottom: 8px;
+}
+
+// 暗色主题适配
+:global(.dark) {
+  .dashboardCard {
+    background-color: #1f1f1f;
+    border-color: #303030;
+    
+    :global(.ant-card-head) {
+      border-bottom-color: #303030;
+    }
+  }
+  
+  .welcomeCard {
+    background: linear-gradient(135deg, #096dd9 0%, #08979c 100%);
+  }
+  
+  .categoryTag, .tagItem {
+    border-color: #303030;
+  }
+}
+
+// 移动端适配
+@media (max-width: 768px) {
+  .dashboardCard {
+    :global(.ant-card-head-title) {
+      font-size: 16px;
+    }
+    
+    :global(.ant-card-body) {
+      padding: 12px;
+    }
+  }
+  
+  .welcomeInfo {
+    h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    
+    p {
+      margin-bottom: 8px;
+    }
+  }
+  
+  .metricStatistic {
+    :global(.ant-statistic-title) {
+      font-size: 14px;
+    }
+    
+    :global(.ant-statistic-content) {
+      font-size: 22px;
+    }
+  }
+  
+  .chartContainer {
+    height: 180px;
+  }
 }
 
 .categoriesContainer, .tagsContainer {

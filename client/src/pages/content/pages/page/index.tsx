@@ -105,7 +105,10 @@ function Page() {
     const handleChange = (update) => {
         // var now = moment()
         const promise = new Promise((resolve, reject) => {
-            service.post('/hexopro/api/pages/' + _id, update).then((res) => {
+            service.post('/hexopro/api/page/update', {
+                _id,
+                update
+            }).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -144,7 +147,7 @@ function Page() {
 
     const handleUpdate = (update) => {
         return new Promise((resolve, reject) => {
-            service.post('/hexopro/api/pages/' + _id, update).then((res) => {
+            service.post('/hexopro/api/page/update', { _id, update }).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)

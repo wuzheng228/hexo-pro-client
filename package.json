@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ant-design/charts": "^2.2.7",
     "@ant-design/icons": "^5.3.7",
     "@codemirror/lang-html": "^6.0.0",
     "@codemirror/lang-markdown": "^6.0.0",

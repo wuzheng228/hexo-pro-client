@@ -141,15 +141,66 @@ function Post() {
         return promise
     }
 
-    const handleChangeTitle = (v) => {
+    const checkTitleExists = async (title) => {
+        try {
+            const res = await service.get('/hexopro/api/posts/check-title', {
+                params: { title, excludeId: _id }
+            })
+            return res.data.exists
+        } catch (err) {
+            console.error('检查标题失败', err)
+            return false
+        }
+    }
+
+    // 修改标题处理函数
+    const handleChangeTitle = async (v) => {
+        // 直接更新标题状态，不立即检查重复
+        setTitle(v)
+
+        // 如果标题没有变化，直接返回
         if (v === title) {
             return
         }
-        setTitle(v)
-        const parts = post.source.split('/')
-        parts[parts.length - 1] = v + '.md'
-        const newSource = parts.join('/')
-        postRef.current({ title: v, source: newSource })
+
+        // 使用防抖函数延迟更新文件名和检查重复
+        const debouncedUpdate = _.debounce(async (newTitle) => {
+            // 检查是否存在同名文章
+            const exists = await checkTitleExists(newTitle)
+
+            if (exists) {
+                // 提示用户但不阻止输入
+                message.warning('已存在同名文章，保存时将自动添加区分字符')
+            }
+
+            // 无论是否重复，都更新文件名
+            const parts = post.source.split('/')
+            parts[parts.length - 1] = newTitle + '.md'
+            const newSource = parts.join('/')
+            postRef.current({ title: newTitle, source: newSource })
+        }, 800) // 800ms 的延迟
+
+        debouncedUpdate(v)
+    }
+
+    // 添加标题失去焦点时的处理函数
+    const handleTitleBlur = async () => {
+        // 检查标题是否重复
+        const exists = await checkTitleExists(title)
+
+        if (exists) {
+            // 如果重复，自动添加时间戳后缀
+            const uniqueTitle = `${title} (${Date.now()})`
+            setTitle(uniqueTitle)
+
+            // 更新文件名
+            const parts = post.source.split('/')
+            parts[parts.length - 1] = uniqueTitle + '.md'
+            const newSource = parts.join('/')
+            postRef.current({ title: uniqueTitle, source: newSource })
+
+            message.info('已自动为重复标题添加区分字符')
+        }
     }
 
     const handleChangeContent = (text) => {
@@ -315,6 +366,7 @@ function Post() {
                         popTitle={t['editor.header.pop.title']}
                         popDes={t['page.editor.header.pop.des']}
                         handleChangeTitle={handleChangeTitle}
+                        handleTitleBlur={handleTitleBlur}
                         handleSettingClick={(_) => setVisible(true)}
                         handleRemoveSource={removeBlog}
                     />

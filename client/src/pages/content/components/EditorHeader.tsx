@@ -10,7 +10,7 @@ import { GlobalContext } from "@/context"
 import useLocale from "@/hooks/useLocale"
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 
-export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', handleChangeTitle, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
+export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', handleChangeTitle, handleTitleBlur, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
 
     const [isPin, setIsPin] = useState(true)
     const dispatch = useDispatch()
@@ -101,6 +101,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     onChange={(v) => {
                         handleChangeTitle(v.target.value)
                     }}
+                    onBlur={handleTitleBlur}
                 />
             </Col>
 

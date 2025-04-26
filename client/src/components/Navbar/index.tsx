@@ -127,37 +127,97 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         return true
     }
 
-    const newPost = () => {
+    const checkTitleExists = async (title: string) => {
+        try {
+            const res = await service.get('/hexopro/api/posts/check-title', {
+                params: { title }
+            })
+            return res.data.exists
+        } catch (err) {
+            console.error('检查标题失败', err)
+            return false
+        }
+    }
+
+    const newPost = async () => {
         if (!checkTitle(title)) {
             return
         }
-        service.post('/hexopro/api/posts/new', { title: title }).then((res) => {
-            const post = res.data
-            post.date = parseDateTime(post.date)
-            post.updated = parseDateTime(post.updated)
-            navigate(`/post/${base64Encode(post.permalink)}`)
-        })
+        
+        // 检查标题是否已存在
+        const exists = await checkTitleExists(title)
+        if (exists) {
+            // 如果存在，自动添加时间戳后缀
+            const uniqueTitle = `${title} (${Date.now()})`
+            message.info('已存在同名文章，已自动添加区分字符')
+            
+            service.post('/hexopro/api/posts/new', { title: uniqueTitle }).then((res) => {
+                const post = res.data
+                post.date = parseDateTime(post.date)
+                post.updated = parseDateTime(post.updated)
+                navigate(`/post/${base64Encode(post.permalink)}`)
+            })
+        } else {
+            // 如果不存在，直接创建
+            service.post('/hexopro/api/posts/new', { title: title }).then((res) => {
+                const post = res.data
+                post.date = parseDateTime(post.date)
+                post.updated = parseDateTime(post.updated)
+                navigate(`/post/${base64Encode(post.permalink)}`)
+            })
+        }
         setOpen(false)
     }
 
-    function newPage() {
-        if (!checkTitle(title)) return
-        service.post('/hexopro/api/pages/new', { title: title }).then((res) => {
-            if (res.status === 200) {
-                const post = res.data
-                console.log(post)
-                post.date = parseDateTime(post.date)
-                post.updated = parseDateTime(post.updated)
+    // 检查页面标题是否已存在
+    const checkPageTitleExists = async (title: string) => {
+        try {
+            // 创建一个临时路径来检查文件是否存在
+            const testPath = `${title}/index.md`
+            const res = await service.get('/hexopro/api/pages/check-exists', {
+                params: { path: testPath }
+            })
+            return res.data.exists
+        } catch (err) {
+            console.error('检查页面标题失败', err)
+            return false
+        }
+    }
 
-                navigate(`/page/${base64Encode(post.permalink)}`)
+    const newPage = async () => {
+        if (!checkTitle(title)) {
+            return
+        }
+        
+        try {
+            // 检查标题是否已存在
+            const exists = await checkPageTitleExists(title)
+            if (exists) {
+                // 如果存在，自动添加时间戳后缀
+                const uniqueTitle = `${title} (${Date.now()})`
+                message.info(locale['navbar.page.exists'] || '已存在同名页面，已自动添加区分字符')
+                
+                const res = await service.post('/hexopro/api/pages/new', { title: uniqueTitle })
+                if (res.status === 200) {
+                    const post = res.data
+                    post.date = parseDateTime(post.date)
+                    post.updated = parseDateTime(post.updated)
+                    navigate(`/page/${base64Encode(post.permalink)}`)
+                }
             } else {
-                console.log(res)
-                api.error({ message: locale['error.title'], description: res.data })
+                // 如果不存在，直接创建
+                const res = await service.post('/hexopro/api/pages/new', { title: title })
+                if (res.status === 200) {
+                    const post = res.data
+                    post.date = parseDateTime(post.date)
+                    post.updated = parseDateTime(post.updated)
+                    navigate(`/page/${base64Encode(post.permalink)}`)
+                }
             }
-        }).catch(err => {
+        } catch (err) {
             console.log(err)
             api.error({ message: locale['error.title'], description: err.message })
-        })
+        }
         setOpen(false)
     }
 
