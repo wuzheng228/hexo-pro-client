@@ -1,24 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 export default function useDeviceDetect() {
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(false)
     
     useEffect(() => {
         const checkDevice = () => {
-            setIsMobile(window.innerWidth <= 768);
-        };
+            setIsMobile(window.innerWidth <= 768)
+        }
         
         // 初始检查
-        checkDevice();
+        checkDevice()
         
         // 监听窗口大小变化
-        window.addEventListener('resize', checkDevice);
+        window.addEventListener('resize', checkDevice)
         
         // 清理函数
         return () => {
-            window.removeEventListener('resize', checkDevice);
-        };
-    }, []);
+            window.removeEventListener('resize', checkDevice)
+        }
+    }, [])
     
-    return { isMobile };
+    return { isMobile }
 }

@@ -1,12 +1,12 @@
 import { Button, Card, Checkbox, Input, Space, Tag, Tooltip } from "antd"
 import React from "react"
 import { useEffect, useState } from "react"
-import useDeviceDetect from '../../../hooks/useDeviceDetect';
+import useDeviceDetect from '../../../hooks/useDeviceDetect'
 
 const CheckboxGroup = Checkbox.Group
 
 export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, frontMatter, onChange }) {
-    const { isMobile } = useDeviceDetect();
+    const { isMobile } = useDeviceDetect()
     const [localVisible, setLocalVisible] = useState(false)
     const [inputFmtKeyValue, setInputFmtKeyValue] = useState('')
     const [inputFmtValueValue, setInputFmtValueValue] = useState('')
@@ -127,5 +127,5 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
                 {existFontMatter()}
             </div>
         </Card>
-    ) : null;
+    ) : null
 }

@@ -1,16 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Card, Form, Input, Button, message, Divider, Alert, Spin, Typography, Space, Row, Col, Progress, Timeline } from 'antd';
-import { GithubOutlined, SaveOutlined, RocketOutlined, InfoCircleOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
-import { service } from '@/utils/api';
-import useLocale from '@/hooks/useLocale';
-import styles from './style.module.less';
+import React, { useEffect, useState, useRef } from 'react'
+import { Card, Form, Input, Button, message, Divider, Alert, Spin, Typography, Space, Row, Col, Progress, Timeline } from 'antd'
+import { GithubOutlined, SaveOutlined, RocketOutlined, InfoCircleOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons'
+import { service } from '@/utils/api'
+import useLocale from '@/hooks/useLocale'
+import styles from './style.module.less'
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph, Text } = Typography
 
 const DeployPage: React.FC = () => {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [deployLoading, setDeployLoading] = useState(false);
+  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
+  const [deployLoading, setDeployLoading] = useState(false)
   const [deployStatus, setDeployStatus] = useState({
     isDeploying: false,
     progress: 0,
@@ -19,106 +19,106 @@ const DeployPage: React.FC = () => {
     logs: [],
     hasDeployGit: false,
     error: null
-  });
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
-  const t = useLocale();
+  })
+  const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const t = useLocale()
 
   // 获取部署配置
   const fetchDeployConfig = async () => {
     try {
-      setLoading(true);
-      const res = await service.get('/hexopro/api/deploy/config');
-      form.setFieldsValue(res.data);
+      setLoading(true)
+      const res = await service.get('/hexopro/api/deploy/config')
+      form.setFieldsValue(res.data)
       
       // 获取部署状态
-      await fetchDeployStatus();
+      await fetchDeployStatus()
     } catch (error) {
-      message.error('获取部署配置失败');
-      console.error(error);
+      message.error('获取部署配置失败')
+      console.error(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // 获取部署状态
   const fetchDeployStatus = async () => {
     try {
-      const statusRes = await service.get('/hexopro/api/deploy/status');
-      setDeployStatus(statusRes.data);
-      return statusRes.data;
+      const statusRes = await service.get('/hexopro/api/deploy/status')
+      setDeployStatus(statusRes.data)
+      return statusRes.data
     } catch (error) {
-      console.error('获取部署状态失败', error);
-      return null;
+      console.error('获取部署状态失败', error)
+      return null
     }
-  };
+  }
 
   // 保存配置
   const saveConfig = async (values) => {
     try {
-      setLoading(true);
-      const res = await service.post('/hexopro/api/deploy/save-config', values);
-      message.success('配置保存成功，_config.yml 已自动更新');
-      form.setFieldsValue(res.data);
+      setLoading(true)
+      const res = await service.post('/hexopro/api/deploy/save-config', values)
+      message.success('配置保存成功，_config.yml 已自动更新')
+      form.setFieldsValue(res.data)
     } catch (error) {
-      message.error('保存配置失败');
-      console.error(error);
+      message.error('保存配置失败')
+      console.error(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // 执行部署
   const executeDeploy = async () => {
     try {
-      setDeployLoading(true);
-      const res = await service.post('/hexopro/api/deploy/execute');
+      setDeployLoading(true)
+      const res = await service.post('/hexopro/api/deploy/execute')
       
       if (res.data.isDeploying) {
-        message.success('部署已开始，请等待完成');
+        message.success('部署已开始，请等待完成')
         // 开始轮询部署状态
-        startPolling();
+        startPolling()
       } else {
-        message.success('部署成功');
+        message.success('部署成功')
       }
     } catch (error) {
-      message.error('部署失败: ' + (error.response?.data || error.message));
-      console.error(error);
+      message.error('部署失败: ' + (error.response?.data || error.message))
+      console.error(error)
     } finally {
-      setDeployLoading(false);
+      setDeployLoading(false)
     }
-  };
+  }
 
   // 开始轮询部署状态
   const startPolling = () => {
     // 清除现有的轮询
     if (pollingRef.current) {
-      clearInterval(pollingRef.current);
+      clearInterval(pollingRef.current)
     }
     
     // 设置新的轮询
     pollingRef.current = setInterval(async () => {
-      const status = await fetchDeployStatus();
+      const status = await fetchDeployStatus()
       
       // 如果部署完成或失败，停止轮询
       if (status && !status.isDeploying) {
         if (status.error) {
-          message.error(`部署失败: ${status.error}`);
+          message.error(`部署失败: ${status.error}`)
         } else if (status.stage === 'completed') {
-          message.success('部署成功完成！');
+          message.success('部署成功完成！')
         }
         
-        stopPolling();
+        stopPolling()
       }
-    }, 3000); // 每3秒轮询一次
-  };
+    }, 3000) // 每3秒轮询一次
+  }
 
   // 停止轮询
   const stopPolling = () => {
     if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
     }
-  };
+  }
 
   // 获取部署阶段的显示文本
   const getStageText = (stage) => {
@@ -130,57 +130,57 @@ const DeployPage: React.FC = () => {
       'deploying': '部署到 GitHub',
       'completed': '已完成',
       'failed': '失败'
-    };
-    return stageMap[stage] || stage;
-  };
+    }
+    return stageMap[stage] || stage
+  }
 
   // 获取部署阶段的图标
   const getStageIcon = (stage) => {
     if (deployStatus.isDeploying) {
-      return <LoadingOutlined style={{ color: '#1890ff' }} />;
+      return <LoadingOutlined style={{ color: '#1890ff' }} />
     }
     
     if (stage === 'completed') {
-      return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+      return <CheckCircleOutlined style={{ color: '#52c41a' }} />
     }
     
     if (stage === 'failed') {
-      return <CloseCircleOutlined style={{ color: '#f5222d' }} />;
+      return <CloseCircleOutlined style={{ color: '#f5222d' }} />
     }
     
-    return <InfoCircleOutlined />;
-  };
+    return <InfoCircleOutlined />
+  }
 
   useEffect(() => {
-    fetchDeployConfig();
+    fetchDeployConfig()
     
     // 检查是否正在部署，如果是则开始轮询
     fetchDeployStatus().then(status => {
       if (status && status.isDeploying) {
-        startPolling();
+        startPolling()
       }
-    });
+    })
     
     // 组件卸载时清除轮询
     return () => {
-      stopPolling();
-    };
-  }, []);
+      stopPolling()
+    }
+  }, [])
 
   // 重置部署状态
   const resetDeployStatus = async () => {
     try {
-      setLoading(true);
-      await service.post('/hexopro/api/deploy/reset-status');
-      message.success('部署状态已重置');
-      await fetchDeployStatus();
+      setLoading(true)
+      await service.post('/hexopro/api/deploy/reset-status')
+      message.success('部署状态已重置')
+      await fetchDeployStatus()
     } catch (error) {
-      message.error('重置部署状态失败');
-      console.error(error);
+      message.error('重置部署状态失败')
+      console.error(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className={styles.deployContainer}>
@@ -382,7 +382,7 @@ const DeployPage: React.FC = () => {
         </Col>
       </Row>
     </div>
-  );
-};
+  )
+}
 
-export default DeployPage;
+export default DeployPage

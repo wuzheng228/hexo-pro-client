@@ -109,11 +109,31 @@
 }
 
 .chartContainer {
-  height: 300px;
+  height: 250px; // 调整默认高度以适应柱状图
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   @media (max-width: 768px) {
-    height: 200px;
+    height: 200px; // 移动端高度
   }
+}
+
+.popularContainer {
+  // height: 300px; // 可以移除固定高度，让内容自适应
+  overflow-y: auto;
+  padding-right: 8px;
+  
+  @media (max-width: 768px) {
+    // height: 250px;
+  }
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: #1890ff;
 }
 
 // 系统信息区域样式

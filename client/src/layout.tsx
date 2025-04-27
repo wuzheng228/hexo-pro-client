@@ -141,7 +141,7 @@ export default function PageLayout() {
         } else {
             setCollapsed(false)
         }
-    }, [isMobile]);
+    }, [isMobile])
 
     return (
         <Layout className={styles.layout}>

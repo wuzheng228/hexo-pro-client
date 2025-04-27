@@ -43,7 +43,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
     const responsiveHeaderStyles: React.CSSProperties | null = isMobile ? {
         flexWrap: 'wrap',
         padding: '8px 0',
-    } : null;
+    } : null
 
     const responsiveInputStyles = isMobile ? {
         fontSize: 22,
@@ -52,7 +52,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
         height: 50
     } : {
         fontSize: 19,
-    };
+    }
 
     const responsiveButtonColStyles = isMobile ? {
         fontSize: 22,
@@ -63,7 +63,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
     } : {
         fontSize: 18,
         height: 60,
-    };
+    }
 
     const handlePinClick = () => {
         const newPinState = !isPin

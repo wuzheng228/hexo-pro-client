@@ -15,23 +15,23 @@ service.interceptors.request.use(config => {
 })
 // 强化类型定义
 class ApiError extends Error {
-    code: number | string;
-    config?: object;
-    response?: object;
+    code: number | string
+    config?: object
+    response?: object
 
     constructor(message: string);
     constructor(message: string, code?: number | string, config?: object, response?: object) {
-        super(message);
-        this.code = code;
-        this.config = config;
-        this.response = response;
+        super(message)
+        this.code = code
+        this.config = config
+        this.response = response
     };
 
 }
 
 // 类型断言帮助函数
 function isApiError(error: unknown): error is ApiError {
-    return error instanceof Error && 'code' in error;
+    return error instanceof Error && 'code' in error
 }
 
 // 注入导航方法

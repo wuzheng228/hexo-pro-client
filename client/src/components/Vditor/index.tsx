@@ -13,8 +13,8 @@ import useDeviceDetect from '@/hooks/useDeviceDetect'
 import { Button, Modal, Pagination, Image, Spin, Empty, Select, Space, Row, Col, Card, Typography, Upload, Input, message } from 'antd'
 import { PictureOutlined, InboxOutlined } from '@ant-design/icons'
 
-const { Text } = Typography;
-const { Option } = Select;
+const { Text } = Typography
+const { Option } = Select
 
 interface HexoProVditorProps {
     initValue: string;
@@ -51,23 +51,23 @@ interface FolderData {
 
 export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage }: HexoProVditorProps) {
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
-    const { isMobile } = useDeviceDetect(); // 添加设备检测
-    const [imagePickerVisible, setImagePickerVisible] = useState(false);
+    const { isMobile } = useDeviceDetect() // 添加设备检测
+    const [imagePickerVisible, setImagePickerVisible] = useState(false)
     const [imageData, setImageData] = useState<FolderData>({
         images: [],
         folders: [],
         total: 0,
         page: 1,
         pageSize: 12
-    });
-    const [currentImagePage, setCurrentImagePage] = useState(1);
-    const [imagePageSize, setImagePageSize] = useState(isMobile ? 8 : 12);
-    const [currentImageFolder, setCurrentImageFolder] = useState('');
-    const [loadingImages, setLoadingImages] = useState(false);
+    })
+    const [currentImagePage, setCurrentImagePage] = useState(1)
+    const [imagePageSize, setImagePageSize] = useState(isMobile ? 8 : 12)
+    const [currentImageFolder, setCurrentImageFolder] = useState('')
+    const [loadingImages, setLoadingImages] = useState(false)
     // 添加上传图片相关状态
-    const [uploadModalVisible, setUploadModalVisible] = useState(false);
-    const [uploadFolder, setUploadFolder] = useState('');
-    const [uploadFileName, setUploadFileName] = useState('');
+    const [uploadModalVisible, setUploadModalVisible] = useState(false)
+    const [uploadFolder, setUploadFolder] = useState('')
+    const [uploadFileName, setUploadFileName] = useState('')
 
 
     const t = useLocale()
@@ -107,7 +107,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     // 获取图片列表
     const fetchImages = async () => {
-        setLoadingImages(true);
+        setLoadingImages(true)
         try {
             const res = await service.get('/hexopro/api/images/list', {
                 params: {
@@ -115,14 +115,14 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     pageSize: imagePageSize,
                     folder: currentImageFolder
                 }
-            });
-            setImageData(res.data);
+            })
+            setImageData(res.data)
         } catch (error) {
-            console.error('获取图片列表失败', error);
+            console.error('获取图片列表失败', error)
         } finally {
-            setLoadingImages(false);
+            setLoadingImages(false)
         }
-    };
+    }
 
     const fetchFolders = async () => {
         try {
@@ -131,107 +131,107 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     page: 1,
                     pageSize: 1
                 }
-            });
+            })
             if (res.data && res.data.folders) {
                 setImageData(prevData => ({
                     ...prevData,
                     folders: res.data.folders
-                }));
+                }))
             }
         } catch (error) {
-            console.error('获取文件夹列表失败', error);
+            console.error('获取文件夹列表失败', error)
         }
-    };
+    }
 
 
     // 处理自定义上传
     const handleCustomUpload = async (file: File) => {
-        if (!file) return;
+        if (!file) return
 
-        setIsUPloadingImage(true);
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
+        setIsUPloadingImage(true)
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
 
         reader.onload = async (event) => {
             try {
                 // 处理SVG文件名问题
-                let filename = uploadFileName || file.name;
+                let filename = uploadFileName || file.name
                 // 确保SVG文件有正确的扩展名
                 if (file.type === 'image/svg+xml' && !filename.toLowerCase().endsWith('.svg')) {
-                    filename = filename.replace(/\.[^/.]+$/, '') + '.svg';
+                    filename = filename.replace(/\.[^/.]+$/, '') + '.svg'
                 }
 
-                const result = await uploadImage(event.target.result, filename, uploadFolder) as UploadResult;
+                const result = await uploadImage(event.target.result, filename, uploadFolder) as UploadResult
 
-                console.log('result', result);
+                console.log('result', result)
 
                 if (vd && result) {
                     // 对图片 URL 进行编码处理
-                    const encodedSrc = encodeURI(result.url);
-                    vd.insertValue(`\n![${filename}](${encodedSrc})\n`);
-                    vd.tip(`${t['vditor.upload.success'] || '上传成功'}: ${filename}`, 3000);
+                    const encodedSrc = encodeURI(result.url)
+                    vd.insertValue(`\n![${filename}](${encodedSrc})\n`)
+                    vd.tip(`${t['vditor.upload.success'] || '上传成功'}: ${filename}`, 3000)
                     // 强制编辑器重新渲染
                 }
 
-                setUploadModalVisible(false);
-                setUploadFileName('');
+                setUploadModalVisible(false)
+                setUploadFileName('')
             } catch (err) {
-                vd?.tip(`${t['vditor.upload.error'] || '上传失败'}: ${err.message}`, 3000);
+                vd?.tip(`${t['vditor.upload.error'] || '上传失败'}: ${err.message}`, 3000)
             } finally {
-                setIsUPloadingImage(false);
+                setIsUPloadingImage(false)
                 setTimeout(() => {
-                    vd.setValue(vd.getValue());
-                }, 600);
+                    vd.setValue(vd.getValue())
+                }, 600)
             }
-        };
-    };
+        }
+    }
 
     // 处理图片选择
     const handleSelectImage = (image: ImageItem) => {
         if (vd) {
             // 对图片 URL 进行编码处理
-            const encodedUrl = encodeURI(image.url);
-            vd.insertValue(`\n![${image.name}](${encodedUrl})\n`);
-            setImagePickerVisible(false);
+            const encodedUrl = encodeURI(image.url)
+            vd.insertValue(`\n![${image.name}](${encodedUrl})\n`)
+            setImagePickerVisible(false)
         }
-    };
+    }
 
     // 处理页面变化
     const handleImagePageChange = (page: number, pageSize?: number) => {
-        setCurrentImagePage(page);
-        if (pageSize) setImagePageSize(pageSize);
-    };
+        setCurrentImagePage(page)
+        if (pageSize) setImagePageSize(pageSize)
+    }
 
     // 处理文件夹变化
     const handleImageFolderChange = (folder: string) => {
-        setCurrentImageFolder(folder);
-        setCurrentImagePage(1);
-    };
+        setCurrentImageFolder(folder)
+        setCurrentImagePage(1)
+    }
 
     // 格式化文件大小
     const formatFileSize = (size: number) => {
         if (size < 1024) {
-            return `${size} B`;
+            return `${size} B`
         } else if (size < 1024 * 1024) {
-            return `${(size / 1024).toFixed(2)} KB`;
+            return `${(size / 1024).toFixed(2)} KB`
         } else {
-            return `${(size / 1024 / 1024).toFixed(2)} MB`;
+            return `${(size / 1024 / 1024).toFixed(2)} MB`
         }
-    };
+    }
 
     useEffect(() => {
         if (uploadModalVisible) {
-            fetchFolders();
+            fetchFolders()
         }
-    }, [uploadModalVisible]);
+    }, [uploadModalVisible])
 
 
     // 当图片选择器打开时加载图片
     useEffect(() => {
         if (imagePickerVisible) {
-            fetchImages();
+            fetchImages()
         }
-    }, [imagePickerVisible, currentImagePage, imagePageSize, currentImageFolder]);
+    }, [imagePickerVisible, currentImagePage, imagePageSize, currentImageFolder])
 
     useEffect(() => {
         handleUploadingImage(isUploadingImage)
@@ -376,14 +376,14 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
                     // 为移动设备添加专用样式
                     if (isMobile) {
-                        vditorElement.classList.add('vditor-mobile');
-                        toolbar.classList.add('vditor-toolbar-mobile');
+                        vditorElement.classList.add('vditor-mobile')
+                        toolbar.classList.add('vditor-toolbar-mobile')
 
                         // 移动设备下优化工具栏布局
-                        const toolbarItems = toolbar.querySelectorAll('.vditor-toolbar__item');
+                        const toolbarItems = toolbar.querySelectorAll('.vditor-toolbar__item')
                         toolbarItems.forEach((item) => {
-                            (item as HTMLElement).style.margin = '2px';
-                        });
+                            (item as HTMLElement).style.margin = '2px'
+                        })
                     }
                 }
 
@@ -429,10 +429,10 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                         const reader = new FileReader()
                         reader.onload = (event) => {
                             // 处理SVG文件名问题
-                            let filename = file.name;
+                            let filename = file.name
                             // 确保SVG文件有正确的扩展名
                             if (file.type === 'image/svg+xml' && !filename.toLowerCase().endsWith('.svg')) {
-                                filename = filename.replace(/\.[^/.]+$/, '') + '.svg';
+                                filename = filename.replace(/\.[^/.]+$/, '') + '.svg'
                             }
 
                             // 粘贴图片默认上传到根目录（不指定文件夹）
@@ -442,7 +442,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                 setTimeout(() => {
                                     const currentValue = vditor.getValue()
                                     // 对图片 URL 进行编码处理
-                                    const encodedSrc = encodeURI(res.url || res.src);
+                                    const encodedSrc = encodeURI(res.url || res.src)
                                     if (isEditorFocus) {
                                         vditor.setValue(currentValue + `\n![${filename}](${encodedSrc})`)
                                     } else {
@@ -506,7 +506,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M512 928c-28.928 0-52.416-23.488-52.416-52.416V547.072H336.96c-18.944 0-36.096-10.112-45.376-26.56-9.28-16.448-8.544-36.224 1.92-52.032L468.48 218.624C477.952 203.84 494.88 195.584 512 195.584c17.12 0 34.048 8.256 43.52 23.04l174.976 249.856c10.464 15.808 11.2 35.584 1.92 52.032-9.28 16.448-26.432 26.56-45.376 26.56H564.416v328.512c0 28.928-23.488 52.416-52.416 52.416z" fill="currentColor"></path></svg>',
                     click() {
                         // 点击上传按钮时打开上传模态框
-                        setUploadModalVisible(true);
+                        setUploadModalVisible(true)
                     }
                 },
                 // 添加图床选择按钮
@@ -515,7 +515,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     tip: t['vditor.selectImage'] || '从图床选择',
                     icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M896 0H128C57.6 0 0 57.6 0 128v768c0 70.4 57.6 128 128 128h768c70.4 0 128-57.6 128-128V128c0-70.4-57.6-128-128-128zm0 896H128V128h768v768z"></path><path d="M288 384c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm0-128c17.7 0 32 14.3 32 32s-14.3 32-32 32-32-14.3-32-32 14.3-32 32-32zM704 576l-128-128-256 256-64-64L128 768h768z"></path></svg>',
                     click() {
-                        setImagePickerVisible(true);
+                        setImagePickerVisible(true)
                     }
                 },
                 {
@@ -585,7 +585,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M512 928c-28.928 0-52.416-23.488-52.416-52.416V547.072H336.96c-18.944 0-36.096-10.112-45.376-26.56-9.28-16.448-8.544-36.224 1.92-52.032L468.48 218.624C477.952 203.84 494.88 195.584 512 195.584c17.12 0 34.048 8.256 43.52 23.04l174.976 249.856c10.464 15.808 11.2 35.584 1.92 52.032-9.28 16.448-26.432 26.56-45.376 26.56H564.416v328.512c0 28.928-23.488 52.416-52.416 52.416z" fill="currentColor"></path></svg>',
                     click() {
                         // 点击上传按钮时打开上传模态框
-                        setUploadModalVisible(true);
+                        setUploadModalVisible(true)
                     }
                 },
                 // 添加图床选择按钮
@@ -594,7 +594,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     tip: t['vditor.selectImage'] || '从图床选择',
                     icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M896 0H128C57.6 0 0 57.6 0 128v768c0 70.4 57.6 128 128 128h768c70.4 0 128-57.6 128-128V128c0-70.4-57.6-128-128-128zm0 896H128V128h768v768z"></path><path d="M288 384c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm0-128c17.7 0 32 14.3 32 32s-14.3 32-32 32-32-14.3-32-32 14.3-32 32-32zM704 576l-128-128-256 256-64-64L128 768h768z"></path></svg>',
                     click() {
-                        setImagePickerVisible(true);
+                        setImagePickerVisible(true)
                     }
                 },
                 {
@@ -762,13 +762,13 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                             name="file"
                             multiple={false}
                             beforeUpload={(file) => {
-                                const isImage = file.type.startsWith('image/');
+                                const isImage = file.type.startsWith('image/')
                                 if (!isImage) {
-                                    message.error(t['vditor.upload.invalidFileType'] || '只能上传图片文件');
-                                    return false;
+                                    message.error(t['vditor.upload.invalidFileType'] || '只能上传图片文件')
+                                    return false
                                 }
-                                handleCustomUpload(file);
-                                return false;
+                                handleCustomUpload(file)
+                                return false
                             }}
                             showUploadList={false}
                         >

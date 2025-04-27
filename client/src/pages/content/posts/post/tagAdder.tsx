@@ -1,11 +1,11 @@
 import { Button, Card, Checkbox, Input, Tag } from "antd"
 import React, { useEffect, useState } from "react"
-import useDeviceDetect from '../../../../hooks/useDeviceDetect';
+import useDeviceDetect from '../../../../hooks/useDeviceDetect'
 
 const CheckboxGroup = Checkbox.Group
 
 export function TagAdder({ existTags, tags, onchange, onClose, visible, cardTitle, placeholder }) {
-    const { isMobile } = useDeviceDetect();
+    const { isMobile } = useDeviceDetect()
     const [tagInputValue, setTagInputValue] = useState('')
     const [localVisible, setLocalVisible] = useState(visible)
 
@@ -130,5 +130,5 @@ export function TagAdder({ existTags, tags, onchange, onClose, visible, cardTitl
                 </div>
             </Card>
         ) : null
-    );
+    )
 }

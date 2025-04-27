@@ -12,7 +12,7 @@ import IconLinkLight from "@/assets/linkLight.svg"
 import Iconllipsis from "@/assets/ellipsis.svg"
 import IconllipsisLight from "@/assets/ellipsisLight.svg"
 
-const { Text } = Typography;
+const { Text } = Typography
 
 interface Props {
     published?: boolean; // 保持可选状态
@@ -40,25 +40,25 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(isMobile ? 6 : 9) // 移动端使用较小的 pageSize
     const [total, setTotal] = useState(0)
-    const navigate = useNavigate();
+    const navigate = useNavigate()
 
     // 新增状态管理封面设置对话框
-    const [coverModalVisible, setCoverModalVisible] = useState(false);
-    const [currentPost, setCurrentPost] = useState(null);
-    const [form] = Form.useForm();
+    const [coverModalVisible, setCoverModalVisible] = useState(false)
+    const [currentPost, setCurrentPost] = useState(null)
+    const [form] = Form.useForm()
     // 添加一个状态来强制更新预览
-    const [previewUrl, setPreviewUrl] = useState('');
+    const [previewUrl, setPreviewUrl] = useState('')
 
     const t = useLocale()
 
     const removeSource = async (item) => {
         try {
             // 执行删除操作
-            const deleteApiPath = isPage ? '/hexopro/api/pages' : '/hexopro/api/posts';
+            const deleteApiPath = isPage ? '/hexopro/api/pages' : '/hexopro/api/posts'
             await service.get(`${deleteApiPath}/${base64Encode(item.permalink)}/remove`)
 
             // 重新查询数据并更新列表
-            const listApiPath = isPage ? '/hexopro/api/pages/list' : '/hexopro/api/posts/list';
+            const listApiPath = isPage ? '/hexopro/api/pages/list' : '/hexopro/api/posts/list'
             const res = await service.get(listApiPath, { params: { published: published, page: currentPage, pageSize: pageSize } })
             const result = res.data.data.map((obj, i) => {
                 return { _id: obj._id, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, updated: obj.updated, key: i + 1 }
@@ -79,15 +79,15 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
     }
 
     const openCoverModal = (item, e) => {
-        e.stopPropagation();
-        setCurrentPost(item);
-        setCoverModalVisible(true);
+        e.stopPropagation()
+        setCurrentPost(item)
+        setCoverModalVisible(true)
         // 重置预览URL
-        setPreviewUrl('');
+        setPreviewUrl('')
         // 如果当前文章有封面，则设置为初始值
         if (item.cover) {
-            form.setFieldsValue({ value: item.cover });
-            setPreviewUrl(item.cover);
+            form.setFieldsValue({ value: item.cover })
+            setPreviewUrl(item.cover)
         }
     }
 
@@ -109,36 +109,36 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
 
     // 添加发布和撤销发布的处理函数
     const handlePublish = async (item, e) => {
-        e.stopPropagation();
+        e.stopPropagation()
         try {
-            const publishApiPath = '/hexopro/api/posts/' + base64Encode(item.permalink) + '/publish';
-            const res = await service.get(publishApiPath);
+            const publishApiPath = '/hexopro/api/posts/' + base64Encode(item.permalink) + '/publish'
+            const res = await service.get(publishApiPath)
             if (res.status === 200) {
-                message.success(t['content.articleList.publish.success'] || '文章发布成功');
-                queryPosts();
+                message.success(t['content.articleList.publish.success'] || '文章发布成功')
+                queryPosts()
             }
         } catch (err) {
-            message.error(err.message || t['content.articleList.publish.error'] || '发布失败');
+            message.error(err.message || t['content.articleList.publish.error'] || '发布失败')
         }
     }
 
     const handleUnpublish = async (item, e) => {
-        e.stopPropagation();
+        e.stopPropagation()
         try {
-            const unpublishApiPath = '/hexopro/api/posts/' + base64Encode(item.permalink) + '/unpublish';
-            const res = await service.get(unpublishApiPath);
+            const unpublishApiPath = '/hexopro/api/posts/' + base64Encode(item.permalink) + '/unpublish'
+            const res = await service.get(unpublishApiPath)
             if (res.status === 200) {
-                message.success(t['content.articleList.unpublish.success'] || '文章已撤回到草稿箱');
-                queryPosts();
+                message.success(t['content.articleList.unpublish.success'] || '文章已撤回到草稿箱')
+                queryPosts()
             }
         } catch (err) {
-            message.error(err.message || t['content.articleList.unpublish.error'] || '撤回失败');
+            message.error(err.message || t['content.articleList.unpublish.error'] || '撤回失败')
         }
     }
 
     const queryPosts = () => {
         console.log('queryPosts', pageSize)
-        const listApiPath = isPage ? '/hexopro/api/pages/list' : '/hexopro/api/posts/list';
+        const listApiPath = isPage ? '/hexopro/api/pages/list' : '/hexopro/api/posts/list'
         service.get(listApiPath, { params: { published: published, page: currentPage, pageSize: pageSize } })
             .then(res => {
                 const result = res.data.data.map((obj, i) => {
@@ -151,7 +151,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
 
     // 添加 Base64 编码函数
     function base64Encode(str) {
-        return btoa(unescape(encodeURIComponent(str)));
+        return btoa(unescape(encodeURIComponent(str)))
     }
 
     useEffect(() => {
@@ -222,8 +222,8 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                         type="text"
                                         style={{ color: 'rgba(0, 0, 0, 0.45)' }}
                                         onClick={(event) => {
-                                            event.stopPropagation();
-                                            window.open(item.permalink, '_blank');
+                                            event.stopPropagation()
+                                            window.open(item.permalink, '_blank')
                                         }}
                                         icon={theme === 'dark' ? <IconLinkLight /> : <IconLink />}
                                     >
@@ -256,13 +256,13 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                                                 title={t['editor.header.pop.title']}
                                                                 description={t['list.editor.header.pop.des']}
                                                                 onConfirm={(event) => {
-                                                                    if (event && event.stopPropagation) event.stopPropagation();
+                                                                    if (event && event.stopPropagation) event.stopPropagation()
                                                                     removeSource(item)
                                                                 }}
                                                             >
                                                                 <Text type="danger" onClick={(event) => {
-                                                                    event.stopPropagation();
-                                                                    event.preventDefault();
+                                                                    event.stopPropagation()
+                                                                    event.preventDefault()
                                                                 }}>
                                                                     {t['content.articleList.btn.delete']}
                                                                 </Text>
@@ -278,7 +278,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                             type="text"
                                             icon={theme === 'dark' ? <IconllipsisLight /> : <Iconllipsis />}
                                             onClick={(event) => {
-                                                event.stopPropagation();
+                                                event.stopPropagation()
                                             }}
                                         />
                                     </Dropdown>
@@ -336,14 +336,14 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                             placeholder={t['content.articleList.cover.valuePlaceholder'] || '例如: https://example.com/image.jpg'}
                             onChange={(e) => {
                                 // 当输入值变化时，更新预览URL
-                                setPreviewUrl(e.target.value);
+                                setPreviewUrl(e.target.value)
                             }}
                             onPaste={(e) => {
                                 // 粘贴时立即更新预览URL
                                 setTimeout(() => {
-                                    const pastedValue = form.getFieldValue('value');
-                                    setPreviewUrl(pastedValue);
-                                }, 0);
+                                    const pastedValue = form.getFieldValue('value')
+                                    setPreviewUrl(pastedValue)
+                                }, 0)
                             }}
                         />
                     </Form.Item>
@@ -358,7 +358,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                     style={{ maxWidth: '100%', maxHeight: 200 }}
                                     fallback="data:image/png;base64,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"
                                     onError={(e) => {
-                                        message.error('图片链接无效，请检查URL');
+                                        message.error('图片链接无效，请检查URL')
                                     }}
                                 />
                                 <div style={{

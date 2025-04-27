@@ -8,7 +8,7 @@
  * @returns Base64 编码后的字符串
  */
 export function base64Encode(str: string): string {
-    return btoa(unescape(encodeURIComponent(str)));
+    return btoa(unescape(encodeURIComponent(str)))
 }
 
 /**
@@ -17,5 +17,5 @@ export function base64Encode(str: string): string {
  * @returns 解码后的原始字符串
  */
 export function base64Decode(str: string): string {
-    return decodeURIComponent(escape(atob(str)));
+    return decodeURIComponent(escape(atob(str)))
 }

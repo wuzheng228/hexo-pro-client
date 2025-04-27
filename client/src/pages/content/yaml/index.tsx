@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react'
 import {
   Button,
   Card,
@@ -21,7 +21,7 @@ import {
   Tag,
   Typography,
   Tree
-} from 'antd';
+} from 'antd'
 import {
   CopyOutlined,
   DeleteOutlined,
@@ -35,18 +35,18 @@ import {
   FullscreenExitOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined
-} from '@ant-design/icons';
-import service from '@/utils/api';
-import useLocale from '@/hooks/useLocale';
-import { GlobalContext } from '@/context';
-import useDeviceDetect from '@/hooks/useDeviceDetect';
-import styles from './style/index.module.less';
-import YamlEditor from './components/YamlEditor';
-import TemplateManager from './components/TemplateManager';
+} from '@ant-design/icons'
+import service from '@/utils/api'
+import useLocale from '@/hooks/useLocale'
+import { GlobalContext } from '@/context'
+import useDeviceDetect from '@/hooks/useDeviceDetect'
+import styles from './style/index.module.less'
+import YamlEditor from './components/YamlEditor'
+import TemplateManager from './components/TemplateManager'
 
-const { Title, Text, Paragraph } = Typography;
-const { Option } = Select;
-const { TabPane } = Tabs;
+const { Title, Text, Paragraph } = Typography
+const { Option } = Select
+const { TabPane } = Tabs
 
 interface YamlFile {
   name: string;
@@ -64,70 +64,70 @@ interface YamlTemplate {
 }
 
 const YamlManager: React.FC = () => {
-  const t = useLocale();
-  const { theme } = useContext(GlobalContext);
-  const { isMobile } = useDeviceDetect();
+  const t = useLocale()
+  const { theme } = useContext(GlobalContext)
+  const { isMobile } = useDeviceDetect()
 
-  const [loading, setLoading] = useState(false);
-  const [yamlFiles, setYamlFiles] = useState<YamlFile[]>([]);
-  const [templates, setTemplates] = useState<YamlTemplate[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [currentFile, setCurrentFile] = useState<YamlFile | null>(null);
-  const [currentTemplate, setCurrentTemplate] = useState<YamlTemplate | null>(null);
-  const [editMode, setEditMode] = useState<'file' | 'template' | null>(null);
-  const [createFileVisible, setCreateFileVisible] = useState(false);
-  const [createTemplateVisible, setCreateTemplateVisible] = useState(false);
-  const [newFileName, setNewFileName] = useState('');
-  const [newFilePath, setNewFilePath] = useState('');
+  const [loading, setLoading] = useState(false)
+  const [yamlFiles, setYamlFiles] = useState<YamlFile[]>([])
+  const [templates, setTemplates] = useState<YamlTemplate[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [total, setTotal] = useState(0)
+  const [currentFile, setCurrentFile] = useState<YamlFile | null>(null)
+  const [currentTemplate, setCurrentTemplate] = useState<YamlTemplate | null>(null)
+  const [editMode, setEditMode] = useState<'file' | 'template' | null>(null)
+  const [createFileVisible, setCreateFileVisible] = useState(false)
+  const [createTemplateVisible, setCreateTemplateVisible] = useState(false)
+  const [newFileName, setNewFileName] = useState('')
+  const [newFilePath, setNewFilePath] = useState('')
   const [newTemplateData, setNewTemplateData] = useState({
     name: '',
     description: '',
     structure: {},
     variables: []
-  });
-  const [activeTab, setActiveTab] = useState('files');
+  })
+  const [activeTab, setActiveTab] = useState('files')
 
   // 获取YAML文件列表
   const fetchYamlFiles = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
       const res = await service.get('/hexopro/api/yaml/list', {
         params: {
           page: currentPage,
           pageSize: pageSize
         }
-      });
-      setYamlFiles(res.data.files);
-      setTotal(res.data.total);
+      })
+      setYamlFiles(res.data.files)
+      setTotal(res.data.total)
     } catch (error) {
-      message.error(t['content.yaml.fetchFailed'] || '获取YAML文件列表失败');
-      console.error(error);
+      message.error(t['content.yaml.fetchFailed'] || '获取YAML文件列表失败')
+      console.error(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // 获取模板列表
   const fetchTemplates = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const res = await service.get('/hexopro/api/yaml/templates');
-      setTemplates(res.data);
+      const res = await service.get('/hexopro/api/yaml/templates')
+      setTemplates(res.data)
     } catch (error) {
-      message.error(t['content.yaml.fetchTemplatesFailed'] || '获取模板列表失败');
-      console.error(error);
+      message.error(t['content.yaml.fetchTemplatesFailed'] || '获取模板列表失败')
+      console.error(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // 创建新YAML文件
   const handleCreateFile = async () => {
     if (!newFileName.trim()) {
-      message.error(t['content.yaml.fileNameRequired'] || '文件名称不能为空');
-      return;
+      message.error(t['content.yaml.fileNameRequired'] || '文件名称不能为空')
+      return
     }
 
     try {
@@ -135,45 +135,45 @@ const YamlManager: React.FC = () => {
         name: newFileName,
         path: newFilePath,
         content: '# 新建YAML文件\n'
-      });
-      message.success(t['content.yaml.createSuccess'] || '创建文件成功');
-      setCreateFileVisible(false);
-      setNewFileName('');
-      setNewFilePath('');
-      fetchYamlFiles();
+      })
+      message.success(t['content.yaml.createSuccess'] || '创建文件成功')
+      setCreateFileVisible(false)
+      setNewFileName('')
+      setNewFilePath('')
+      fetchYamlFiles()
     } catch (error) {
-      message.error(t['content.yaml.createFailed'] || '创建文件失败');
-      console.error(error);
+      message.error(t['content.yaml.createFailed'] || '创建文件失败')
+      console.error(error)
     }
-  };
+  }
 
   // 创建新模板
   const handleCreateTemplate = async () => {
     if (!newTemplateData.name.trim()) {
-      message.error(t['content.yaml.templateNameRequired'] || '模板名称不能为空');
-      return;
+      message.error(t['content.yaml.templateNameRequired'] || '模板名称不能为空')
+      return
     }
 
     try {
       // 获取表单中的变量数据
-      const formElement = document.querySelector('form');
-      const formData = new FormData(formElement as HTMLFormElement);
-      const variables = [];
+      const formElement = document.querySelector('form')
+      const formData = new FormData(formElement as HTMLFormElement)
+      const variables = []
 
       // 从表单中提取变量数据
-      const formFields = formElement?.querySelectorAll('.ant-row');
+      const formFields = formElement?.querySelectorAll('.ant-row')
       if (formFields && formFields.length > 0) {
         formFields.forEach((row) => {
-          const nameInput = row.querySelector('input[placeholder="title"]');
-          const typeSelect = row.querySelector('.ant-select-selection-item');
-          const defaultInput = row.querySelector('input[placeholder="默认值"]');
-          const descInput = row.querySelector('input[placeholder="变量描述"]');
+          const nameInput = row.querySelector('input[placeholder="title"]')
+          const typeSelect = row.querySelector('.ant-select-selection-item')
+          const defaultInput = row.querySelector('input[placeholder="默认值"]')
+          const descInput = row.querySelector('input[placeholder="变量描述"]')
 
           if (nameInput) {
-            const name = (nameInput as HTMLInputElement).value;
-            const type = typeSelect ? (typeSelect as HTMLElement).textContent || 'string' : 'string';
-            const defaultValue = defaultInput ? (defaultInput as HTMLInputElement).value : '';
-            const description = descInput ? (descInput as HTMLInputElement).value : '';
+            const name = (nameInput as HTMLInputElement).value
+            const type = typeSelect ? (typeSelect as HTMLElement).textContent || 'string' : 'string'
+            const defaultValue = defaultInput ? (defaultInput as HTMLInputElement).value : ''
+            const description = descInput ? (descInput as HTMLInputElement).value : ''
 
             if (name) {
               variables.push({
@@ -181,32 +181,32 @@ const YamlManager: React.FC = () => {
                 type,
                 default: defaultValue,
                 description
-              });
+              })
             }
           }
-        });
+        })
       }
 
       const templateData = {
         ...newTemplateData,
         variables: variables.length > 0 ? variables : newTemplateData.variables
-      };
+      }
 
-      await service.post('/hexopro/api/yaml/template/create', templateData);
-      message.success(t['content.yaml.createTemplateSuccess'] || '创建模板成功');
-      setCreateTemplateVisible(false);
+      await service.post('/hexopro/api/yaml/template/create', templateData)
+      message.success(t['content.yaml.createTemplateSuccess'] || '创建模板成功')
+      setCreateTemplateVisible(false)
       setNewTemplateData({
         name: '',
         description: '',
         structure: {},
         variables: []
-      });
-      fetchTemplates();
+      })
+      fetchTemplates()
     } catch (error) {
-      message.error(t['content.yaml.createTemplateFailed'] || '创建模板失败');
-      console.error(error);
+      message.error(t['content.yaml.createTemplateFailed'] || '创建模板失败')
+      console.error(error)
     }
-  };
+  }
 
   // 保存YAML文件
   const handleSaveFile = async (file: YamlFile, content: string) => {
@@ -214,32 +214,32 @@ const YamlManager: React.FC = () => {
       await service.post('/hexopro/api/yaml/update', {
         path: file.path,
         content: content
-      });
-      message.success(t['content.yaml.saveSuccess'] || '保存成功');
-      fetchYamlFiles();
+      })
+      message.success(t['content.yaml.saveSuccess'] || '保存成功')
+      fetchYamlFiles()
     } catch (error) {
-      message.error(t['content.yaml.saveFailed'] || '保存失败');
-      console.error(error);
+      message.error(t['content.yaml.saveFailed'] || '保存失败')
+      console.error(error)
     }
-  };
+  }
 
   // 删除YAML文件
   const handleDeleteFile = async (file: YamlFile) => {
     try {
       await service.post('/hexopro/api/yaml/delete', {
         path: file.path
-      });
-      message.success(t['content.yaml.deleteSuccess'] || '删除成功');
+      })
+      message.success(t['content.yaml.deleteSuccess'] || '删除成功')
       if (currentFile && currentFile.path === file.path) {
-        setCurrentFile(null);
-        setEditMode(null);
+        setCurrentFile(null)
+        setEditMode(null)
       }
-      fetchYamlFiles();
+      fetchYamlFiles()
     } catch (error) {
-      message.error(t['content.yaml.deleteFailed'] || '删除失败');
-      console.error(error);
+      message.error(t['content.yaml.deleteFailed'] || '删除失败')
+      console.error(error)
     }
-  };
+  }
 
   // 应用模板
   const handleApplyTemplate = async (template: YamlTemplate, values: any, targetPath: string) => {
@@ -248,51 +248,51 @@ const YamlManager: React.FC = () => {
         templateId: template.id,
         values: values,
         targetPath: targetPath
-      });
-      message.success(t['content.yaml.applyTemplateSuccess'] || '应用模板成功');
-      fetchYamlFiles();
+      })
+      message.success(t['content.yaml.applyTemplateSuccess'] || '应用模板成功')
+      fetchYamlFiles()
     } catch (error) {
-      message.error(t['content.yaml.applyTemplateFailed'] || '应用模板失败');
-      console.error(error);
+      message.error(t['content.yaml.applyTemplateFailed'] || '应用模板失败')
+      console.error(error)
     }
-  };
+  }
 
   // 处理页面变化
   const handlePageChange = (page: number, pageSize?: number) => {
-    setCurrentPage(page);
-    if (pageSize) setPageSize(pageSize);
-  };
+    setCurrentPage(page)
+    if (pageSize) setPageSize(pageSize)
+  }
 
   // 初始加载和依赖变化时获取数据
   useEffect(() => {
-    fetchYamlFiles();
-  }, [currentPage, pageSize]);
+    fetchYamlFiles()
+  }, [currentPage, pageSize])
 
   useEffect(() => {
-    fetchTemplates();
-  }, []);
+    fetchTemplates()
+  }, [])
 
   // 新增状态
-  const [fileListCollapsed, setFileListCollapsed] = useState(false);
-  const [fullscreenMode, setFullscreenMode] = useState(false);
+  const [fileListCollapsed, setFileListCollapsed] = useState(false)
+  const [fullscreenMode, setFullscreenMode] = useState(false)
 
   // 切换文件列表收起/展开状态
   const toggleFileList = () => {
-    setFileListCollapsed(!fileListCollapsed);
-  };
+    setFileListCollapsed(!fileListCollapsed)
+  }
 
   // 切换全屏编辑模式
   const toggleFullscreen = () => {
-    setFullscreenMode(!fullscreenMode);
+    setFullscreenMode(!fullscreenMode)
     
     // 全屏模式下自动调整编辑器大小
     setTimeout(() => {
-      const editor = document.getElementById('yaml-editor') as any;
+      const editor = document.getElementById('yaml-editor') as any
       if (editor && editor.layout) {
-        editor.layout();
+        editor.layout()
       }
-    }, 100);
-  };
+    }, 100)
+  }
 
   return (
     <div className={styles.yamlManager}>
@@ -351,8 +351,8 @@ const YamlManager: React.FC = () => {
                           key="name"
                           render={(text, record: YamlFile) => (
                             <a onClick={() => {
-                              setCurrentFile(record);
-                              setEditMode('file');
+                              setCurrentFile(record)
+                              setEditMode('file')
                             }}>{text}</a>
                           )}
                         />
@@ -380,8 +380,8 @@ const YamlManager: React.FC = () => {
                                 type="text"
                                 icon={<EditOutlined />}
                                 onClick={() => {
-                                  setCurrentFile(record);
-                                  setEditMode('file');
+                                  setCurrentFile(record)
+                                  setEditMode('file')
                                 }}
                               />
                               <Popconfirm
@@ -442,9 +442,9 @@ const YamlManager: React.FC = () => {
                         icon={<SaveOutlined />}
                         onClick={() => {
                           if (currentFile) {
-                            const editor = document.getElementById('yaml-editor') as any;
+                            const editor = document.getElementById('yaml-editor') as any
                             if (editor && editor.getValue) {
-                              handleSaveFile(currentFile, editor.getValue());
+                              handleSaveFile(currentFile, editor.getValue())
                             }
                           }
                         }}
@@ -481,9 +481,9 @@ const YamlManager: React.FC = () => {
         open={createFileVisible}
         onOk={handleCreateFile}
         onCancel={() => {
-          setCreateFileVisible(false);
-          setNewFileName('');
-          setNewFilePath('');
+          setCreateFileVisible(false)
+          setNewFileName('')
+          setNewFilePath('')
         }}
         okText={t['content.yaml.ok'] || '确定'}
         cancelText={t['content.yaml.cancel'] || '取消'}
@@ -517,13 +517,13 @@ const YamlManager: React.FC = () => {
         open={createTemplateVisible}
         onOk={handleCreateTemplate}
         onCancel={() => {
-          setCreateTemplateVisible(false);
+          setCreateTemplateVisible(false)
           setNewTemplateData({
             name: '',
             description: '',
             structure: {},
             variables: []
-          });
+          })
         }}
         okText={t['content.yaml.ok'] || '确定'}
         cancelText={t['content.yaml.cancel'] || '取消'}
@@ -563,9 +563,9 @@ const YamlManager: React.FC = () => {
                 setNewTemplateData({
                   ...newTemplateData,
                   structure: value
-                });
+                })
               } catch (e) {
-                console.error('Invalid YAML structure', e);
+                console.error('Invalid YAML structure', e)
               }
             }}
           />
@@ -641,7 +641,7 @@ const YamlManager: React.FC = () => {
         </Form>
       </Modal>
     </div>
-  );
-};
+  )
+}
 
-export default YamlManager;
+export default YamlManager

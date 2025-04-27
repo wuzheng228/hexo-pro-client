@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
   Button,
   Card,
@@ -14,7 +14,7 @@ import {
   Space,
   Tabs,
   Typography
-} from 'antd';
+} from 'antd'
 import {
   DeleteOutlined,
   EditOutlined,
@@ -24,16 +24,16 @@ import {
   ImportOutlined,
   PlusOutlined,
   SaveOutlined
-} from '@ant-design/icons';
-import service from '@/utils/api';
-import useLocale from '@/hooks/useLocale';
-import YamlEditor from './YamlEditor';
-import yaml from 'js-yaml';
+} from '@ant-design/icons'
+import service from '@/utils/api'
+import useLocale from '@/hooks/useLocale'
+import YamlEditor from './YamlEditor'
+import yaml from 'js-yaml'
 import styles from '../style/index.module.less'
 
-const { Title, Text, Paragraph } = Typography;
-const { Option } = Select;
-const { TabPane } = Tabs;
+const { Title, Text, Paragraph } = Typography
+const { Option } = Select
+const { TabPane } = Tabs
 
 interface YamlFile {
   name: string;
@@ -63,96 +63,96 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
   onApplyTemplate,
   onRefresh
 }) => {
-  const t = useLocale();
-  const [form] = Form.useForm();
+  const t = useLocale()
+  const [form] = Form.useForm()
 
-  const [currentTemplate, setCurrentTemplate] = useState<YamlTemplate | null>(null);
-  const [applyTemplateVisible, setApplyTemplateVisible] = useState(false);
-  const [targetPath, setTargetPath] = useState('');
-  const [editTemplateVisible, setEditTemplateVisible] = useState(false);
-  const [editedTemplate, setEditedTemplate] = useState<YamlTemplate | null>(null);
-  const [fullscreen, setFullscreen] = useState(false);
-  const [previewFullscreen, setPreviewFullscreen] = useState(false);
+  const [currentTemplate, setCurrentTemplate] = useState<YamlTemplate | null>(null)
+  const [applyTemplateVisible, setApplyTemplateVisible] = useState(false)
+  const [targetPath, setTargetPath] = useState('')
+  const [editTemplateVisible, setEditTemplateVisible] = useState(false)
+  const [editedTemplate, setEditedTemplate] = useState<YamlTemplate | null>(null)
+  const [fullscreen, setFullscreen] = useState(false)
+  const [previewFullscreen, setPreviewFullscreen] = useState(false)
 
   // 删除模板
   const handleDeleteTemplate = async (template: YamlTemplate) => {
     try {
       await service.post('/hexopro/api/yaml/template/delete', {
         id: template.id
-      });
-      message.success(t['content.yaml.deleteTemplateSuccess'] || '删除模板成功');
-      onRefresh();
+      })
+      message.success(t['content.yaml.deleteTemplateSuccess'] || '删除模板成功')
+      onRefresh()
     } catch (error) {
-      message.error(t['content.yaml.deleteTemplateFailed'] || '删除模板失败');
-      console.error(error);
+      message.error(t['content.yaml.deleteTemplateFailed'] || '删除模板失败')
+      console.error(error)
     }
-  };
+  }
 
   // 编辑模板
   const handleEditTemplate = async () => {
-    if (!editedTemplate) return;
+    if (!editedTemplate) return
 
     try {
-      await service.post('/hexopro/api/yaml/templates/update', editedTemplate);
-      message.success(t['content.yaml.updateTemplateSuccess'] || '更新模板成功');
-      setEditTemplateVisible(false);
-      onRefresh();
+      await service.post('/hexopro/api/yaml/templates/update', editedTemplate)
+      message.success(t['content.yaml.updateTemplateSuccess'] || '更新模板成功')
+      setEditTemplateVisible(false)
+      onRefresh()
     } catch (error) {
-      message.error(t['content.yaml.updateTemplateFailed'] || '更新模板失败');
-      console.error(error);
+      message.error(t['content.yaml.updateTemplateFailed'] || '更新模板失败')
+      console.error(error)
     }
-  };
+  }
 
   // 应用模板
   const handleApplyTemplate = async () => {
     try {
-      const values = await form.validateFields();
+      const values = await form.validateFields()
       if (currentTemplate) {
-        onApplyTemplate(currentTemplate, values, targetPath);
-        setApplyTemplateVisible(false);
-        form.resetFields();
+        onApplyTemplate(currentTemplate, values, targetPath)
+        setApplyTemplateVisible(false)
+        form.resetFields()
       }
     } catch (error) {
-      console.error('Validation failed:', error);
+      console.error('Validation failed:', error)
     }
-  };
+  }
 
   // 导出模板
   const handleExportTemplate = (template: YamlTemplate) => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(template, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `${template.name}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(template, null, 2))
+    const downloadAnchorNode = document.createElement('a')
+    downloadAnchorNode.setAttribute("href", dataStr)
+    downloadAnchorNode.setAttribute("download", `${template.name}.json`)
+    document.body.appendChild(downloadAnchorNode)
+    downloadAnchorNode.click()
+    downloadAnchorNode.remove()
+  }
 
   // 导入模板
   const handleImportTemplate = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
     input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+      const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
-        const reader = new FileReader();
+        const reader = new FileReader()
         reader.onload = async (event) => {
           try {
-            const template = JSON.parse(event.target?.result as string);
-            await service.post('/hexopro/api/yaml/templates/import', template);
-            message.success(t['content.yaml.importTemplateSuccess'] || '导入模板成功');
-            onRefresh();
+            const template = JSON.parse(event.target?.result as string)
+            await service.post('/hexopro/api/yaml/templates/import', template)
+            message.success(t['content.yaml.importTemplateSuccess'] || '导入模板成功')
+            onRefresh()
           } catch (error) {
-            message.error(t['content.yaml.importTemplateFailed'] || '导入模板失败');
-            console.error(error);
+            message.error(t['content.yaml.importTemplateFailed'] || '导入模板失败')
+            console.error(error)
           }
-        };
-        reader.readAsText(file);
+        }
+        reader.readAsText(file)
       }
-    };
-    input.click();
-  };
+    }
+    input.click()
+  }
 
   return (
     <div>
@@ -176,8 +176,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     type="text"
                     icon={<EditOutlined />}
                     onClick={() => {
-                      setEditedTemplate({ ...template });
-                      setEditTemplateVisible(true);
+                      setEditedTemplate({ ...template })
+                      setEditTemplateVisible(true)
                     }}
                   />
                   <Button
@@ -203,16 +203,16 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                 <Button
                   type="primary"
                   onClick={() => {
-                    setCurrentTemplate(template);
-                    setApplyTemplateVisible(true);
-                    form.resetFields();
+                    setCurrentTemplate(template)
+                    setApplyTemplateVisible(true)
+                    form.resetFields()
 
                     // 为每个变量设置默认值
-                    const initialValues = {};
+                    const initialValues = {}
                     template.variables.forEach(variable => {
-                      initialValues[variable.name] = variable.default || '';
-                    });
-                    form.setFieldsValue(initialValues);
+                      initialValues[variable.name] = variable.default || ''
+                    })
+                    form.setFieldsValue(initialValues)
                   }}
                 >
                   {t['content.yaml.applyTemplate'] || '应用模板'}
@@ -359,8 +359,8 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         open={editTemplateVisible}
         onOk={handleEditTemplate}
         onCancel={() => {
-          setEditTemplateVisible(false);
-          setFullscreen(false); // 关闭 Modal 时退出全屏
+          setEditTemplateVisible(false)
+          setFullscreen(false) // 关闭 Modal 时退出全屏
         }}
         okText={t['content.yaml.ok'] || '确定'}
         cancelText={t['content.yaml.cancel'] || '取消'}
@@ -433,14 +433,14 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                   onChange={(value) => {
                     try {
                       // 尝试解析 YAML 以确保其有效性，但仅在编辑时更新字符串状态
-                      yaml.load(value);
-                      setEditedTemplate({ ...editedTemplate, structure: value });
+                      yaml.load(value)
+                      setEditedTemplate({ ...editedTemplate, structure: value })
                     } catch (e) {
                       // 如果 YAML 无效，仍然更新编辑器的内容，但不改变状态中的 structure
                       // 或者可以添加一个错误提示
-                      console.warn("Invalid YAML structure:", e);
+                      console.warn("Invalid YAML structure:", e)
                       // 仅更新编辑器显示，不更新 state
-                      setEditedTemplate(prev => ({ ...prev, structure: value })); // 或者保持原样，让用户修复
+                      setEditedTemplate(prev => ({ ...prev, structure: value })) // 或者保持原样，让用户修复
                     }
                   }}
                 />
@@ -541,7 +541,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
         )}
       </Modal>
     </div>
-  );
-};
+  )
+}
 
-export default TemplateManager;
+export default TemplateManager
