@@ -319,7 +319,7 @@ const TagWordCloud = React.memo(({ loading, tags, theme, darkMode, styles }: Tag
 const Dashboard: React.FC = () => {
   const navigate = useNavigate()
   const { theme } = useContext(GlobalContext)
-
+  const [todoLoading, setTodoLoading] = useState(false); // 添加待办事项加载状态
   const darkMode = theme === 'dark' ? styles.darkMode : ''
   const t = useLocale()
   const { isMobile } = useDeviceDetect()
@@ -524,9 +524,6 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchStats()
-  }, [])
-
-  useEffect(() => {
     fetchTodoItems()
   }, [])
 
@@ -895,78 +892,101 @@ const Dashboard: React.FC = () => {
       }
     };
 
-    // 处理删除待办事项
-    const handleDeleteTodo = async (id) => {
-      try {
-        await service.delete(`/hexopro/api/dashboard/todos/delete/${id}`);
-        message.success('删除成功');
-        fetchStats(); // 刷新数据
-      } catch (error) {
-        message.error('删除失败');
-        console.error(error);
-      }
-    };
+    // 删除待办事项
+  const handleDeleteTodo = async (id) => {
+    try {
+      setTodoLoading(true);
+      await service.delete(`/hexopro/api/dashboard/todos/delete/${id}`);
+      message.success('删除成功');
+      // 更新本地状态
+      setTodoItems(prevItems => prevItems.filter(item => item.id !== id));
+    } catch (error) {
+      message.error('删除失败');
+      console.error(error);
+    } finally {
+      setTodoLoading(false);
+    }
+  };
 
     // 处理切换待办事项状态
-    const handleToggleTodo = async (id) => {
-      try {
-        await service.put(`/hexopro/api/dashboard/todos/toggle/${id}`);
-        message.success('状态已更新');
-        fetchStats(); // 刷新数据
-      } catch (error) {
-        message.error('更新失败');
-        console.error(error);
-      }
+    const handleToggleTodo = async (id: string) => {
+        console.log('Toggling todo with ID:', id); // 添加日志
+        try {
+            setTodoLoading(true);
+            await service.put(`/hexopro/api/dashboard/todos/toggle/${id}`);
+            // fetchTodos(); // 重新获取列表 - 注意：原始代码没有 fetchTodos，这里先注释掉，如果需要，需要定义 fetchTodos
+            // 暂时保留本地更新逻辑，如果需要强制刷新，取消注释 fetchTodos() 并确保其已定义
+            setTodoItems(prevItems =>
+              prevItems.map(item =>
+                item.id === id ? { ...item, completed: !item.completed } : item
+              )
+            );
+        } catch (error) {
+            console.error('Failed to toggle todo:', error);
+            message.error('切换待办事项状态失败');
+        } finally {
+            setTodoLoading(false);
+        }
     };
 
     return (
       <Card
-        title={<><ClockCircleOutlined /> 待办事项</>}
-        className={`${styles.dashboardCard} ${styles.todoCard}`}
-      >
-        <div className={styles.todoInputWrapper}>
-          <Input
-            placeholder="添加新待办，回车添加"
-            value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
-            onPressEnter={handleAdd}
-            allowClear
-            size="small"
-          />
-        </div>
-        <List
-          size="small"
-          dataSource={todoItems}
-          renderItem={item => (
-            <List.Item
-              className={styles.todoItem}
-              actions={[
-                <Button
-                  type="text"
-                  icon={<DeleteOutlined />}
-                  danger
-                  size="small"
-                  className={styles.todoDeleteBtn}
-                  onClick={() => handleDeleteTodo(item.id)}
-                />
-              ]}
-            >
-              <Checkbox
-                checked={item.completed}
-                onChange={() => handleToggleTodo(item.id)}
-                className={styles.todoCheckbox}
+            title={<><EditOutlined style={{ marginRight: 8 }} />待办事项</>}
+            bordered={false}
+            className={styles.metricCard}
+            extra={
+              <Search
+                placeholder="添加新的待办事项"
+                enterButton="添加"
+                value={todoInput}
+                onChange={(e) => setTodoInput(e.target.value)}
+                onSearch={addTodoItem}
+                loading={todoLoading} // 添加加载状态到Search按钮
+                style={{ width: isMobile ? '100%' : 300 }}
               />
-              <div className={styles.todoContent} style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>
-                {item.content}
-              </div>
-              <div className={styles.todoTime}>
-                {new Date(item.createdAt).toLocaleDateString()}
-              </div>
-            </List.Item>
-          )}
-          locale={{ emptyText: '暂无待办事项' }}
-        />
-      </Card>
+            }
+          >
+            <Spin spinning={todoLoading}> {/* 用Spin包裹List */}
+              {todoItems.length > 0 ? (
+                <List
+                  itemLayout="horizontal"
+                  dataSource={todoItems}
+                  renderItem={(item: any) => ( // 添加类型注解
+                    <List.Item
+                      actions={[
+                        <Tooltip title="删除">
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => handleDeleteTodo(item.id)}
+                          />
+                        </Tooltip>
+                      ]}
+                    >
+                      <List.Item.Meta
+                        avatar={
+                          <Checkbox
+                            checked={item.completed}
+                            onChange={() => handleToggleTodo(item.id)}
+                          />
+                        }
+                        title={
+                          <Text delete={item.completed} style={{ color: item.completed ? '#8c8c8c' : 'inherit' }}>
+                            {item.content}
+                          </Text>
+                        }
+                        description={`创建于: ${item.createdAt}`}
+                      />
+                    </List.Item>
+                  )}
+                  className={styles.todoList} // 添加样式类
+                />
+              ) : (
+                <Empty description="还没有待办事项" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
+            </Spin>
+          </Card>
     );
   };
 
