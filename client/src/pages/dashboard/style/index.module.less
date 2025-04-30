@@ -69,8 +69,16 @@
 }
 
 // 核心指标卡片样式
+.metricsGroupCard {
+  margin-bottom: 14px; // 增加底部边距，使其与 trendsRow 上方间距一致
+}
+
+.trendsRow {
+  // margin-bottom: 14px;
+  margin-top: 0; // 去掉顶部边距，保证与上方卡片间距一致
+}
 .metricsRow {
-  margin-bottom: 8px;
+  // margin-bottom: 8px;
 }
 
 .metricCard {
@@ -103,7 +111,7 @@
 
 // 趋势图表样式
 .trendsRow {
-  margin-bottom: 8px;
+  // margin-bottom: 14px;
 }
 
 // 优化饼图容器
@@ -347,473 +355,186 @@
   }
 }
 
-// 暗色主题适配
-:global(.dark) {
-  .systemInfoCard, .pluginsCard, .buildCard {
-    background-color: #1f1f1f;
-    
-    :global(.ant-list-item) {
-      border-bottom-color: #303030;
-    }
-  }
-  
-  .pluginsCard {
-    .pluginsHeader {
-      border-bottom-color: #303030;
-      
-      .pluginsCount {
-        color: rgba(255, 255, 255, 0.45);
-      }
-    }
-    
-    .pluginVersion {
-      color: rgba(255, 255, 255, 0.45);
-    }
-    
-    .pluginStatus {
-      &.disabled {
-        background-color: #262626;
-        color: rgba(255, 255, 255, 0.45);
-      }
-    }
-  }
-  
-  .buildCard {
-    .buildHeader {
-      border-bottom-color: #303030;
-      
-      .buildCount {
-        color: rgba(255, 255, 255, 0.45);
-      }
-    }
-    
-    .buildItemTime {
-      color: rgba(255, 255, 255, 0.45);
-    }
-  }
-}
-
-// 暗色主题适配
-:global(.dark) {
-  .dashboardCard {
-    background-color: #1f1f1f;
-    border-color: #303030;
-    
-    :global(.ant-card-head) {
-      border-bottom-color: #303030;
-    }
-  }
-  
-  .welcomeCard {
-    background: linear-gradient(135deg, #096dd9 0%, #08979c 100%);
-  }
-  
-  .categoryTag, .tagItem {
-    border-color: #303030;
-  }
-}
-
-// 移动端适配
-@media (max-width: 768px) {
-  .dashboardCard {
-    :global(.ant-card-head-title) {
-      font-size: 16px;
-    }
-    
-    :global(.ant-card-body) {
-      padding: 12px;
-    }
-  }
-  
-  .welcomeInfo {
-    h3 {
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-    
-    p {
-      margin-bottom: 8px;
-    }
-  }
-  
-  .metricStatistic {
-    :global(.ant-statistic-title) {
-      font-size: 14px;
-    }
-    
-    :global(.ant-statistic-content) {
-      font-size: 22px;
-    }
-  }
-  
-  .chartContainer {
-    height: 180px;
-  }
-}
-
-.categoriesContainer, .tagsContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.categoryTag, .tagItem {
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  
-  &:hover {
-    transform: scale(1.05);
-  }
-}
-
-.tagItem {
-  font-size: 12px;
-  padding: 0 8px;
-  
-  &:nth-child(3n+1) {
-    font-size: 14px;
-  }
-  
-  &:nth-child(5n+1) {
-    font-size: 16px;
-  }
-}
-
-.metricsGroupWrapper {
-  margin-bottom: 16px;
-}
-
-// 优化核心指标卡片样式
-.metricsGroupCard {
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
-  border-radius: 12px;
-  background: #fff;
-  padding: 20px 16px;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
-  }
-  
-  @media (max-width: 768px) {
-    padding: 12px 8px;
-  }
-  
-  :global(.ant-statistic) {
-    text-align: center;
-  }
-  
-  :global(.ant-statistic-title) {
-    font-size: 15px;
-    font-weight: 500;
-    color: rgba(0, 0, 0, 0.65);
-    margin-bottom: 6px;
-  }
-  
-  :global(.ant-statistic-content) {
-    font-size: 30px;
-    font-weight: 600;
-    color: #1890ff;
-  }
-}
-
-:global(.dark) {
-  .metricsGroupCard {
-    background: #1f1f1f;
-    box-shadow: 0 1px 6px rgba(24, 144, 255, 0.12);
-  }
-}
-// 待办事项侧边栏样式
-.todoSidebarWrapper {
-  position: sticky;
-  top: 16px;
-  z-index: 10;
-  
-  @media (max-width: 992px) {
-    position: static;
-  }
-}
-
-.todoCard {
-  height: calc(100vh - 180px);
-  overflow-y: auto;
-  
-  @media (max-width: 992px) {
-    height: auto;
-    max-height: 400px;
-  }
-  
-  :global(.ant-card-body) {
-    display: flex;
-    flex-direction: column;
-    height: calc(100% - 57px); // 减去卡片头部高度
-  }
-  
-  :global(.ant-list) {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 4px;
-    
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
-    }
-  }
-}
-
-// 优化图表容器
-.chartContainer {
-  height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: rgba(24, 144, 255, 0.02);
-  padding: 8px;
-  
-  @media (max-width: 768px) {
-    height: 220px;
-  }
-}
-
-// 优化标签云
-.tagsContainer {
-  height: 260px !important;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(24, 144, 255, 0.02);
-  border-radius: 8px;
-  padding: 16px;
-  
-  @media (max-width: 768px) {
-    height: 200px !important;
-    padding: 8px;
-  }
-}
-
-// 优化暗色主题
-:global(.dark) {
-  .metricsGroupCard {
-    background: #1f1f1f;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    
-    :global(.ant-statistic-title) {
-      color: rgba(255, 255, 255, 0.65);
-    }
-    
-    :global(.ant-statistic-content) {
-      color: #1890ff;
-    }
-  }
-  
-  .chartContainer, .tagsContainer {
-    background: rgba(255, 255, 255, 0.02);
-  }
-  
-  .welcomeCard {
-    background: linear-gradient(135deg, #096dd9 0%, #08979c 100%);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-}
-
-// 优化响应式布局
-@media (max-width: 768px) {
-  .dashboardContainer {
-    padding: 12px 8px;
-  }
-  
-  .welcomeCard {
-    margin-bottom: 16px;
-  }
-  
-  .welcomeHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    
-    .welcomeInfo {
-      margin-bottom: 16px;
-      width: 100%;
-    }
-    
-    .quickActions {
-      width: 100%;
-      justify-content: space-between;
-      margin-top: 12px;
-    }
-  }
-}
-
-.categoriesContainer, .tagsContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.categoryTag, .tagItem {
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  
-  &:hover {
-    transform: scale(1.05);
-  }
-}
-
-.tagItem {
-  font-size: 12px;
-  padding: 0 8px;
-  
-  &:nth-child(3n+1) {
-    font-size: 14px;
-  }
-  
-  &:nth-child(5n+1) {
-    font-size: 16px;
-  }
-}
-
+// 新增/优化核心指标卡片区域样式
 .metricCardNew {
+  background: linear-gradient(135deg, #f8fafc 0%, #e6f7ff 100%);
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(24, 144, 255, 0.08);
+  padding: 24px 12px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.3s, transform 0.3s;
+  min-height: 120px;
   position: relative;
-  background: rgba(24, 144, 255, 0.03);
-  border-radius: 8px;
-  padding: 18px 16px 12px 16px;
-  min-height: 90px;
-  overflow: hidden;
-  transition: box-shadow 0.2s;
+
   &:hover {
-    box-shadow: 0 4px 16px rgba(24, 144, 255, 0.10);
+    box-shadow: 0 6px 24px rgba(24, 144, 255, 0.18);
+    transform: translateY(-4px) scale(1.03);
+  }
+
+  &.darkMode {
+    background: linear-gradient(135deg, #23272f 0%, #1a2233 100%);
+    box-shadow: 0 2px 12px rgba(24, 144, 255, 0.12);
   }
 }
 
 .metricIconBadge {
-  position: absolute;
-  top: 12px;
-  right: 16px;
   font-size: 32px;
-  color: #e6f7ff;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.7;
-  transition: color 0.2s;
+  color: #1890ff;
+  margin-bottom: 8px;
+  transition: color 0.3s;
+  display: block;
+
+  .darkMode & {
+    color: #40a9ff;
+  }
 }
 
 .metricStatisticNew {
-  z-index: 2;
-  position: relative;
   :global(.ant-statistic-title) {
-    font-size: 14px;
+    font-size: 15px;
     color: #888;
-    font-weight: 400;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    text-align: center;
     letter-spacing: 1px;
+    .darkMode & {
+      color: #bbb;
+    }
   }
   :global(.ant-statistic-content) {
     font-size: 32px;
     font-weight: 700;
-    color: #1890ff;
-    line-height: 1.1;
-    transition: color 0.2s;
+    color: #222;
+    text-align: center;
+    .darkMode & {
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(24,144,255,0.12);
+    }
   }
 }
 
-.metricTitle {
-  color: #888;
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 1px;
-}.todoInputWrapper {
-  margin-bottom: 12px;
+// 响应式优化
+@media (max-width: 768px) {
+  .metricCardNew {
+    padding: 16px 6px 12px 6px;
+    min-height: 90px;
+  }
+  .metricIconBadge {
+    font-size: 26px;
+    margin-bottom: 4px;
+  }
+  .metricStatisticNew {
+    :global(.ant-statistic-title) {
+      font-size: 13px;
+    }
+    :global(.ant-statistic-content) {
+      font-size: 22px;
+    }
+  }
+}
+
+// 待办事项区域样式优化
+.todoCard {
+  .ant-card-head {
+    border-bottom: 1px solid #f0f0f0;
+    background: linear-gradient(90deg, #e6f7ff 0%, #f8fafc 100%);
+    border-radius: 10px 10px 0 0;
+  }
+  .ant-card-body {
+    padding: 18px 12px 12px 12px;
+    background: #fcfeff;
+    border-radius: 0 0 10px 10px;
+  }
+}
+
+.todoInputWrapper {
+  margin-bottom: 14px;
+  .ant-input {
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    transition: border-color 0.2s;
+    &:focus, &:hover {
+      border-color: #1890ff;
+      box-shadow: 0 0 0 2px rgba(24,144,255,0.08);
+    }
+  }
 }
 
 .todoItem {
-  display: flex;
+  display: flex !important;
   align-items: center;
-  position: relative;
-  padding-right: 36px;
-  &:hover .todoDeleteBtn {
-    opacity: 1;
+  padding: 8px 0 !important;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.2s;
+  &:last-child {
+    border-bottom: none;
+  }
+  &:hover {
+    background: #f4faff;
+    .todoDeleteBtn {
+      opacity: 1;
+    }
   }
 }
 
 .todoCheckbox {
-  margin-right: 8px;
-}
-
-.todoTag {
-  margin-right: 8px;
-  font-size: 12px;
-  padding: 0 8px;
+  margin-right: 10px;
+  .ant-checkbox-inner {
+    border-radius: 4px;
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .todoContent {
   flex: 1;
   font-size: 15px;
-  color: #333;
-  margin-right: 8px;
-  word-break: break-all;
+  color: #222;
+  transition: color 0.2s;
+  &.completed {
+    color: #bfbfbf;
+    text-decoration: line-through;
+  }
 }
 
 .todoTime {
-  font-size: 12px;
+  font-size: 13px;
   color: #aaa;
-  margin-left: 8px;
-  white-space: nowrap;
+  margin-left: 18px;
+  min-width: 80px;
+  text-align: right;
 }
 
 .todoDeleteBtn {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  margin-left: 10px;
   opacity: 0.5;
   transition: opacity 0.2s;
   &:hover {
     opacity: 1;
-    color: #ff4d4f;
+    color: #ff4d4f !important;
   }
 }
 
-// 添加加载状态样式
-.loadingContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  width: 100%;
+// 已完成待办的背景色
+.todoItem .ant-checkbox-checked + .todoContent,
+.todoItem .todoContent[style*="line-through"] {
+  color: #bfbfbf !important;
 }
 
-// 优化空状态样式
-.emptyContainer {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  width: 100%;
-  color: rgba(0, 0, 0, 0.45);
-  
-  :global(.ant-empty-image) {
-    height: 60px;
+// 移动端适配
+@media (max-width: 768px) {
+  .todoCard .ant-card-body {
+    padding: 12px 4px 8px 4px;
   }
-  
-  :global(.ant-empty-description) {
-    margin-top: 8px;
-    font-size: 14px;
+  .todoInputWrapper {
+    margin-bottom: 10px;
   }
-}
-
-:global(.dark) {
-  .emptyContainer {
-    color: rgba(255, 255, 255, 0.45);
+  .todoContent {
+    font-size: 13px;
+  }
+  .todoTime {
+    font-size: 12px;
+    min-width: 60px;
   }
 }

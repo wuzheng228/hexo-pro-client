@@ -1,17 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react'
 import {
-  Row, Col, Card, Statistic, Tag, List, Button, Input,
-  Space, Divider, Typography, Calendar, Timeline, Spin, // 移除 Calendar
+  Row, Col, Card, Statistic, List, Button, Input,
+  Typography, Timeline, Spin, // 移除 Calendar
   message, Tooltip, Badge, Checkbox, Avatar, Empty
 } from 'antd'
 import {
-  FileAddOutlined, EditOutlined, SearchOutlined,
-  EyeOutlined, CloudUploadOutlined, SettingOutlined,
-  TagsOutlined, FolderOutlined, ClockCircleOutlined,
-  QuestionCircleOutlined, LinkOutlined, HomeOutlined,
-  RocketOutlined, PlusOutlined, BarChartOutlined,
-  CalendarOutlined, LineChartOutlined, InfoCircleOutlined, // 保留 CalendarOutlined 图标
-  FireOutlined, PieChartOutlined, // 添加 PieChartOutlined 图标
+  FileAddOutlined, EditOutlined,
+  EyeOutlined, SettingOutlined,
+  TagsOutlined, ClockCircleOutlined, HomeOutlined,
+  RocketOutlined, BarChartOutlined,
+  InfoCircleOutlined, // 保留 CalendarOutlined 图标
+  PieChartOutlined, // 添加 PieChartOutlined 图标
   DeleteOutlined,
   EllipsisOutlined,
   CodeOutlined,
@@ -26,20 +25,315 @@ import { base64Encode } from '@/utils/encodeUtils'
 import styles from './style/index.module.less'
 // import { Line } from '@ant-design/charts'; // 移除 Line
 import { Column, Pie, WordCloud } from '@ant-design/charts' // 引入 WordCloud
-import { text } from 'body-parser'
+// import { text } from 'body-parser'; // 移除未使用的导入
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
 
+// --- 新增：提取的图表组件 ---
+
+interface ChartProps {
+  loading: boolean;
+  theme: string;
+  darkMode: string;
+  styles: Record<string, string>;
+}
+
+interface MonthlyPostsChartProps extends ChartProps {
+  monthlyPostStats: { month: string; count: number }[];
+}
+
+const MonthlyPostsChart = React.memo(({ loading, monthlyPostStats, theme, darkMode, styles }: MonthlyPostsChartProps) => {
+  const validCount = monthlyPostStats.filter(item => item.count > 0).length
+
+  if (loading) {
+    return (
+      <div className={`${styles.loadingContainer} ${darkMode}`}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (monthlyPostStats.length === 0 || validCount < 1) {
+    return (
+      <div className={`${styles.emptyContainer} ${darkMode}`}>
+        <Empty description="暂无足够数据展示趋势" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      </div>
+    )
+  }
+
+  const config = {
+    data: monthlyPostStats,
+    xField: 'month',
+    yField: 'count',
+    height: 250,
+    meta: {
+      month: { alias: '月份' },
+      count: { alias: '发布量' },
+    },
+    animation: {
+      appear: {
+        animation: 'scale-in-y',
+        duration: 800,
+      },
+    },
+    tooltip: {
+      title: (datum) => datum.month,
+      formatter: (datum) => ({ name: '发布量', value: datum.count }),
+    },
+    label: {
+      position: 'top',
+      style: {
+        fill: theme === 'dark' ? '#ccc' : '#333',
+        opacity: 0.8,
+      },
+    },
+    xAxis: {
+      label: {
+        autoHide: true,
+        autoRotate: false,
+        style: {
+          fill: theme === 'dark' ? '#ccc' : '#333',
+        }
+      },
+      line: {
+        style: {
+          stroke: theme === 'dark' ? '#303030' : '#d9d9d9',
+        }
+      },
+      tickLine: {
+        style: {
+          stroke: theme === 'dark' ? '#303030' : '#d9d9d9',
+        }
+      },
+    },
+    yAxis: {
+      label: {
+        style: {
+          fill: theme === 'dark' ? '#ccc' : '#333',
+        }
+      },
+      line: {
+        style: {
+          stroke: theme === 'dark' ? '#303030' : '#d9d9d9',
+        }
+      },
+      tickLine: {
+        style: {
+          stroke: theme === 'dark' ? '#303030' : '#d9d9d9',
+        }
+      },
+    },
+    color: ['#1890ff'],
+    columnStyle: {
+      radius: [4, 4, 0, 0],
+      fill: 'l(90) 0:#1890ff 1:#36cfc9',
+    },
+    interactions: [{ type: 'element-active' }],
+    state: {
+      active: {
+        style: {
+          fill: '#ff7875',
+          stroke: '#ff4d4f',
+          lineWidth: 1,
+        },
+      },
+    },
+    theme: theme === 'dark' ? 'dark' : 'light',
+  }
+
+  return <Column {...config} />
+});
+
+interface CategoryPieChartProps extends ChartProps {
+  categories: { name: string; count: number }[];
+}
+
+const CategoryPieChart = React.memo(({ loading, categories, theme, darkMode, styles }: CategoryPieChartProps) => {
+  if (loading) {
+    return (
+      <div className={`${styles.loadingContainer} ${darkMode}`}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (categories.length === 0) {
+    return (
+      <div className={`${styles.emptyContainer} ${darkMode}`}>
+        <Empty description="暂无分类数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      </div>
+    )
+  }
+
+  return (
+    <div className={`${styles.chartContainer} ${darkMode}`}>
+      <Pie
+        data={(categories || []).map(cat => ({
+          type: cat.name,
+          value: cat.count,
+        }))}
+        angleField="value"
+        colorField="type"
+        radius={0.8}
+        innerRadius={0.6}
+        height={280}
+        label={{
+          type: 'outer',
+          content: '{name}: {value}',
+          style: {
+            fontSize: 14,
+            fontWeight: 600,
+            fill: theme === 'dark' ? '#ccc' : '#333',
+          },
+        }}
+        statistic={{
+          title: {
+            style: {
+              fontSize: 18,
+              fontWeight: 700,
+              color: theme === 'dark' ? '#40a9ff' : '#1890ff'
+            },
+            content: '总计',
+          },
+          content: {
+            style: {
+              fontSize: 28,
+              fontWeight: 700,
+              color: theme === 'dark' ? '#40a9ff' : '#1890ff'
+            },
+            formatter: (_, data) => {
+              return data.reduce((total, item) => total + item.value, 0);
+            },
+          },
+        }}
+        color={['#36cfc9', '#1890ff', '#ffc53d', '#ff7875', '#73d13d', '#b37feb']}
+        interactions={[
+          { type: 'element-active' },
+          { type: 'pie-statistic-active' }
+        ]}
+        tooltip={{
+          showTitle: false,
+          formatter: (datum) => ({ name: datum.type, value: datum.value }),
+        }}
+        state={{
+          active: {
+            style: {
+              shadowBlur: 8,
+              stroke: '#1890ff',
+              lineWidth: 2,
+            }
+          }
+        }}
+        legend={{
+          position: 'bottom',
+          layout: 'horizontal',
+          itemName: {
+            style: {
+              fontSize: 12,
+              fill: theme === 'dark' ? '#ccc' : '#333',
+            }
+          }
+        }}
+        theme={theme === 'dark' ? 'dark' : 'light'}
+      />
+    </div>
+  )
+});
+
+interface TagWordCloudProps extends ChartProps {
+  tags: { name: string; count: number; path: string }[];
+}
+
+const TagWordCloud = React.memo(({ loading, tags, theme, darkMode, styles }: TagWordCloudProps) => {
+  if (loading) {
+    return (
+      <div className={`${styles.loadingContainer} ${darkMode}`}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (tags.length === 0) {
+    return (
+      <div className={`${styles.emptyContainer} ${darkMode}`}>
+        <Empty description="暂无标签数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      </div>
+    )
+  }
+
+  return (
+    <WordCloud
+      data={tags.map(tag => ({
+        name: tag.name,
+        value: tag.count,
+        path: tag.path
+      }))}
+      wordField="name"
+      weightField="value"
+      colorField="name"
+      height={240}
+      spiral="rectangular"
+      wordStyle={{
+        fontFamily: 'Verdana',
+        fontSize: [16, 40],
+        rotation: 0,
+        fontWeight: 700,
+      }}
+      random={() => Math.random()}
+      tooltip={{
+        formatter: (datum) => {
+          return { name: datum.text, value: datum.value }
+        },
+      }}
+      state={{
+        active: {
+          style: {
+            shadowColor: '#1890ff',
+            shadowBlur: 10,
+            fill: '#ff7875',
+            cursor: 'pointer'
+          }
+        }
+      }}
+      interactions={[{ type: 'element-active' }]}
+      onReady={(plot) => {
+        plot.chart.on('element:click', (e) => {
+          const { data } = e.data;
+          if (data.datum?.path) {
+            window.open(data.datum.path, '_blank');
+          }
+        });
+      }}
+      style={{
+        background: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(245, 250, 255, 0.7)',
+        borderRadius: 8
+      }}
+      theme={theme === 'dark' ? 'dark' : 'light'}
+    />
+  )
+});
+
+// --- Dashboard 组件 ---
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate()
   const { theme } = useContext(GlobalContext)
+
+  const darkMode = theme === 'dark' ? styles.darkMode : ''
   const t = useLocale()
   const { isMobile } = useDeviceDetect()
 
   // 状态定义
   const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<{
+    totalPosts: number;
+    draftPosts: number;
+    publishedPosts: number;
+    categories: { name: string; count: number }[];
+    tags: { name: string; count: number; path: string }[];
+    recentPosts: any[]; // 明确类型会更好
+  }>({
     totalPosts: 0,
     draftPosts: 0,
     publishedPosts: 0,
@@ -55,7 +349,7 @@ const Dashboard: React.FC = () => {
     author: ''
   })
   const [todoItems, setTodoItems] = useState([])
-  const [visitStats, setVisitStats] = useState([])
+  const [visitStats, setVisitStats] = useState<{ date: string; value: number }[]>([]) // 明确类型
   const [visitData, setVisitData] = useState({
     success: false,
     busuanziEnabled: false,
@@ -67,7 +361,8 @@ const Dashboard: React.FC = () => {
     error: null,
     message: ''
   })
-  const [monthlyPostStats, setMonthlyPostStats] = useState([]) // 新增：月度文章统计状态
+  const [monthlyPostStats, setMonthlyPostStats] = useState<{ month: string; count: number }[]>([]) // 明确类型
+  const [todoInput, setTodoInput] = useState('')
 
   // 获取统计数据
   const fetchStats = async () => {
@@ -102,13 +397,9 @@ const Dashboard: React.FC = () => {
         hexoVersion: 'N/A',
         theme: 'N/A',
         plugins: [],
-        lastDeployTime: 'N/A'
+        lastDeployTime: 'N/A',
+        author: 'N/A' // 添加默认值
       })
-
-      // 获取待办事项
-      const todoRes = await service.get('/hexopro/api/dashboard/todos/list')
-      setTodoItems(todoRes.data || [])
-
       // 获取访问统计数据
       try {
         const visitRes = await service.get('/hexopro/api/dashboard/visit/stats')
@@ -201,10 +492,21 @@ const Dashboard: React.FC = () => {
     try {
       await service.post('/hexopro/api/dashboard/todos/add', { content })
       message.success('添加成功')
-      fetchStats() // 刷新数据
+      setTodoInput('') // 清空输入
+      // fetchStats() // 刷新数据
+      fetchTodoItems()
     } catch (error) {
       message.error('添加失败')
       console.error(error)
+    }
+  }
+
+  const fetchTodoItems = async () => {
+    try {
+      const todoRes = await service.get('/hexopro/api/dashboard/todos/list')
+      setTodoItems(todoRes.data || [])
+    } catch (error) {
+      console.error('获取待办事项失败', error)
     }
   }
 
@@ -224,9 +526,13 @@ const Dashboard: React.FC = () => {
     fetchStats()
   }, [])
 
+  useEffect(() => {
+    fetchTodoItems()
+  }, [])
+
   // 渲染顶部欢迎区域
   const renderWelcomeSection = () => (
-    <Card className={`${styles.dashboardCard} ${styles.welcomeCard}`}>
+    <Card className={`${styles.dashboardCard} ${styles.welcomeCard} ${darkMode}`}>
       <div className={styles.welcomeHeader}>
         <div className={styles.welcomeInfo}>
           <Title level={3}>
@@ -248,134 +554,65 @@ const Dashboard: React.FC = () => {
     </Card>
   )
 
-  // 新增：渲染核心指标卡片组
   // 修改渲染核心指标卡片组
-const renderCoreMetricsGroup = () => (
-  <Card className={styles.metricsGroupCard} bordered={false}>
-    <Row gutter={[24, 16]}>
-      <Col xs={12} md={6}>
-        <div className={styles.metricCardNew}>
-          <FileAddOutlined className={styles.metricIconBadge} />
-          <Statistic
-            title="文章总数"
-            value={stats.totalPosts}
-            className={styles.metricStatisticNew}
-          />
-        </div>
-      </Col>
-      <Col xs={12} md={6}>
-        <div className={styles.metricCardNew}>
-          <EyeOutlined className={styles.metricIconBadge} />
-          <Statistic
-            title="访问量"
-            value={visitData.success ? visitData.currentStats.sitePv : (visitStats.length > 0 ? visitStats.reduce((sum, item) => sum + item.value, 0) : 0)}
-            className={styles.metricStatisticNew}
-          />
-          {visitData.busuanziEnabled === false && (
-            <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'center', marginTop: 4 }}>
-              <InfoCircleOutlined style={{ marginRight: 4 }} />
-              未启用busuanzi统计
-            </Text>
-          )}
-        </div>
-      </Col>
-      <Col xs={12} md={6}>
-        <div className={styles.metricCardNew}>
-          <EditOutlined className={styles.metricIconBadge} />
-          <Statistic
-            title="草稿数"
-            value={stats.draftPosts}
-            className={styles.metricStatisticNew}
-          />
-        </div>
-      </Col>
-      <Col xs={12} md={6}>
-        <div className={styles.metricCardNew}>
-          <ClockCircleOutlined className={styles.metricIconBadge} />
-          <Statistic
-            title="待办事项"
-            value={todoItems.length}
-            className={styles.metricStatisticNew}
-          />
-        </div>
-      </Col>
-    </Row>
-  </Card>
-)
+  const renderCoreMetricsGroup = () => (
+    <Card className={`${styles.metricsGroupCard} ${darkMode}`} bordered={false}>
+      <Row gutter={[24, 16]}>
+        <Col xs={12} md={6}>
+          <div className={`${styles.metricCardNew} ${darkMode}`}>
+            <FileAddOutlined className={styles.metricIconBadge} />
+            <Statistic
+              title="文章总数"
+              value={stats.totalPosts}
+              className={styles.metricStatisticNew}
+            />
+          </div>
+        </Col>
+        <Col xs={12} md={6}>
+          <div className={`${styles.metricCardNew} ${darkMode}`}>
+            <EyeOutlined className={styles.metricIconBadge} />
+            <Statistic
+              title="访问量"
+              value={visitData.success ? visitData.currentStats.sitePv : (visitStats.length > 0 ? visitStats.reduce((sum, item) => sum + item.value, 0) : 0)}
+              className={styles.metricStatisticNew}
+            />
+            {visitData.busuanziEnabled === false && (
+              <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'center', marginTop: 4 }}>
+                <InfoCircleOutlined style={{ marginRight: 4 }} />
+                未启用busuanzi统计
+              </Text>
+            )}
+          </div>
+        </Col>
+        <Col xs={12} md={6}>
+          <div className={`${styles.metricCardNew} ${darkMode}`}>
+            <EditOutlined className={styles.metricIconBadge} />
+            <Statistic
+              title="草稿数"
+              value={stats.draftPosts}
+              className={styles.metricStatisticNew}
+            />
+          </div>
+        </Col>
+        <Col xs={12} md={6}>
+          <div className={`${styles.metricCardNew} ${darkMode}`}>
+            <ClockCircleOutlined className={styles.metricIconBadge} />
+            <Statistic
+              title="待办事项"
+              value={todoItems.length}
+              className={styles.metricStatisticNew}
+            />
+          </div>
+        </Col>
+      </Row>
+    </Card>
+  )
 
-// 新增：渲染月度文章发布柱状图
-// 修改渲染月度文章发布柱状图
-const renderMonthlyPostsChart = () => {
-  // 判断有效数据点数量
-  const validCount = monthlyPostStats.filter(item => item.count > 0).length
-  
-  if (loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <Spin size="large" />
-      </div>
-    )
-  }
-  
-  if (monthlyPostStats.length === 0 || validCount < 1) {
-    return (
-      <div className={styles.emptyContainer}>
-        <Empty description="暂无足够数据展示趋势" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-      </div>
-    )
-  }
-  
-  const config = {
-    data: monthlyPostStats,
-    xField: 'month',
-    yField: 'count',
-    height: 250,
-    meta: {
-      month: { alias: '月份' },
-      count: { alias: '发布量' },
-    },
-    animation: {
-      appear: {
-        animation: 'scale-in-y',
-        duration: 800,
-      },
-    },
-    tooltip: {
-      title: (datum) => datum.month,
-      formatter: (datum) => ({ name: '发布量', value: datum.count }),
-    },
-    label: {
-      position: 'top',
-      style: {
-        fill: theme === 'dark' ? '#ccc' : '#333',
-        opacity: 0.8,
-      },
-    },
-    xAxis: {
-      label: {
-        autoHide: true,
-        autoRotate: false,
-      },
-    },
-    color: ['#1890ff'],
-    columnStyle: {
-      radius: [4, 4, 0, 0],
-      fill: 'l(90) 0:#1890ff 1:#36cfc9',
-    },
-    interactions: [{ type: 'element-active' }],
-    state: {
-      active: {
-        style: {
-          fill: '#ff7875',
-          stroke: '#ff4d4f',
-          lineWidth: 1,
-        },
-      },
-    },
-  }
-  
-  return <Column {...config} />
-}
+  // --- 移除 renderMonthlyPostsChart, MemoizedPieChart, MemoizedWordCloud 定义 ---
+  // const renderMonthlyPostsChart = () => { ... } // 移除
+  // const MemoizedMonthlyChart = React.memo(renderMonthlyPostsChart) // 移除
+  // const MemoizedPieChart = React.memo(() => { ... }) // 移除
+  // const MemoizedWordCloud = React.memo(()=>{ ... }) // 移除
 
   // 修改：渲染趋势图表区域
   const renderTrendsSection = () => (
@@ -384,118 +621,81 @@ const renderMonthlyPostsChart = () => {
       <Col xs={24} md={12}>
         <Card
           title={<><BarChartOutlined /> 最近 6 月文章发布趋势 <Text type="secondary" style={{fontSize:12,marginLeft:8}}>（零值月份自动隐藏）</Text></>}
-          className={styles.dashboardCard}
-          bodyStyle={{ padding: 0 }}
+          className={`${styles.dashboardCard} ${darkMode}`}
+          bodyStyle={{ padding: 10 }}
         >
-          <div className={styles.chartContainer}>
-            {renderMonthlyPostsChart()}
+          <div className={`${styles.chartContainer} ${darkMode}`}>
+            {/* 使用新组件 */}
+            <MonthlyPostsChart
+              loading={loading}
+              monthlyPostStats={monthlyPostStats}
+              theme={theme}
+              darkMode={darkMode}
+              styles={styles}
+            />
           </div>
         </Card>
       </Col>
-      
+
       {/* 分类饼图 */}
       <Col xs={24} md={12}>
         <Card
           title={<><PieChartOutlined /> 分类分布</>}
-          className={styles.dashboardCard}
-          bodyStyle={{ padding: 0 }}
+          className={`${styles.dashboardCard} ${darkMode}`}
+          bodyStyle={{ padding: 10 }}
         >
-          <div className={styles.chartContainer}>
-            {loading ? (
-              <div className={styles.loadingContainer}>
-                <Spin size="large" />
-              </div>
-            ) : stats.categories.length === 0 ? (
-              <div className={styles.emptyContainer}>
-                <Empty description="暂无分类数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-              </div>
-            ) : (
-              <Pie
-                data={(stats.categories || []).map(cat => ({
-                  type: cat.name,
-                  value: cat.count,
-                }))}
-                angleField="value"
-                colorField="type"
-                radius={0.8}
-                innerRadius={0.6}
-                height={280}
-                label={{
-                  type: 'outer',
-                  content: '{name}: {value}',
-                  style: {
-                    fontSize: 14,
-                    fontWeight: 600,
-                    fill: theme === 'dark' ? '#ccc' : '#333',
-                  },
-                }}
-                statistic={{
-                  title: {
-                    style: { fontSize: 18, fontWeight: 700, color: '#1890ff' },
-                    content: '总计',
-                  },
-                  content: {
-                    style: { fontSize: 28, fontWeight: 700, color: '#1890ff' },
-                    formatter: (_, data) => {
-                      return data.reduce((total, item) => total + item.value, 0);
-                    },
-                  },
-                }}
-                color={['#36cfc9', '#1890ff', '#ffc53d', '#ff7875', '#73d13d', '#b37feb']}
-                interactions={[
-                  { type: 'element-active' },
-                  { type: 'pie-statistic-active' }
-                ]}
-                tooltip={{
-                  showTitle: false,
-                  formatter: (datum) => ({ name: datum.type, value: datum.value }),
-                }}
-                state={{
-                  active: {
-                    style: {
-                      shadowBlur: 8,
-                      stroke: '#1890ff',
-                      lineWidth: 2,
-                    }
-                  }
-                }}
-                legend={{
-                  position: 'bottom',
-                  layout: 'horizontal',
-                  itemName: {
-                    style: {
-                      fontSize: 12,
-                      fill: theme === 'dark' ? '#ccc' : '#333',
-                    }
-                  }
-                }}
-              />
-            )}
-          </div>
+          {/* 使用新组件 */}
+          <CategoryPieChart
+            loading={loading}
+            categories={stats.categories}
+            theme={theme}
+            darkMode={darkMode}
+            styles={styles}
+          />
         </Card>
       </Col>
     </Row>
   )
-  
+
 
   // 渲染标签词云图
   const renderTagsWordCloud = () => (
     <Card
       title={<><TagsOutlined /> 热门标签</>}
-      className={styles.dashboardCard}
-      bodyStyle={{ padding: 0 }}
+      className={`${styles.dashboardCard} ${darkMode}`}
     >
-      <div className={styles.tagsContainer}>
-        {loading ? (
-          <div className={styles.loadingContainer}>
-            <Spin size="large" />
-          </div>
-        ) : stats.tags.length === 0 ? (
-          <div className={styles.emptyContainer}>
-            <Empty description="暂无标签数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          </div>
-        ) : (
-          <WordCloud
+      <div className={`${styles.tagsContainer} ${darkMode}`}>
+        {/* 使用新组件 */}
+        <TagWordCloud
+          loading={loading}
+          tags={stats.tags}
+          theme={theme}
+          darkMode={darkMode}
+          styles={styles}
+        />
+      </div>
+    </Card>
+  )
+
+  const MemoizedWordCloud = React.memo(()=>{
+    if (loading) {
+      return (
+        <div className={`${styles.loadingContainer} ${darkMode}`}>
+          <Spin size="large" />
+        </div>
+      )
+    }
+    
+    if (stats.tags.length === 0) {
+      return (
+        <div className={`${styles.emptyContainer} ${darkMode}`}>
+          <Empty description="暂无标签数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+      )
+    }
+
+    return (
+      <WordCloud
             data={stats.tags.map(tag => ({
               name: tag.name,
               value: tag.count,
@@ -515,7 +715,7 @@ const renderMonthlyPostsChart = () => {
             random={() => Math.random()}
             tooltip={{
               formatter: (datum) => {
-                return { name: datum.name, value: datum.value }
+                return { name: datum.text, value: datum.value }
               },
             }}
             state={{
@@ -537,12 +737,14 @@ const renderMonthlyPostsChart = () => {
                 }
               });
             }}
-            style={{ background: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(245, 250, 255, 0.7)', borderRadius: 8 }}
+            style={{ 
+              background: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(245, 250, 255, 0.7)', 
+              borderRadius: 8 
+            }}
+            theme={theme === 'dark' ? 'dark' : 'light'}
           />
-        )}
-      </div>
-    </Card>
-  )
+    )
+  })
   
 
   // 渲染底部系统信息区域
@@ -754,9 +956,6 @@ const renderMonthlyPostsChart = () => {
                 onChange={() => handleToggleTodo(item.id)}
                 className={styles.todoCheckbox}
               />
-              <Tag color={item.color || 'blue'} className={styles.todoTag}>
-                {item.category || '默认'}
-              </Tag>
               <div className={styles.todoContent} style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>
                 {item.content}
               </div>
@@ -777,7 +976,7 @@ const renderMonthlyPostsChart = () => {
         {renderWelcomeSection()}
         
         {/* 核心指标区域 */}
-        <div className={styles.metricsGroupWrapper}>
+        <div >
           {renderCoreMetricsGroup()}
         </div>
         
