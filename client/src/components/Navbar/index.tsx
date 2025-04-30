@@ -3,7 +3,7 @@ import _ from 'lodash'
 import styles from './style/index.module.less'
 import Logo from '@/assets/logo.svg'
 import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Tag, message, notification } from "antd"
-import { DownOutlined, EditOutlined, MenuOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons"
+import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
 import IconLangLight from "@/assets/langLight.svg"
 import useLocale from "@/hooks/useLocale"
@@ -484,10 +484,25 @@ const getFlatternRoute = (routes) => {
     return res
 }
 
-const getIconFromKey = (key: string) => {
+function getIconFromKey(key: string) {
     switch (key) {
-        case 'posts': return <EditOutlined />
-        default: return <div className={styles['icon-empty']}></div>
+        case 'posts':
+            return <EditOutlined />
+        case 'dashboard':
+            return <HomeOutlined />
+        case 'content_management':
+            return <AppstoreOutlined />
+        case 'system':
+            return <SettingOutlined />
+        case 'deploy':
+            return <CloudUploadOutlined />
+        case 'content/pages':
+            return <FileTextOutlined />
+        case 'content/images':
+            return <PictureOutlined />
+        case 'content/yaml':
+                return <CodeOutlined />
+        default:
+            return <div className={styles['icon-empty']}></div>
     }
 }
-

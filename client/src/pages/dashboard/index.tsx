@@ -190,7 +190,7 @@ const CategoryPieChart = React.memo(({ loading, categories, theme, darkMode, sty
         statistic={{
           title: {
             style: {
-              fontSize: 18,
+              // fontSize: 18,
               fontWeight: 700,
               color: theme === 'dark' ? '#40a9ff' : '#1890ff'
             },
@@ -198,7 +198,7 @@ const CategoryPieChart = React.memo(({ loading, categories, theme, darkMode, sty
           },
           content: {
             style: {
-              fontSize: 28,
+              // fontSize: 28,
               fontWeight: 700,
               color: theme === 'dark' ? '#40a9ff' : '#1890ff'
             },

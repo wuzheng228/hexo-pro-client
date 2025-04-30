@@ -4,7 +4,7 @@ import Layout, { Content } from 'antd/es/layout/layout'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './style/layout.module.less'
 import useRoute, { IRoute } from './routes'
-import { EditOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuFoldOutlined, MenuUnfoldOutlined, PictureOutlined, SettingOutlined } from '@ant-design/icons'
 import useLocale from './hooks/useLocale'
 import lazyload from './utils/lazyload'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
@@ -19,6 +19,20 @@ function getIconFromKey(key: string) {
     switch (key) {
         case 'posts':
             return <EditOutlined />
+        case 'dashboard':
+            return <HomeOutlined />
+        case 'content_management':
+            return <AppstoreOutlined />
+        case 'system':
+            return <SettingOutlined />
+        case 'deploy':
+            return <CloudUploadOutlined />
+        case 'content/pages':
+            return <FileTextOutlined />
+        case 'content/images':
+            return <PictureOutlined />
+        case 'content/yaml':
+                return <CodeOutlined />
         default:
             return <div className={styles['icon-empty']}></div>
     }

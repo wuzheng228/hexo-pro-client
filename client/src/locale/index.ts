@@ -47,6 +47,7 @@ const i18n = {
         'list.editor.header.pop.des': 'Are you sure to delete the article?',
         'navbar.modal.error.title': 'Title cannot be empty or longer than 100',
         'navbar.mobile.menu.title': 'Menu',
+        'menu.content_management': 'Content Management',
     },
     'zh-CN': {
         'menu.posts': '文章',
@@ -96,7 +97,7 @@ const i18n = {
         'content.articleList.btn.delete': '删除',
         'navbar.modal.error.title': '标题不能为空或长度超过100',
         'navbar.mobile.menu.title': '菜单',
-        'menu.content.images': '图床管理',
+        'menu.content.images': '图床',
 
         // 图床管理页面
         'content.images.title': '图床管理',
@@ -139,7 +140,7 @@ const i18n = {
         'content.images.fileNamePlaceholder': '留空则自动生成',
 
         // 添加 YAML 管理相关的翻译
-        'menu.content.yaml': 'YAML 管理',
+        'menu.content.yaml': 'YAML 配置',
         'content.yaml.title': 'YAML 管理',
         'content.yaml.createFile': '新建文件',
         'content.yaml.createTemplate': '新建模板',
@@ -208,7 +209,10 @@ const i18n = {
         'content.yaml.applyTemplateFailed': '应用模板失败',
         'content.yaml.applyTemplateSuccess': '应用模板成功',
         'menu.dashboard': '主页',
-        "menu.deploy": "部署管理"
+        'menu.deploy': "部署",
+        'menu.content_management': "内容管理",
+        'menu.system': "系统管理",
+
     }
 }
 
