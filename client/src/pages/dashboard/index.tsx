@@ -11,7 +11,11 @@ import {
   QuestionCircleOutlined, LinkOutlined, HomeOutlined,
   RocketOutlined, PlusOutlined, BarChartOutlined,
   CalendarOutlined, LineChartOutlined, InfoCircleOutlined, // 保留 CalendarOutlined 图标
-  FireOutlined, PieChartOutlined // 添加 PieChartOutlined 图标
+  FireOutlined, PieChartOutlined, // 添加 PieChartOutlined 图标
+  DeleteOutlined,
+  EllipsisOutlined,
+  CodeOutlined,
+  BgColorsOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { GlobalContext } from '@/context'
@@ -22,6 +26,7 @@ import { base64Encode } from '@/utils/encodeUtils'
 import styles from './style/index.module.less'
 // import { Line } from '@ant-design/charts'; // 移除 Line
 import { Column, Pie, WordCloud } from '@ant-design/charts' // 引入 WordCloud
+import { text } from 'body-parser'
 
 const { Title, Text, Paragraph } = Typography
 const { Search } = Input
@@ -243,154 +248,134 @@ const Dashboard: React.FC = () => {
     </Card>
   )
 
-  // 渲染核心指标卡片
-  const renderCoreMetricsSection = () => (
-    <Row gutter={[16, 16]} className={styles.metricsRow}>
-      <Col xs={24} sm={12} md={6}>
-        <Card className={`${styles.dashboardCard} ${styles.metricCard}`}>
+  // 新增：渲染核心指标卡片组
+  // 修改渲染核心指标卡片组
+const renderCoreMetricsGroup = () => (
+  <Card className={styles.metricsGroupCard} bordered={false}>
+    <Row gutter={[24, 16]}>
+      <Col xs={12} md={6}>
+        <div className={styles.metricCardNew}>
+          <FileAddOutlined className={styles.metricIconBadge} />
           <Statistic
             title="文章总数"
             value={stats.totalPosts}
-            prefix={<FileAddOutlined className={styles.metricIcon} />}
-            className={styles.metricStatistic}
+            className={styles.metricStatisticNew}
           />
-        </Card>
+        </div>
       </Col>
-      <Col xs={24} sm={12} md={6}>
-        <Card className={`${styles.dashboardCard} ${styles.metricCard}`}>
+      <Col xs={12} md={6}>
+        <div className={styles.metricCardNew}>
+          <EyeOutlined className={styles.metricIconBadge} />
           <Statistic
             title="访问量"
-            // 优先使用实时数据，其次使用历史数据，最后使用模拟数据
             value={visitData.success ? visitData.currentStats.sitePv : (visitStats.length > 0 ? visitStats.reduce((sum, item) => sum + item.value, 0) : 0)}
-            prefix={<EyeOutlined className={styles.metricIcon} />}
-            className={styles.metricStatistic}
+            className={styles.metricStatisticNew}
           />
           {visitData.busuanziEnabled === false && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'center', marginTop: 4 }}>
               <InfoCircleOutlined style={{ marginRight: 4 }} />
               未启用busuanzi统计
             </Text>
           )}
-        </Card>
+        </div>
       </Col>
-      <Col xs={24} sm={12} md={6}>
-        <Card className={`${styles.dashboardCard} ${styles.metricCard}`}>
+      <Col xs={12} md={6}>
+        <div className={styles.metricCardNew}>
+          <EditOutlined className={styles.metricIconBadge} />
           <Statistic
             title="草稿数"
             value={stats.draftPosts}
-            prefix={<EditOutlined className={styles.metricIcon} />}
-            className={styles.metricStatistic}
+            className={styles.metricStatisticNew}
           />
-        </Card>
+        </div>
       </Col>
-      <Col xs={24} sm={12} md={6}>
-        <Card className={`${styles.dashboardCard} ${styles.metricCard}`}>
+      <Col xs={12} md={6}>
+        <div className={styles.metricCardNew}>
+          <ClockCircleOutlined className={styles.metricIconBadge} />
           <Statistic
             title="待办事项"
             value={todoItems.length}
-            prefix={<ClockCircleOutlined className={styles.metricIcon} />}
-            className={styles.metricStatistic}
+            className={styles.metricStatisticNew}
           />
-        </Card>
+        </div>
       </Col>
     </Row>
-  )
+  </Card>
+)
 
-  // 新增：渲染月度文章发布柱状图
-  const renderMonthlyPostsChart = () => {
-    const config = {
-      data: monthlyPostStats,
-      xField: 'month',
-      yField: 'count',
-      height: 250, // 调整图表高度
-      meta: {
-        month: { alias: '月份' },
-        count: { alias: '发布量' },
-      },
-      tooltip: {
-        title: (datum) => datum.month,
-        formatter: (datum) => ({ name: '发布量', value: datum.count }),
-      },
-      label: {
-        position: 'top', // 将标签显示在柱子顶部
-        style: {
-          fill: theme === 'dark' ? '#ccc' : '#333', // Adjust label color based on theme
-          opacity: 0.8,
-        },
-      },
-      xAxis: {
-        label: {
-          autoHide: true,
-          autoRotate: false,
-        },
-      },
-    }
+// 新增：渲染月度文章发布柱状图
+// 修改渲染月度文章发布柱状图
+const renderMonthlyPostsChart = () => {
+  // 判断有效数据点数量
+  const validCount = monthlyPostStats.filter(item => item.count > 0).length
+  
+  if (loading) {
     return (
-      <Spin spinning={loading}>
-        {monthlyPostStats.length > 0 ? (
-          <Column {...config} />
-        ) : (
-          <Empty description="暂无文章发布数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        )}
-      </Spin>
+      <div className={styles.loadingContainer}>
+        <Spin size="large" />
+      </div>
     )
   }
-
-  // 修改后的：渲染分类分布饼图
-  const renderCategoryDistributionChart = () => {
-    const data = (stats.categories || []).map(cat => ({
-      type: cat.name,
-      value: cat.count,
-    }));
-
-    // 分类数小于2时不显示饼图
-    if (data.length < 2) {
-      return (
-        <Empty description="分类数据不足，无法展示饼图" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-      )
-    }
-
-    const config = {
-      data,
-      angleField: 'value',
-      colorField: 'type',
-      innerRadius: 0.6,
-      height: 260,
-      label: {
-        text: (d) => `${d.type}: ${d.value}`,
-        position: 'outside',
-        style: {
-          fontWeight: 'bold',
-        },
-      },
-      legend: {
-        color: {
-          title: false,
-          position: 'right',
-          rowPadding: 5,
-        },
-      },
-      annotations: [
-        {
-          type: 'text',
-          style: {
-            text: '分类\n分布',
-            x: '50%',
-            y: '50%',
-            textAlign: 'center',
-            fontSize: 32,
-            fontStyle: 'bold',
-          },
-        },
-      ],
-    };
-
+  
+  if (monthlyPostStats.length === 0 || validCount < 1) {
     return (
-      <Spin spinning={loading}>
-        <Pie {...config} />
-      </Spin>
+      <div className={styles.emptyContainer}>
+        <Empty description="暂无足够数据展示趋势" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      </div>
     )
   }
+  
+  const config = {
+    data: monthlyPostStats,
+    xField: 'month',
+    yField: 'count',
+    height: 250,
+    meta: {
+      month: { alias: '月份' },
+      count: { alias: '发布量' },
+    },
+    animation: {
+      appear: {
+        animation: 'scale-in-y',
+        duration: 800,
+      },
+    },
+    tooltip: {
+      title: (datum) => datum.month,
+      formatter: (datum) => ({ name: '发布量', value: datum.count }),
+    },
+    label: {
+      position: 'top',
+      style: {
+        fill: theme === 'dark' ? '#ccc' : '#333',
+        opacity: 0.8,
+      },
+    },
+    xAxis: {
+      label: {
+        autoHide: true,
+        autoRotate: false,
+      },
+    },
+    color: ['#1890ff'],
+    columnStyle: {
+      radius: [4, 4, 0, 0],
+      fill: 'l(90) 0:#1890ff 1:#36cfc9',
+    },
+    interactions: [{ type: 'element-active' }],
+    state: {
+      active: {
+        style: {
+          fill: '#ff7875',
+          stroke: '#ff4d4f',
+          lineWidth: 1,
+        },
+      },
+    },
+  }
+  
+  return <Column {...config} />
+}
 
   // 修改：渲染趋势图表区域
   const renderTrendsSection = () => (
@@ -398,216 +383,426 @@ const Dashboard: React.FC = () => {
       {/* 文章产出柱状图 */}
       <Col xs={24} md={12}>
         <Card
-          title={<><BarChartOutlined /> 最近6个月文章产出</>}
+          title={<><BarChartOutlined /> 最近 6 月文章发布趋势 <Text type="secondary" style={{fontSize:12,marginLeft:8}}>（零值月份自动隐藏）</Text></>}
           className={styles.dashboardCard}
+          bodyStyle={{ padding: 0 }}
         >
           <div className={styles.chartContainer}>
             {renderMonthlyPostsChart()}
           </div>
         </Card>
       </Col>
-      {/* 分类饼图与热门标签 */}
+      
+      {/* 分类饼图 */}
       <Col xs={24} md={12}>
         <Card
-          title={<><FireOutlined /> 热门内容分布</>}
+          title={<><PieChartOutlined /> 分类分布</>}
           className={styles.dashboardCard}
+          bodyStyle={{ padding: 0 }}
         >
-          <div className={styles.popularContainer}>
-            {/* 分类饼图 */}
-            <div className={styles.sectionTitle}><PieChartOutlined /> 分类分布</div>
-            <div className={styles.chartContainer} style={{ height: 200, marginBottom: 16 }}>
-              {renderCategoryDistributionChart()}
-            </div>
-
-            <Divider style={{ margin: '12px 0' }} />
-
-            {/* 热门标签词云 */}
-            <div className={styles.sectionTitle}><TagsOutlined /> 热门标签</div>
-            <div className={styles.tagsContainer} style={{ height: 200 }}>
-              {stats.tags.length > 0 ? (
-                <WordCloud
-                  data={stats.tags.map(tag => ({
-                    text: tag.name,
-                    value: tag.count,
-                    path: tag.path,
-                  }))}
-                  wordField="text"
-                  weightField="value"
-                  colorField="text"
-                  height={180}
-                  spiral="rectangular"
-                  wordStyle={{
-                    fontFamily: 'inherit',
+          <div className={styles.chartContainer}>
+            {loading ? (
+              <div className={styles.loadingContainer}>
+                <Spin size="large" />
+              </div>
+            ) : stats.categories.length === 0 ? (
+              <div className={styles.emptyContainer}>
+                <Empty description="暂无分类数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              </div>
+            ) : (
+              <Pie
+                data={(stats.categories || []).map(cat => ({
+                  type: cat.name,
+                  value: cat.count,
+                }))}
+                angleField="value"
+                colorField="type"
+                radius={0.8}
+                innerRadius={0.6}
+                height={280}
+                label={{
+                  type: 'outer',
+                  content: '{name}: {value}',
+                  style: {
+                    fontSize: 14,
                     fontWeight: 600,
-                  }}
-                  tooltip={{
-                    customContent: (title, items) => {
-                      const item = items?.[0]?.data
-                      return item
-                        ? `<div style="padding: 8px;">
-                            <div><b>标签：</b>${item.name}</div>
-                            <div><b>路径：</b>${item.path}</div>
-                          </div>`
-                        : ''
+                    fill: theme === 'dark' ? '#ccc' : '#333',
+                  },
+                }}
+                statistic={{
+                  title: {
+                    style: { fontSize: 18, fontWeight: 700, color: '#1890ff' },
+                    content: '总计',
+                  },
+                  content: {
+                    style: { fontSize: 28, fontWeight: 700, color: '#1890ff' },
+                    formatter: (_, data) => {
+                      return data.reduce((total, item) => total + item.value, 0);
+                    },
+                  },
+                }}
+                color={['#36cfc9', '#1890ff', '#ffc53d', '#ff7875', '#73d13d', '#b37feb']}
+                interactions={[
+                  { type: 'element-active' },
+                  { type: 'pie-statistic-active' }
+                ]}
+                tooltip={{
+                  showTitle: false,
+                  formatter: (datum) => ({ name: datum.type, value: datum.value }),
+                }}
+                state={{
+                  active: {
+                    style: {
+                      shadowBlur: 8,
+                      stroke: '#1890ff',
+                      lineWidth: 2,
                     }
-                  }}
-                  state={{
-                    active: {
-                      style: {
-                        lineWidth: 1,
-                        stroke: '#333',
-                      }
+                  }
+                }}
+                legend={{
+                  position: 'bottom',
+                  layout: 'horizontal',
+                  itemName: {
+                    style: {
+                      fontSize: 12,
+                      fill: theme === 'dark' ? '#ccc' : '#333',
                     }
-                  }}
-                  interactions={[{ type: 'element-active' }]}
-                  onReady={(plot) => {
-                    plot.on('element:click', (e) => {
-                      const { data } = e.data
-                      if (data?.path) {
-                        window.open(data.path, '_blank') // 新标签页打开
-                        // 或 navigate(data.path) // 如果你想在当前页面跳转
-                      }
-                    })
-                  }}
-                />
-              ) : (
-                <Empty
-                  description="暂无标签数据"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              )}
-            </div>
+                  }
+                }}
+              />
+            )}
           </div>
         </Card>
       </Col>
     </Row>
   )
+  
 
-  // 渲染底部系统信息区域
-  const renderSystemInfoSection = () => (
-    <Row gutter={[16, 16]} className={styles.systemRow}>
-      <Col xs={24} md={8}>
-        <Card
-          title={<><SettingOutlined /> 系统信息</>}
-          className={styles.dashboardCard}
-        >
-          <List
-            size="small"
-            dataSource={[
-              { label: 'Hexo 版本', value: systemInfo.hexoVersion || 'N/A' },
-              { label: '主题', value: systemInfo.theme || 'N/A' },
-              { label: '最近部署', value: systemInfo.lastDeployTime || '暂无记录' }
-            ]}
-            renderItem={item => (
-              <List.Item>
-                <Text strong>{item.label}:</Text>
-                <Text>{item.value}</Text>
-              </List.Item>
-            )}
-          />
-        </Card>
-      </Col>
-      <Col xs={24} md={8}>
-        <Card
-          title={<><TagsOutlined /> 插件状态</>}
-          className={styles.dashboardCard}
-        >
-          <List
-            size="small"
-            dataSource={systemInfo.plugins || []}
-            renderItem={plugin => (
-              <List.Item>
-                <Badge status={plugin.enabled ? "success" : "default"} />
-                <Text>{plugin.name}</Text>
-                <Text type="secondary" style={{ marginLeft: 8 }}>v{plugin.version}</Text>
-              </List.Item>
-            )}
-            locale={{ emptyText: '暂无插件信息' }}
-          />
-        </Card>
-      </Col>
-      <Col xs={24} md={8}>
-        <Card
-          title={<><BarChartOutlined /> 构建记录</>}
-          className={styles.dashboardCard}
-        >
-          <Timeline>
-            <Timeline.Item>构建成功 (2023-07-15 14:30)</Timeline.Item>
-            <Timeline.Item>部署完成 (2023-07-15 14:32)</Timeline.Item>
-            <Timeline.Item>构建成功 (2023-07-10 09:45)</Timeline.Item>
-            <Timeline.Item>部署完成 (2023-07-10 09:48)</Timeline.Item>
-          </Timeline>
-        </Card>
-      </Col>
-    </Row>
-  )
-
-  // 渲染待办事项区域
-  const renderTodoSection = () => (
+  // 渲染标签词云图
+  const renderTagsWordCloud = () => (
     <Card
-      title={<><ClockCircleOutlined /> 待办事项</>}
+      title={<><TagsOutlined /> 热门标签</>}
       className={styles.dashboardCard}
-      extra={
-        <Search
-          placeholder="添加新待办..."
-          enterButton={<PlusOutlined />}
-          size="small"
-          onSearch={value => {
-            if (value) addTodoItem(value)
-          }}
-        />
-      }
+      bodyStyle={{ padding: 0 }}
     >
-      <List
-        size="small"
-        dataSource={todoItems}
-        renderItem={item => (
-          <List.Item
-            actions={[
-              <Button
-                type="text"
-                size="small"
-                danger
-                onClick={() => {
-                  // 删除待办事项的逻辑
-                }}
-              >
-                删除
-              </Button>
-            ]}
-          >
-            <Checkbox checked={item.completed} onChange={() => {
-              // 更新待办事项状态的逻辑
-            }}>
-              {item.content}
-            </Checkbox>
-          </List.Item>
+      <div className={styles.tagsContainer}>
+        {loading ? (
+          <div className={styles.loadingContainer}>
+            <Spin size="large" />
+          </div>
+        ) : stats.tags.length === 0 ? (
+          <div className={styles.emptyContainer}>
+            <Empty description="暂无标签数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        ) : (
+          <WordCloud
+            data={stats.tags.map(tag => ({
+              name: tag.name,
+              value: tag.count,
+              path: tag.path
+            }))}
+            wordField="name"
+            weightField="value"
+            colorField="name"
+            height={240}
+            spiral="rectangular"
+            wordStyle={{
+              fontFamily: 'Verdana',
+              fontSize: [16, 40],
+              rotation: 0,
+              fontWeight: 700,
+            }}
+            random={() => Math.random()}
+            tooltip={{
+              formatter: (datum) => {
+                return { name: datum.name, value: datum.value }
+              },
+            }}
+            state={{
+              active: {
+                style: {
+                  shadowColor: '#1890ff',
+                  shadowBlur: 10,
+                  fill: '#ff7875',
+                  cursor: 'pointer'
+                }
+              }
+            }}
+            interactions={[{ type: 'element-active' }]}
+            onReady={(plot) => {
+              plot.on('element:click', (e) => {
+                const { data } = e.data;
+                if (data?.path) {
+                  window.open(data.path, '_blank');
+                }
+              });
+            }}
+            style={{ background: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(245, 250, 255, 0.7)', borderRadius: 8 }}
+          />
         )}
-        locale={{ emptyText: '暂无待办事项' }}
-      />
+      </div>
     </Card>
   )
+  
+
+  // 渲染底部系统信息区域
+  const renderSystemInfoSection = () => {
+    // 获取启用的插件数量
+    const enabledPluginsCount = systemInfo.plugins ? 
+      systemInfo.plugins.filter(plugin => plugin.enabled).length : 0;
+    
+    // 构建记录数据（示例数据，实际应从API获取）
+    const buildRecords = [
+      { id: 1, title: '构建成功', time: '2023-07-15 14:30', status: 'success' },
+      { id: 2, title: '部署完成', time: '2023-07-15 14:32', status: 'success' },
+      { id: 3, title: '构建成功', time: '2023-07-10 09:45', status: 'success' },
+      { id: 4, title: '部署完成', time: '2023-07-10 09:48', status: 'success' },
+    ];
+    
+    return (
+      <Row gutter={[16, 16]} className={styles.systemRow}>
+        {/* 系统信息卡片 */}
+        <Col xs={24} md={8}>
+          <Card
+            title={<><SettingOutlined /> 系统信息</>}
+            className={`${styles.dashboardCard} ${styles.systemInfoCard}`}
+          >
+            <List
+              size="small"
+              dataSource={[
+                { 
+                  label: 'Hexo 版本', 
+                  value: systemInfo.hexoVersion || 'N/A',
+                  icon: <CodeOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+                },
+                { 
+                  label: '主题', 
+                  value: systemInfo.theme || 'N/A',
+                  icon: <BgColorsOutlined style={{ marginRight: 8, color: '#722ed1' }} />
+                },
+                { 
+                  label: '最近部署', 
+                  value: systemInfo.lastDeployTime || '暂无记录',
+                  icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#fa8c16' }} />
+                }
+              ]}
+              renderItem={item => (
+                <List.Item>
+                  <span>{item.icon} {item.label}</span>
+                  <Text strong>{item.value}</Text>
+                </List.Item>
+              )}
+            />
+          </Card>
+        </Col>
+        
+        {/* 插件状态卡片 */}
+        <Col xs={24} md={8}>
+          <Card
+            title={<><TagsOutlined /> 插件状态</>}
+            className={`${styles.dashboardCard} ${styles.pluginsCard}`}
+            bodyStyle={{ padding: '0 16px' }}
+          >
+            <div className={styles.pluginsHeader}>
+              <span className={styles.pluginsCount}>
+                已启用 {enabledPluginsCount}/{systemInfo.plugins ? systemInfo.plugins.length : 0} 个插件
+              </span>
+              <Tooltip title="查看所有插件">
+                <Button type="link" size="small" icon={<EllipsisOutlined />} onClick={() => navigate('/settings/plugins')} />
+              </Tooltip>
+            </div>
+            
+            <div className={styles.pluginsList}>
+              {loading ? (
+                <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                  <Spin size="small" />
+                </div>
+              ) : systemInfo.plugins && systemInfo.plugins.length > 0 ? (
+                <List
+                  size="small"
+                  dataSource={systemInfo.plugins}
+                  renderItem={plugin => (
+                    <List.Item>
+                      <Badge status={plugin.enabled ? "success" : "default"} />
+                      <span className={styles.pluginName}>{plugin.name}</span>
+                      <span className={styles.pluginVersion}>v{plugin.version}</span>
+                      <span className={`${styles.pluginStatus} ${!plugin.enabled ? styles.disabled : ''}`}>
+                        {plugin.enabled ? '已启用' : '未启用'}
+                      </span>
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Empty 
+                  image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                  description="暂无插件信息" 
+                  style={{ margin: '20px 0' }} 
+                />
+              )}
+            </div>
+          </Card>
+        </Col>
+        
+        {/* 构建记录卡片 */}
+        <Col xs={24} md={8}>
+          <Card
+            title={<><BarChartOutlined /> 构建记录</>}
+            className={`${styles.dashboardCard} ${styles.buildCard}`}
+            bodyStyle={{ padding: '0 16px' }}
+          >
+            <div className={styles.buildHeader}>
+              <span className={styles.buildCount}>
+                最近 {buildRecords.length} 次构建记录
+              </span>
+              <Tooltip title="查看所有记录">
+                <Button type="link" size="small" icon={<EllipsisOutlined />} onClick={() => navigate('/deploy/history')} />
+              </Tooltip>
+            </div>
+            
+            <div className={styles.buildTimeline}>
+              <Timeline>
+                {buildRecords.map(record => (
+                  <Timeline.Item 
+                    key={record.id}
+                    color={record.status === 'success' ? 'green' : 'red'}
+                  >
+                    <div className={styles.buildItemTitle}>
+                      {record.title}
+                      <span className={`${styles.buildItemStatus} ${record.status !== 'success' ? styles.failed : ''}`}>
+                        {record.status === 'success' ? '成功' : '失败'}
+                      </span>
+                    </div>
+                    <div className={styles.buildItemTime}>{record.time}</div>
+                  </Timeline.Item>
+                ))}
+              </Timeline>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+    )
+  }
+
+  // 渲染待办事项区域
+  const renderTodoSection = () => {
+    const [inputValue, setInputValue] = useState('');
+    const handleAdd = async () => {
+      if (inputValue.trim()) {
+        await addTodoItem(inputValue.trim());
+        setInputValue('');
+      }
+    };
+
+    // 处理删除待办事项
+    const handleDeleteTodo = async (id) => {
+      try {
+        await service.delete(`/hexopro/api/dashboard/todos/delete/${id}`);
+        message.success('删除成功');
+        fetchStats(); // 刷新数据
+      } catch (error) {
+        message.error('删除失败');
+        console.error(error);
+      }
+    };
+
+    // 处理切换待办事项状态
+    const handleToggleTodo = async (id) => {
+      try {
+        await service.put(`/hexopro/api/dashboard/todos/toggle/${id}`);
+        message.success('状态已更新');
+        fetchStats(); // 刷新数据
+      } catch (error) {
+        message.error('更新失败');
+        console.error(error);
+      }
+    };
+
+    return (
+      <Card
+        title={<><ClockCircleOutlined /> 待办事项</>}
+        className={`${styles.dashboardCard} ${styles.todoCard}`}
+      >
+        <div className={styles.todoInputWrapper}>
+          <Input
+            placeholder="添加新待办，回车添加"
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            onPressEnter={handleAdd}
+            allowClear
+            size="small"
+          />
+        </div>
+        <List
+          size="small"
+          dataSource={todoItems}
+          renderItem={item => (
+            <List.Item
+              className={styles.todoItem}
+              actions={[
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  danger
+                  size="small"
+                  className={styles.todoDeleteBtn}
+                  onClick={() => handleDeleteTodo(item.id)}
+                />
+              ]}
+            >
+              <Checkbox
+                checked={item.completed}
+                onChange={() => handleToggleTodo(item.id)}
+                className={styles.todoCheckbox}
+              />
+              <Tag color={item.color || 'blue'} className={styles.todoTag}>
+                {item.category || '默认'}
+              </Tag>
+              <div className={styles.todoContent} style={{ textDecoration: item.completed ? 'line-through' : 'none' }}>
+                {item.content}
+              </div>
+              <div className={styles.todoTime}>
+                {new Date(item.createdAt).toLocaleDateString()}
+              </div>
+            </List.Item>
+          )}
+          locale={{ emptyText: '暂无待办事项' }}
+        />
+      </Card>
+    );
+  };
 
   return (
-    <Spin spinning={loading && !monthlyPostStats.length} tip="加载仪表盘数据中...">
       <div className={styles.dashboardContainer}>
-        {/* 顶部：欢迎语 + 快捷操作栏 */}
+        {/* 欢迎区域 */}
         {renderWelcomeSection()}
-
-        {/* 中部：核心指标卡片 */}
-        {renderCoreMetricsSection()}
-
-        {/* 待办事项区域 */}
-        {renderTodoSection()}
-
-        {/* 下方：趋势图表 */}
-        {renderTrendsSection()}
-
-        {/* 最底部：系统信息、插件状态、构建记录 */}
-        {renderSystemInfoSection()}
+        
+        {/* 核心指标区域 */}
+        <div className={styles.metricsGroupWrapper}>
+          {renderCoreMetricsGroup()}
+        </div>
+        
+        {/* 主要内容区域 */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={16}>
+            {/* 趋势图表区域 */}
+            {renderTrendsSection()}
+            
+            {/* 标签词云区域 */}
+            {renderTagsWordCloud()}
+            
+            {/* 系统信息区域 */}
+            {renderSystemInfoSection()}
+          </Col>
+          
+          {/* 右侧边栏 - 待办事项 */}
+          <Col xs={24} lg={8}>
+            <div className={styles.todoSidebarWrapper}>
+              {renderTodoSection()}
+            </div>
+          </Col>
+        </Row>
       </div>
-    </Spin>
-  )
+    )
 }
 
 export default Dashboard

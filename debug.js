@@ -6,7 +6,7 @@ const browserSync = require('browser-sync').create();
 
 // 创建 Hexo 实例
 async function startHexoServer() {
-    const hexo = new Hexo(path.resolve(__dirname, 'E:\\docker-warms\\compose\\hexo-dev\\blog'), { cache: false });
+    const hexo = new Hexo(path.resolve(__dirname, '/Users/warms/Workspace/code/node_project/blog'), { cache: false });
 
     // 初始化 Hexo
     await hexo.init().then(function () {
