@@ -1,5 +1,5 @@
-import { Button, Image, Popconfirm, Space, TableProps, message, Row, Col, Card, Pagination, Dropdown, Typography, Modal, Form, Input } from "antd"
-import { EllipsisOutlined, SendOutlined, RollbackOutlined } from "@ant-design/icons"
+import { Button, Image, Popconfirm, Space, TableProps, message, Row, Col, Card, Pagination, Dropdown, Typography, Modal, Form, Input, Spin, Empty, Select } from "antd"
+import { EllipsisOutlined, SendOutlined, RollbackOutlined, PictureOutlined } from "@ant-design/icons"
 import React, { useContext, useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import service from "@/utils/api"
@@ -42,12 +42,22 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
     const [total, setTotal] = useState(0)
     const navigate = useNavigate()
 
-    // 新增状态管理封面设置对话框
+    // 状态管理封面设置对话框
     const [coverModalVisible, setCoverModalVisible] = useState(false)
     const [currentPost, setCurrentPost] = useState(null)
     const [form] = Form.useForm()
     // 添加一个状态来强制更新预览
     const [previewUrl, setPreviewUrl] = useState('')
+    
+    // 图床选择器相关状态
+    const [imagePickerVisible, setImagePickerVisible] = useState(false)
+    const [imageList, setImageList] = useState([])
+    const [imageLoading, setImageLoading] = useState(false)
+    const [currentFolder, setCurrentFolder] = useState('')
+    const [folderList, setFolderList] = useState([])
+    const [imagePage, setImagePage] = useState(1)
+    const [imagePageSize, setImagePageSize] = useState(isMobile ? 8 : 12)
+    const [imageTotal, setImageTotal] = useState(0)
 
     const t = useLocale()
 
@@ -105,6 +115,55 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                 message.error('封面设置失败')
             }
         })
+    }
+    
+    // 打开图床选择器
+    const openImagePicker = () => {
+        setImagePickerVisible(true)
+        fetchImages(1)
+    }
+    
+    // 获取图床图片列表
+    const fetchImages = async (page = imagePage) => {
+        setImageLoading(true)
+        try {
+            const res = await service.get('/hexopro/api/images/list', {
+                params: {
+                    page: page,
+                    pageSize: imagePageSize,
+                    folder: currentFolder
+                }
+            })
+            
+            setImageList(res.data.images || [])
+            setFolderList(res.data.folders || [])
+            setImageTotal(res.data.total || 0)
+            setImagePage(page)
+        } catch (error) {
+            message.error('获取图片列表失败')
+            console.error(error)
+        } finally {
+            setImageLoading(false)
+        }
+    }
+    
+    // 处理文件夹变化
+    const handleFolderChange = (folder) => {
+        setCurrentFolder(folder)
+        fetchImages(1)
+    }
+    
+    // 处理图片页码变化
+    const handleImagePageChange = (page) => {
+        setImagePage(page)
+        fetchImages(page)
+    }
+    
+    // 选择图片作为封面
+    const selectImageAsCover = (imageUrl) => {
+        form.setFieldsValue({ value: imageUrl })
+        setPreviewUrl(imageUrl)
+        setImagePickerVisible(false)
     }
 
     // 添加发布和撤销发布的处理函数
@@ -326,7 +385,6 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                     >
                         <Input placeholder={t['content.articleList.cover.keyPlaceholder'] || '例如: cover'} />
                     </Form.Item>
-                    // 在Modal部分修改Form.Item
                     <Form.Item
                         name="value"
                         label={t['content.articleList.cover.valueLabel'] || '图片URL'}
@@ -345,6 +403,24 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                     setPreviewUrl(pastedValue)
                                 }, 0)
                             }}
+                            style={{
+                                color: theme === 'dark' ? '#e6e6e6' : '#000000',
+                                backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
+                                borderColor: theme === 'dark' ? '#333333' : '#d9d9d9'
+                            }}
+                            addonAfter={
+                                <Button
+                                    type="link"
+                                    icon={<PictureOutlined />}
+                                    onClick={openImagePicker}
+                                    style={{
+                                        margin: -7,
+                                        color: theme === 'dark' ? '#e6e6e6' : '#000000'
+                                    }}
+                                >
+                                    从图床选择
+                                </Button>
+                            }
                         />
                     </Form.Item>
                     {/* 使用previewUrl状态而不是form.getFieldValue('value')来控制预览 */}
@@ -377,6 +453,79 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                         </div>
                     )}
                 </Form>
+            </Modal>
+            
+            {/* 图床选择器对话框 */}
+            <Modal
+                title={t['content.articleList.imagePicker.title'] || "从图床选择图片"}
+                open={imagePickerVisible}
+                onCancel={() => setImagePickerVisible(false)}
+                footer={null}
+                width={isMobile ? '95%' : 800}
+                bodyStyle={{ maxHeight: '70vh', overflow: 'auto' }}
+            >
+                <div style={{ marginBottom: 16 }}>
+                    <Space>
+                        <span>{t['content.articleList.imagePicker.currentFolder'] || "当前文件夹"}:</span>
+                        <Select
+                            value={currentFolder}
+                            onChange={handleFolderChange}
+                            style={{ width: isMobile ? 200 : 300 }}
+                            placeholder={t['content.articleList.imagePicker.selectFolder'] || "选择文件夹"}
+                        >
+                            <Select.Option value="">{t['content.articleList.imagePicker.rootFolder'] || "根目录"}</Select.Option>
+                            {folderList.map(folder => (
+                                <Select.Option key={folder} value={folder}>{folder}</Select.Option>
+                            ))}
+                        </Select>
+                    </Space>
+                </div>
+                
+                <Spin spinning={imageLoading}>
+                    {imageList.length > 0 ? (
+                        <div>
+                            <Row gutter={[16, 16]}>
+                                {imageList.map(image => (
+                                    <Col xs={12} sm={8} md={6} key={image.path}>
+                                        <Card
+                                            hoverable
+                                            cover={
+                                                <div style={{ height: 120, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Image
+                                                        src={image.url}
+                                                        alt={image.name}
+                                                        style={{ maxHeight: '100%', objectFit: 'contain' }}
+                                                        preview={false}
+                                                    />
+                                                </div>
+                                            }
+                                            onClick={() => selectImageAsCover(image.url)}
+                                            bodyStyle={{ padding: '8px', textAlign: 'center' }}
+                                        >
+                                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {image.name}
+                                            </div>
+                                        </Card>
+                                    </Col>
+                                ))}
+                            </Row>
+                            
+                            {imageTotal > imagePageSize && (
+                                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                                    <Pagination
+                                        current={imagePage}
+                                        pageSize={imagePageSize}
+                                        total={imageTotal}
+                                        onChange={handleImagePageChange}
+                                        showSizeChanger={false}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <Empty description={t['content.articleList.imagePicker.noImages'] || "暂无图片"} />
+                    )}
+                </Spin>
             </Modal>
 
             <div style={{
