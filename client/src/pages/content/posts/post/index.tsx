@@ -274,7 +274,7 @@ function Post() {
     const handleUpdate = (update) => {
         // console.log(update)
         return new Promise((resolve, reject) => {
-            service.post('/hexopro/api/posts/' + _id, update).then((res) => {
+            service.post('/hexopro/api/post/update' + _id, update).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)

@@ -1,5 +1,22 @@
 const i18n = {
     'en-US': {
+        'settings.title': 'Settings',
+        'settings.saveSuccess': 'Settings saved successfully',
+        'settings.uploadImageTypeError': 'You can only upload JPG/PNG file!',
+        'settings.uploadImageSizeError': 'Image must smaller than 2MB!',
+        'settings.uploadSuccess': 'Upload successfully!',
+        'settings.uploadError': 'Upload failed!',
+        'settings.avatar': 'Avatar',
+        'settings.upload': 'Upload',
+        'settings.username': 'Username',
+        'settings.usernameRequired': 'Please input your username!',
+        'settings.password': 'Password',
+        'settings.passwordRequired': 'Please input your password!',
+        'settings.confirmPassword': 'Confirm Password',
+        'settings.confirmPasswordRequired': 'Please confirm your password!',
+        'settings.passwordNotMatch': 'The two passwords do not match!',
+        'settings.menuCollapsed': 'Collapse Menu',
+        'settings.save': 'Save Settings',
         'menu.posts': 'Articles',
         'menu.posts.blogs': 'Blogs',
         'menu.posts.drafts': 'Drafts',
@@ -48,8 +65,26 @@ const i18n = {
         'navbar.modal.error.title': 'Title cannot be empty or longer than 100',
         'navbar.mobile.menu.title': 'Menu',
         'menu.content_management': 'Content Management',
+        'menu.setting': 'setting'
     },
     'zh-CN': {
+        'settings.title': '设置',
+        'settings.saveSuccess': '设置保存成功',
+        'settings.uploadImageTypeError': '只能上传JPG/PNG格式的图片!',
+        'settings.uploadImageSizeError': '图片大小不能超过2MB!',
+        'settings.uploadSuccess': '上传成功!',
+        'settings.uploadError': '上传失败!',
+        'settings.avatar': '头像',
+        'settings.upload': '上传',
+        'settings.username': '用户名',
+        'settings.usernameRequired': '请输入用户名!',
+        'settings.password': '密码',
+        'settings.passwordRequired': '请输入密码!',
+        'settings.confirmPassword': '确认密码',
+        'settings.confirmPasswordRequired': '请确认密码!',
+        'settings.passwordNotMatch': '两次输入的密码不一致!',
+        'settings.menuCollapsed': '折叠菜单',
+        'settings.save': '保存设置',
         'menu.posts': '文章',
         'menu.posts.drafts': '草稿',
         'menu.posts.blogs': '博客',
@@ -212,6 +247,7 @@ const i18n = {
         'menu.deploy': "部署",
         'menu.content_management': "内容管理",
         'menu.system': "系统管理",
+        'menu.settings': "设置"
 
     }
 }

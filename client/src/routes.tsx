@@ -100,6 +100,10 @@ export default function useRoute() {
         {
           name: 'menu.deploy',
           key: 'deploy',
+        },
+        {
+          name: 'menu.settings',
+          key: 'settings',
         }
       ],
     },

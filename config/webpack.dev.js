@@ -174,7 +174,7 @@ module.exports = {
     },
     devServer: {
         open: true,
-        host: "localhost",
+        host: "127.0.0.1",
         port: 8004,
         hot: true,
         compress: true,
@@ -186,7 +186,7 @@ module.exports = {
         proxy: [
             {
                 context: ['/hexopro/api'],
-                target: 'http://localhost:8001',
+                target: 'http://localhost.charlesproxy.com:8001',
                 timeout: 10000,
                 pathRewrite: {
                     '/hexopro/api': '/hexopro/api'
@@ -198,7 +198,7 @@ module.exports = {
             {
                 context: ['/images/'],
 
-                target: 'http://localhost:8001',
+                target: 'http://localhost.charlesproxy.com:8001',
                 timeout: 10000,
                 pathRewrite: {
                     '/images/': '/images/'

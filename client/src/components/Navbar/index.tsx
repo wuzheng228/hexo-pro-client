@@ -110,7 +110,11 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
 
     const handleLogout: MenuProps['onClick'] = ({ key }) => {
         if (key === '1') {
+            // 清除登录状态
             setUserStatus('logout')
+            // 清除token
+            localStorage.removeItem('hexoProToken')
+            // 跳转到登录页面
             window.location.href = '/pro/login'
         }
     }

@@ -9,8 +9,13 @@ const service = axios.create({
 
 service.interceptors.request.use(config => {
     // 在这里可以为每个请求添加请求头
-    // if (localStorage.getItem('hexoProToken'))
-    config.headers['Authorization'] = 'Bearer ' + localStorage.getItem('hexoProToken')
+    const token = localStorage.getItem('hexoProToken')
+    if (token) {
+        console.log('发送请求，添加token:', token)
+        config.headers['Authorization'] = 'Bearer ' + token
+    } else {
+        console.log('发送请求，无token', config)
+    }
     return config
 })
 // 强化类型定义
@@ -43,7 +48,7 @@ export const injectNavigate = (navigate: any) => {
 service.interceptors.response.use((resp) => {
     // 处理401未授权
     if (resp.data?.code === 401) {
-        localStorage.removeItem('userStatus')
+        localStorage.removeItem('hexoProToken')
         window.location.pathname = '/pro/login'
     }
 
@@ -69,7 +74,7 @@ service.interceptors.response.use((resp) => {
     // 统一错误处理
     switch (error.code) {
         case 401:
-            localStorage.removeItem('userStatus')
+            localStorage.removeItem('hexoProToken')
             window.location.pathname = '/pro/login'
             break
         case 404:

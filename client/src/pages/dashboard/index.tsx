@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import {
   Row, Col, Card, Statistic, List, Button, Input,
-  Typography, Timeline, Spin, // 移除 Calendar
+  Typography, Timeline, Spin, Modal, Form, // 移除 Calendar
   message, Tooltip, Badge, Checkbox, Avatar, Empty
 } from 'antd'
 import {
@@ -82,7 +82,7 @@ const MonthlyPostsChart = React.memo(({ loading, monthlyPostStats, theme, darkMo
       formatter: (datum) => ({ name: '发布量', value: datum.count }),
     },
     label: {
-      position: 'top',
+      position: 'top' as const,
       style: {
         fill: theme === 'dark' ? '#ccc' : '#333',
         opacity: 0.8,
@@ -528,7 +528,23 @@ const Dashboard: React.FC = () => {
   }, [])
 
   // 渲染顶部欢迎区域
-  const renderWelcomeSection = () => (
+  const renderWelcomeSection = () => {
+    const [modalVisible, setModalVisible] = useState(false);
+    const [postTitle, setPostTitle] = useState('');
+    const [form] = Form.useForm();
+
+    const handleCreatePost = async () => {
+      try {
+        const values = await form.validateFields();
+        await createNewPost(values.title);
+        setModalVisible(false);
+        form.resetFields();
+      } catch (error) {
+        console.error('创建文章失败:', error);
+      }
+    };
+
+    return (
     <Card className={`${styles.dashboardCard} ${styles.welcomeCard} ${darkMode}`}>
       <div className={styles.welcomeHeader}>
         <div className={styles.welcomeInfo}>
@@ -539,17 +555,35 @@ const Dashboard: React.FC = () => {
           <Paragraph>今天是 {new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Paragraph>
         </div>
         <div className={styles.quickActions}>
-          <Button type="primary" icon={<FileAddOutlined />} onClick={() => {
-            const title = prompt('请输入文章标题')
-            if (title) createNewPost(title)
-          }}>新建文章</Button>
+          <Button type="primary" icon={<FileAddOutlined />} onClick={() => setModalVisible(true)}>新建文章</Button>
+          <Modal
+            title="新建文章"
+            visible={modalVisible}
+            onOk={handleCreatePost}
+            onCancel={() => {
+              setModalVisible(false);
+              form.resetFields();
+            }}
+            okText="创建"
+            cancelText="取消"
+          >
+            <Form form={form} layout="vertical">
+              <Form.Item
+                name="title"
+                label="文章标题"
+                rules={[{ required: true, message: '请输入文章标题' }]}
+              >
+                <Input placeholder="请输入文章标题" />
+              </Form.Item>
+            </Form>
+          </Modal>
           <Button icon={<EditOutlined />} onClick={() => navigate('/content/posts/drafts')}>草稿箱</Button>
           <Button icon={<RocketOutlined />} onClick={() => navigate('/deploy')}>部署</Button>
           <Button icon={<HomeOutlined />} onClick={() => window.open('/', '_blank')}>博客前台</Button>
         </div>
       </div>
     </Card>
-  )
+  )}
 
   // 修改渲染核心指标卡片组
   const renderCoreMetricsGroup = () => (

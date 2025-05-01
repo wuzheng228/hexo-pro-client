@@ -62,7 +62,38 @@ function App() {
         if (checkLogin()) {
             fetchUserInfo()
         } else if (window.location.pathname.replace(/\//g, '') !== 'prologin') {
-            window.location.pathname = '/pro/login'
+            // 检查是否已跳过设置
+            const skipSettings = localStorage.getItem('hexoProSkipSettings') === 'true';
+            
+            if (skipSettings) {
+                // 用户已选择跳过设置，不再检查首次使用状态
+                console.log('用户已选择跳过设置，允许访问');
+                return;
+            }
+            
+            // 检查是否是首次使用
+            service.get('/hexopro/api/settings/check-first-use')
+                .then(res => {
+                    if (res.data.code === 0 && res.data.data.isFirstUse) {
+                        // 首次使用，允许访问设置页面或首页
+                        if (window.location.pathname === '/pro/settings' || window.location.pathname === '/pro/') {
+                            // 不做重定向
+                            console.log('首次使用，允许访问：', window.location.pathname);
+                        } else {
+                            // 其他页面重定向到首页
+                            window.location.pathname = '/pro';
+                        }
+                    } else {
+                        // 清除可能存在的过期token
+                        localStorage.removeItem('hexoProToken');
+                        window.location.pathname = '/pro/login';
+                    }
+                })
+                .catch(err => {
+                    // 出错时默认重定向到登录页
+                    localStorage.removeItem('hexoProToken');
+                    window.location.pathname = '/pro/login';
+                });
         }
     }, [])
 

@@ -1,3 +1,4 @@
 export default function checkLogin() {
-  return localStorage.getItem('userStatus') === 'login' || localStorage.getItem('userStatus') === 'unsafe'
+  // 检查是否有有效的token，而不是依赖userStatus状态
+  return !!localStorage.getItem('hexoProToken')
 }
