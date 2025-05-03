@@ -349,18 +349,12 @@ const Dashboard: React.FC = () => {
     author: ''
   })
   const [todoItems, setTodoItems] = useState([])
-  const [visitStats, setVisitStats] = useState<{ date: string; value: number }[]>([]) // 明确类型
-  const [visitData, setVisitData] = useState({
-    success: false,
-    busuanziEnabled: false,
-    currentStats: {
-      siteUv: 0,
-      sitePv: 0
-    },
-    visitHistory: [],
-    error: null,
-    message: ''
-  })
+  // 移除访问量相关状态
+  // const [visitStats, setVisitStats] = useState<{ date: string; value: number }[]>([]) 
+  // const [visitData, setVisitData] = useState({...})
+  
+  // 新增最近一月新增文章数状态
+  const [monthlyNewPosts, setMonthlyNewPosts] = useState(0)
   const [monthlyPostStats, setMonthlyPostStats] = useState<{ month: string; count: number }[]>([]) // 明确类型
   const [todoInput, setTodoInput] = useState('')
 
@@ -380,6 +374,8 @@ const Dashboard: React.FC = () => {
       })
       // 新增：获取月度文章统计
       const monthlyStatsRes = await service.get('/hexopro/api/dashboard/posts/monthly-stats')
+      // 新增：获取最近一月新增文章数
+      const monthlyNewRes = await service.get('/hexopro/api/dashboard/posts/monthly-new')
 
       setStats({
         totalPosts: postsRes.data.total || 0,
@@ -390,6 +386,8 @@ const Dashboard: React.FC = () => {
         recentPosts: recentPostsRes.data || []
       })
       setMonthlyPostStats(monthlyStatsRes.data || []) // 设置月度统计数据
+      // 设置最近一月新增文章数
+      setMonthlyNewPosts(monthlyNewRes.data.count || 0)
 
       // 获取系统信息
       const systemRes = await service.get('/hexopro/api/dashboard/system/info')
@@ -400,47 +398,8 @@ const Dashboard: React.FC = () => {
         lastDeployTime: 'N/A',
         author: 'N/A' // 添加默认值
       })
-      // 获取访问统计数据
-      try {
-        const visitRes = await service.get('/hexopro/api/dashboard/visit/stats')
-        setVisitData(visitRes.data)
-
-        // 如果有历史访问数据，则使用它
-        if (visitRes.data.visitHistory && visitRes.data.visitHistory.length > 0) {
-          setVisitStats(visitRes.data.visitHistory)
-        } else {
-          // 如果没有历史数据但有当前统计，则创建一个简单的趋势图数据
-          if (visitRes.data.success && visitRes.data.currentStats) {
-            const currentMonth = new Date().toISOString().slice(0, 7)
-            setVisitStats([
-              { date: currentMonth, value: visitRes.data.currentStats.sitePv || 0 }
-            ])
-          } else {
-            // 如果没有任何数据，使用模拟数据 (保持不变)
-            setVisitStats([
-              { date: '2023-01', value: 320 },
-              { date: '2023-02', value: 450 },
-              { date: '2023-03', value: 520 },
-              { date: '2023-04', value: 390 },
-              { date: '2023-05', value: 680 },
-              { date: '2023-06', value: 720 },
-              { date: '2023-07', value: 650 },
-            ])
-          }
-        }
-      } catch (error) {
-        console.error('获取访问统计失败:', error)
-        // 使用模拟数据作为后备 (保持不变)
-        setVisitStats([
-          { date: '2023-01', value: 320 },
-          { date: '2023-02', value: 450 },
-          { date: '2023-03', value: 520 },
-          { date: '2023-04', value: 390 },
-          { date: '2023-05', value: 680 },
-          { date: '2023-06', value: 720 },
-          { date: '2023-07', value: 650 },
-        ])
-      }
+      
+      // 移除获取访问统计数据的代码
 
     } catch (error) {
       message.error('获取数据失败，请稍后重试')
@@ -601,18 +560,12 @@ const Dashboard: React.FC = () => {
         </Col>
         <Col xs={12} md={6}>
           <div className={`${styles.metricCardNew} ${darkMode}`}>
-            <EyeOutlined className={styles.metricIconBadge} />
+            <BarChartOutlined className={styles.metricIconBadge} />
             <Statistic
-              title="访问量"
-              value={visitData.success ? visitData.currentStats.sitePv : (visitStats.length > 0 ? visitStats.reduce((sum, item) => sum + item.value, 0) : 0)}
+              title="本月新增"
+              value={monthlyNewPosts}
               className={styles.metricStatisticNew}
             />
-            {visitData.busuanziEnabled === false && (
-              <Text type="secondary" style={{ fontSize: 12, display: 'block', textAlign: 'center', marginTop: 4 }}>
-                <InfoCircleOutlined style={{ marginRight: 4 }} />
-                未启用busuanzi统计
-              </Text>
-            )}
           </div>
         </Col>
         <Col xs={12} md={6}>
