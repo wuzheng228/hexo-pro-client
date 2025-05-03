@@ -240,7 +240,10 @@ const ImageManager: React.FC = () => {
         onSuccess(res, file)
         setUploadVisible(false)
         setCustomFileName('')
-        fetchImages()
+        // 关键：延迟刷新图片列表，拼接唯一参数防缓存
+        setTimeout(() => {
+          fetchImages()
+        }, 400)
       } catch (error) {
         message.error(t['content.images.uploadFailed'] || '上传失败')
         onError(error)
@@ -327,6 +330,7 @@ const ImageManager: React.FC = () => {
                   cover={
                     <div className={styles.imageContainer}>
                       <Image
+                        key={image.url}
                         src={image.url}
                         alt={image.name}
                         preview={false}
