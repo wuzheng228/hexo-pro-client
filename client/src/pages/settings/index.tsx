@@ -201,8 +201,13 @@ const SettingsPage: React.FC = () => {
       setLoading(false)
       if (info.file.response && info.file.response.code === 0) {
         const avatarUrl = info.file.response.src
-        setAvatarUrl(avatarUrl)
-        message.success('头像上传成功')
+        // 拼接唯一参数，防止缓存
+        const uniqueUrl = avatarUrl + (avatarUrl.includes('?') ? '&' : '?') + '_v=' + Math.random().toString(36).slice(2)
+        // 延迟一点时间再设置，避免刚上传完图片还没写入磁盘
+        setTimeout(() => {
+          setAvatarUrl(uniqueUrl)
+          message.success('头像上传成功')
+        }, 400)
       } else {
         message.error('头像上传失败')
       }
@@ -291,6 +296,7 @@ const SettingsPage: React.FC = () => {
                   src={avatarUrl} 
                   icon={<UserOutlined />}
                   style={{ border: '1px solid #f0f0f0' }}
+                  key={avatarUrl} // 强制刷新
                 />
               </div>
               <Space>
