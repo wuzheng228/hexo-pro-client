@@ -162,69 +162,6 @@ const SettingsPage: React.FC = () => {
     }
   }
 
-  // 上传前检查
-  const beforeUpload = (file: File) => {
-    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
-    if (!isJpgOrPng) {
-      message.error(t['settings.uploadImageTypeError'])
-    }
-    const isLt2M = file.size / 1024 / 1024 < 2
-    if (!isLt2M) {
-      message.error(t['settings.uploadImageSizeError'])
-    }
-    return isJpgOrPng && isLt2M
-  }
-
-  // 处理上传变化
-  const handleUploadChange = async (info: any) => {
-    if (info.file.status === 'uploading') {
-      return
-    }
-    
-    if (info.file.status === 'done') {
-      try {
-        // 获取文件对象
-        const file = info.file.originFileObj
-        
-        // 创建 FileReader 读取文件为 base64
-        const reader = new FileReader()
-        reader.readAsDataURL(file)
-        reader.onload = async () => {
-          const base64Data = reader.result
-          
-          // 上传到服务器 - 使用与图床相同的API格式
-          const res = await service.post('/hexopro/api/settings/upload-avatar', {
-            data: base64Data,
-            filename: file.name
-          })
-          
-          if (res.data.code === 0) {
-            setAvatarUrl(res.data.data.url)
-            message.success(t['settings.uploadSuccess'])
-            
-            // 更新全局用户信息中的头像
-            dispatch({
-              type: 'update-userInfo',
-              payload: { userInfo: { avatar: res.data.data.url } }
-            })
-          } else {
-            message.error(res.data.msg || t['settings.uploadError'])
-          }
-        }
-      } catch (error) {
-        console.error('上传头像失败:', error)
-        message.error(t['settings.uploadError'])
-      }
-    } else if (info.file.status === 'error') {
-      message.error(t['settings.uploadError'])
-    }
-  }
-
-  // 处理菜单折叠状态变化
-  const handleMenuCollapsedChange = (checked: boolean) => {
-    setMenuCollapsed(checked)
-  }
-
   // 跳过设置直接进入
   const skipSettings = () => {
     // 设置一个标记，表示用户选择了跳过设置
@@ -270,9 +207,14 @@ const SettingsPage: React.FC = () => {
             <Form.Item
               label="密码"
               name="password"
-              rules={[{ required: true, message: '请输入密码' }]}
+              rules={[
+                {
+                  required: isFirstUse,
+                  message: '请输入密码'
+                }
+              ]}
             >
-              <Input.Password prefix={<LockOutlined />} />
+              <Input.Password prefix={<LockOutlined />} placeholder={isFirstUse ? "请输入密码" : "不修改请留空"} />
             </Form.Item>
 
             <Form.Item
@@ -280,10 +222,19 @@ const SettingsPage: React.FC = () => {
               name="confirmPassword"
               dependencies={['password']}
               rules={[
-                { required: true, message: '请确认密码' },
+                {
+                  required: isFirstUse,
+                  message: '请确认密码'
+                },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    if (!value || getFieldValue('password') === value) {
+                    if (!value && !getFieldValue('password')) {
+                      return Promise.resolve()
+                    }
+                    if (!value && getFieldValue('password')) {
+                      return Promise.reject(new Error('请确认密码'))
+                    }
+                    if (getFieldValue('password') === value) {
                       return Promise.resolve()
                     }
                     return Promise.reject(new Error('两次输入的密码不一致'))
@@ -291,17 +242,17 @@ const SettingsPage: React.FC = () => {
                 }),
               ]}
             >
-              <Input.Password prefix={<LockOutlined />} />
+              <Input.Password prefix={<LockOutlined />} placeholder={isFirstUse ? "请再次输入密码" : "不修改请留空"} />
             </Form.Item>
 
             <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
+              <Button
+                type="primary"
+                htmlType="submit"
                 loading={loading}
                 style={{ width: 120 }}
               >
-                创建账号
+                {isFirstUse ? '创建账号' : '保存设置'}
               </Button>
             </Form.Item>
           </Form>
