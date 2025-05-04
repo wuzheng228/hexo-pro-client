@@ -18,6 +18,7 @@ import cs from 'classnames'
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import useRoute from "@/routes"
 import { base64Encode } from "@/utils/encodeUtils"
+import SettingIcon from '../../assets/setting.svg'
 
 type NavbarProps = {
     style?: React.CSSProperties; // 增加style属性
@@ -508,6 +509,8 @@ function getIconFromKey(key: string) {
             return <PictureOutlined />
         case 'content/yaml':
                 return <CodeOutlined />
+        case 'settings': 
+                return <SettingIcon />
         default:
             return <div className={styles['icon-empty']}></div>
     }

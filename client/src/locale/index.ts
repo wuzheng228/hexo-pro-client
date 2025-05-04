@@ -326,6 +326,7 @@ const i18n = {
         'settings.passwordLengthError': 'Password must be at least 6 characters long',
         'settings.confirmPasswordPlaceholder': 'Please confirm your password',
         'settings.createAccount': 'Create Account',
+        'settings.saveSettingsButton': 'Save',
         'settings.selectAvatarTitle': 'Select Avatar',
         'settings.noImagesPrompt': 'No images yet, please upload images to the gallery first',
         'settings.setupLaterMessage': 'You can set up your account and password later',

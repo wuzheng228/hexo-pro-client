@@ -349,6 +349,8 @@ const Dashboard: React.FC = () => {
     author: ''
   })
   const [todoItems, setTodoItems] = useState([])
+  // 新增：部署日志状态
+  const [deployLogs, setDeployLogs] = useState<string[]>([])
   // 移除访问量相关状态
   // const [visitStats, setVisitStats] = useState<{ date: string; value: number }[]>([]) 
   // const [visitData, setVisitData] = useState({...})
@@ -481,9 +483,21 @@ const Dashboard: React.FC = () => {
     return t['dashboard.welcome.night']
   }
 
+  // 新增：获取部署日志
+  const fetchDeployLogs = async () => {
+    try {
+      const res = await service.get('/hexopro/api/deploy/status')
+      setDeployLogs(res.data.logs || [])
+    } catch (error) {
+      // 可以根据需要显示错误提示
+      console.error('获取部署日志失败', error)
+    }
+  }
+
   useEffect(() => {
     fetchStats()
     fetchTodoItems()
+    fetchDeployLogs() // 新增：页面加载时获取部署日志
   }, [])
 
   // 渲染顶部欢迎区域
@@ -746,15 +760,7 @@ const Dashboard: React.FC = () => {
     // 获取启用的插件数量
     const enabledPluginsCount = systemInfo.plugins ? 
       systemInfo.plugins.filter(plugin => plugin.enabled).length : 0;
-    
-    // 构建记录数据（示例数据，实际应从API获取）
-    const buildRecords = [
-      { id: 1, title: '构建成功', time: '2023-07-15 14:30', status: 'success' },
-      { id: 2, title: '部署完成', time: '2023-07-15 14:32', status: 'success' },
-      { id: 3, title: '构建成功', time: '2023-07-10 09:45', status: 'success' },
-      { id: 4, title: '部署完成', time: '2023-07-10 09:48', status: 'success' },
-    ];
-    
+
     return (
       <Row gutter={[16, 16]} className={styles.systemRow}>
         {/* 系统信息卡片 */}
@@ -841,39 +847,23 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         
-        {/* 构建记录卡片 */}
+        {/* 构建记录卡片（API获取部署日志） */}
         <Col xs={24} md={8}>
           <Card
-            title={<><BarChartOutlined /> {t['dashboard.system.buildHistory']}</>}
+            title={<><RocketOutlined /> {t['dashboard.deploy.log.title'] || '构建记录'}</>}
             className={`${styles.dashboardCard} ${styles.buildCard}`}
             bodyStyle={{ padding: '0 16px' }}
           >
-            <div className={styles.buildHeader}>
-              <span className={styles.buildCount}>
-                {t['dashboard.system.buildCount'].replace('{count}', buildRecords.length)}
-              </span>
-              <Tooltip title={t['dashboard.system.buildViewAll']}>
-                <Button type="link" size="small" icon={<EllipsisOutlined />} onClick={() => navigate('/deploy/history')} />
-              </Tooltip>
-            </div>
-            
-            <div className={styles.buildTimeline}>
-              <Timeline>
-                {buildRecords.map(record => (
-                  <Timeline.Item 
-                    key={record.id}
-                    color={record.status === 'success' ? 'green' : 'red'}
-                  >
-                    <div className={styles.buildItemTitle}>
-                      {record.title}
-                      <span className={`${styles.buildItemStatus} ${record.status !== 'success' ? styles.failed : ''}`}>
-                        {record.status === 'success' ? '成功' : '失败'}
-                      </span>
-                    </div>
-                    <div className={styles.buildItemTime}>{record.time}</div>
-                  </Timeline.Item>
-                ))}
-              </Timeline>
+            <div style={{ maxHeight: 300, overflowY: 'auto', padding: 20}}>
+              {deployLogs.length === 0 ? (
+                <Empty description="暂无构建记录" />
+              ) : (
+                <Timeline>
+                  {deployLogs.slice(-10).map((log, idx) => (
+                    <Timeline.Item key={idx}>{log}</Timeline.Item>
+                  ))}
+                </Timeline>
+              )}
             </div>
           </Card>
         </Col>

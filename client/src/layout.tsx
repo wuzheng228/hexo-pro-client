@@ -12,6 +12,7 @@ import qs from 'query-string'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import useDeviceDetect from './hooks/useDeviceDetect'
+import SettingIcon from './assets/setting.svg'
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -33,6 +34,8 @@ function getIconFromKey(key: string) {
             return <PictureOutlined />
         case 'content/yaml':
                 return <CodeOutlined />
+        case 'settings': 
+            return <SettingIcon />
         default:
             return <div className={styles['icon-empty']}></div>
     }
