@@ -592,53 +592,53 @@ const Dashboard: React.FC = () => {
     </Card>
   )
 
-  // --- 移除 renderMonthlyPostsChart, MemoizedPieChart, MemoizedWordCloud 定义 ---
-  // const renderMonthlyPostsChart = () => { ... } // 移除
-  // const MemoizedMonthlyChart = React.memo(renderMonthlyPostsChart) // 移除
-  // const MemoizedPieChart = React.memo(() => { ... }) // 移除
-  // const MemoizedWordCloud = React.memo(()=>{ ... }) // 移除
-
   // 修改：渲染趋势图表区域
   const renderTrendsSection = () => (
-    <Row gutter={[16, 16]} className={styles.trendsRow}>
-      {/* 文章产出柱状图 */}
-      <Col xs={24} md={12}>
-        <Card
-          title={<><BarChartOutlined /> 最近 6 月文章发布趋势 <Text type="secondary" style={{fontSize:12,marginLeft:8}}>（零值月份自动隐藏）</Text></>}
-          className={`${styles.dashboardCard} ${darkMode}`}
-          bodyStyle={{ padding: 10 }}
-        >
-          <div className={`${styles.chartContainer} ${darkMode}`}>
+    <div style={{width: '100%'}}>
+      <Row gutter={[16, 16]} className={styles.trendsRow}>
+        {/* 文章产出柱状图 */}
+        <Col span={8} xs={24} md={8}>
+          <Card
+            title={<><BarChartOutlined /> 最近 6 月文章发布趋势 <Text type="secondary" style={{fontSize:12,marginLeft:8}}>（零值月份自动隐藏）</Text></>}
+            className={`${styles.dashboardCard} ${darkMode}`}
+            bodyStyle={{ padding: 10 }}
+          >
+            <div className={`${styles.chartContainer} ${darkMode}`}>
+              {/* 使用新组件 */}
+              <MonthlyPostsChart
+                loading={loading}
+                monthlyPostStats={monthlyPostStats}
+                theme={theme}
+                darkMode={darkMode}
+                styles={styles}
+              />
+            </div>
+          </Card>
+        </Col>
+
+        {/* 分类饼图 */}
+        <Col span={8} xs={24} md={8}>
+          <Card
+            title={<><PieChartOutlined /> 分类分布</>}
+            className={`${styles.dashboardCard} ${darkMode}`}
+            bodyStyle={{ padding: 10 }}
+          >
             {/* 使用新组件 */}
-            <MonthlyPostsChart
+            <CategoryPieChart
               loading={loading}
-              monthlyPostStats={monthlyPostStats}
+              categories={stats.categories}
               theme={theme}
               darkMode={darkMode}
               styles={styles}
             />
-          </div>
-        </Card>
-      </Col>
-
-      {/* 分类饼图 */}
-      <Col xs={24} md={12}>
-        <Card
-          title={<><PieChartOutlined /> 分类分布</>}
-          className={`${styles.dashboardCard} ${darkMode}`}
-          bodyStyle={{ padding: 10 }}
-        >
-          {/* 使用新组件 */}
-          <CategoryPieChart
-            loading={loading}
-            categories={stats.categories}
-            theme={theme}
-            darkMode={darkMode}
-            styles={styles}
-          />
-        </Card>
-      </Col>
-    </Row>
+          </Card>
+        </Col>
+        <Col span={8} xs={24} md={8}>
+          {renderTodoSection()}
+        </Col>
+      </Row>
+    </div>
+    
   )
 
 
@@ -869,6 +869,81 @@ const Dashboard: React.FC = () => {
     )
   }
 
+  // 添加最近文章组件
+const renderRecentArticlesSection = () => {
+  const [recentArticles, setRecentArticles] = useState([]);
+  const [recentLoading, setRecentLoading] = useState(true);
+
+  // 获取最近文章列表
+  const fetchRecentArticles = async () => {
+    try {
+      setRecentLoading(true);
+      const response = await service.get('/hexopro/api/dashboard/posts/recent', {
+        params: { limit: 10, sortBy: 'updated' }
+      });
+      setRecentArticles(response.data || []);
+    } catch (error) {
+      console.error('获取最近文章失败:', error);
+    } finally {
+      setRecentLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecentArticles();
+  }, []);
+
+  // 跳转到文章编辑页面
+  const handleEditArticle = (permalink) => {
+    navigate(`/post/${base64Encode(permalink)}`);
+  };
+
+  return (
+    <Card
+      title={<><EditOutlined /> 最近文章</>}
+      className={`${styles.dashboardCard} ${styles.recentArticlesCard} ${darkMode}`}
+      bodyStyle={{ padding: '0 16px', height: 'calc(100% - 57px)' }}
+    >
+      {recentLoading ? (
+        <div style={{ padding: '20px 0', textAlign: 'center' }}>
+          <Spin />
+        </div>
+      ) : (
+        <List
+          className={styles.recentArticlesList}
+          dataSource={recentArticles}
+          renderItem={(article) => (
+            <List.Item 
+              className={styles.recentArticleItem}
+              onClick={() => handleEditArticle(article.permalink)}
+            >
+              <div className={styles.articleInfo}>
+                <div className={styles.articleTitle}>
+                  {article.isDraft && <Badge status="warning" text="草稿" style={{ marginRight: 8 }} />}
+                  <Text ellipsis style={{ maxWidth: '100%' }}>{article.title}</Text>
+                </div>
+                <div className={styles.articleMeta}>
+                  <ClockCircleOutlined style={{ marginRight: 4 }} />
+                  <Text type="secondary">{article.updated || article.date}</Text>
+                </div>
+              </div>
+              <Button 
+                type="link" 
+                icon={<EditOutlined />} 
+                size="small"
+                className={styles.editButton}
+              >
+                编辑
+              </Button>
+            </List.Item>
+          )}
+          locale={{ emptyText: <Empty description="暂无文章" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+        />
+      )}
+    </Card>
+  );
+};
+
   // 渲染待办事项区域
   const renderTodoSection = () => {
     const [inputValue, setInputValue] = useState('');
@@ -920,7 +995,7 @@ const Dashboard: React.FC = () => {
       <Card
             title={<><EditOutlined style={{ marginRight: 8 }} />待办事项</>}
             bordered={false}
-            className={styles.metricCard}
+            className={`${styles.todoCard} ${styles.dashboardCard}  ${darkMode}`}
             extra={
               <Search
                 placeholder="添加新的待办事项"
@@ -981,32 +1056,34 @@ const Dashboard: React.FC = () => {
       <div className={styles.dashboardContainer}>
         {/* 欢迎区域 */}
         {renderWelcomeSection()}
-        
         {/* 核心指标区域 */}
         <div >
           {renderCoreMetricsGroup()}
         </div>
         
-        {/* 主要内容区域 */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24} lg={16}>
-            {/* 趋势图表区域 */}
+       
+        <Row gutter={[16,16]}>
+          <Col span={24}  >
             {renderTrendsSection()}
-            
-            {/* 标签词云区域 */}
-            {renderTagsWordCloud()}
-            
+          </Col>
+          <Col span={24}>
+            <Row gutter={[16, 16]}>
+                {/* 标签词云区域 */}
+                <Col xl={12} sm={24}>
+                  {renderTagsWordCloud()}
+                </Col>
+                <Col xl={12} sm={24}>
+                  {renderRecentArticlesSection()}
+                </Col>
+            </Row>
+          </Col>
+          <Col span={24}>
             {/* 系统信息区域 */}
             {renderSystemInfoSection()}
           </Col>
-          
-          {/* 右侧边栏 - 待办事项 */}
-          <Col xs={24} lg={8}>
-            <div className={styles.todoSidebarWrapper}>
-              {renderTodoSection()}
-            </div>
-          </Col>
         </Row>
+       
+         
       </div>
     )
 }
