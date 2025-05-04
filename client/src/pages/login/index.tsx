@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import styles from './style/index.module.less'
-import Logo from '../../assets/logo.svg'
+import Logo from '../../assets/logo3.svg'
 import LoginBanner from './banner'
 import LoginForm from './form'
 import { GlobalContext } from '@/context'

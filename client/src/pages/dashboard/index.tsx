@@ -43,7 +43,7 @@ interface MonthlyPostsChartProps extends ChartProps {
   monthlyPostStats: { month: string; count: number }[];
 }
 
-const MonthlyPostsChart = React.memo(({ loading, monthlyPostStats, theme, darkMode, styles }: MonthlyPostsChartProps) => {
+const MonthlyPostsChart = React.memo(({ loading, monthlyPostStats, theme, darkMode, styles, t }: MonthlyPostsChartProps & { t: any }) => {
   const validCount = monthlyPostStats.filter(item => item.count > 0).length
 
   if (loading) {
@@ -57,7 +57,7 @@ const MonthlyPostsChart = React.memo(({ loading, monthlyPostStats, theme, darkMo
   if (monthlyPostStats.length === 0 || validCount < 1) {
     return (
       <div className={`${styles.emptyContainer} ${darkMode}`}>
-        <Empty description="暂无足够数据展示趋势" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <Empty description={t['dashboard.empty.noData']} image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     )
   }
@@ -149,7 +149,7 @@ interface CategoryPieChartProps extends ChartProps {
   categories: { name: string; count: number }[];
 }
 
-const CategoryPieChart = React.memo(({ loading, categories, theme, darkMode, styles }: CategoryPieChartProps) => {
+const CategoryPieChart = React.memo(({ loading, categories, theme, darkMode, styles, t }: CategoryPieChartProps & { t: any }) => {
   if (loading) {
     return (
       <div className={`${styles.loadingContainer} ${darkMode}`}>
@@ -161,7 +161,7 @@ const CategoryPieChart = React.memo(({ loading, categories, theme, darkMode, sty
   if (categories.length === 0) {
     return (
       <div className={`${styles.emptyContainer} ${darkMode}`}>
-        <Empty description="暂无分类数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <Empty description={t['dashboard.empty.noCategories']} image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     )
   }
@@ -245,7 +245,7 @@ interface TagWordCloudProps extends ChartProps {
   tags: { name: string; count: number; path: string }[];
 }
 
-const TagWordCloud = React.memo(({ loading, tags, theme, darkMode, styles }: TagWordCloudProps) => {
+const TagWordCloud = React.memo(({ loading, tags, theme, darkMode, styles, t }: TagWordCloudProps & { t: any }) => {
   if (loading) {
     return (
       <div className={`${styles.loadingContainer} ${darkMode}`}>
@@ -257,7 +257,7 @@ const TagWordCloud = React.memo(({ loading, tags, theme, darkMode, styles }: Tag
   if (tags.length === 0) {
     return (
       <div className={`${styles.emptyContainer} ${darkMode}`}>
-        <Empty description="暂无标签数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <Empty description={t['dashboard.empty.noTags']} image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     )
   }
@@ -402,7 +402,7 @@ const Dashboard: React.FC = () => {
       // 移除获取访问统计数据的代码
 
     } catch (error) {
-      message.error('获取数据失败，请稍后重试')
+      message.error(t['dashboard.error.fetchFailed'])
       console.error(error)
     } finally {
       setLoading(false)
@@ -437,11 +437,11 @@ const Dashboard: React.FC = () => {
 
       const res = await service.post('/hexopro/api/posts/new', { title: finalTitle })
       if (res.data) {
-        message.success('文章创建成功')
+        message.success(t['dashboard.success.createPost'])
         navigate(`/post/${base64Encode(res.data.permalink)}`)
       }
     } catch (error) {
-      message.error('创建文章失败')
+      message.error(t['dashboard.error.createPostFailed'])
       console.error(error)
     }
   }
@@ -450,12 +450,12 @@ const Dashboard: React.FC = () => {
   const addTodoItem = async (content) => {
     try {
       await service.post('/hexopro/api/dashboard/todos/add', { content })
-      message.success('添加成功')
+      message.success(t['dashboard.success.addTodo'])
       setTodoInput('') // 清空输入
       // fetchStats() // 刷新数据
       fetchTodoItems()
     } catch (error) {
-      message.error('添加失败')
+      message.error(t['dashboard.error.addTodoFailed'])
       console.error(error)
     }
   }
@@ -472,13 +472,13 @@ const Dashboard: React.FC = () => {
   // 获取欢迎消息
   const getWelcomeMessage = () => {
     const hour = new Date().getHours()
-    if (hour < 6) return '夜深了，注意休息'
-    if (hour < 9) return '早上好，开始新的一天'
-    if (hour < 12) return '上午好，工作顺利'
-    if (hour < 14) return '中午好，注意休息'
-    if (hour < 18) return '下午好，继续加油'
-    if (hour < 22) return '晚上好，放松一下'
-    return '夜深了，注意休息'
+    if (hour < 6) return t['dashboard.welcome.night']
+    if (hour < 9) return t['dashboard.welcome.morning']
+    if (hour < 12) return t['dashboard.welcome.forenoon']
+    if (hour < 14) return t['dashboard.welcome.noon']
+    if (hour < 18) return t['dashboard.welcome.afternoon']
+    if (hour < 22) return t['dashboard.welcome.evening']
+    return t['dashboard.welcome.night']
   }
 
   useEffect(() => {
@@ -511,34 +511,41 @@ const Dashboard: React.FC = () => {
             {getWelcomeMessage()}
             {systemInfo.author ? `，${systemInfo.author}` : ''}
           </Title>
-          <Paragraph>今天是 {new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Paragraph>
+          <Paragraph>
+            {t['dashboard.welcome.today'].replace('{date}', new Date().toLocaleDateString(t.lang === 'zh-CN' ? 'zh-CN' : 'en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }))}
+          </Paragraph>
         </div>
         <div className={styles.quickActions}>
-          <Button type="primary" icon={<FileAddOutlined />} onClick={() => setModalVisible(true)}>新建文章</Button>
+          <Button type="primary" icon={<FileAddOutlined />} onClick={() => setModalVisible(true)}>{t['dashboard.welcome.new.post']}</Button>
           <Modal
-            title="新建文章"
+            title={t['dashboard.welcome.new.post']}
             visible={modalVisible}
             onOk={handleCreatePost}
             onCancel={() => {
               setModalVisible(false);
               form.resetFields();
             }}
-            okText="创建"
-            cancelText="取消"
+            okText={t['universal.create']}
+            cancelText={t['universal.cancel']}
           >
             <Form form={form} layout="vertical">
               <Form.Item
                 name="title"
-                label="文章标题"
-                rules={[{ required: true, message: '请输入文章标题' }]}
+                label={t['universal.input.placeholder']}
+                rules={[{ required: true, message: `${t['universal.input.placeholder']}` }]}
               >
-                <Input placeholder="请输入文章标题" />
+                <Input placeholder={t['universal.input.placeholder']} />
               </Form.Item>
             </Form>
           </Modal>
-          <Button icon={<EditOutlined />} onClick={() => navigate('/content/posts/drafts')}>草稿箱</Button>
-          <Button icon={<RocketOutlined />} onClick={() => navigate('/deploy')}>部署</Button>
-          <Button icon={<HomeOutlined />} onClick={() => window.open('/', '_blank')}>博客前台</Button>
+          <Button icon={<EditOutlined />} onClick={() => navigate('/content/posts/drafts')}>{t['dashboard.welcome.new.draft']}</Button>
+          <Button icon={<RocketOutlined />} onClick={() => navigate('/deploy')}>{t['dashboard.welcome.new.deploy']}</Button>
+          <Button icon={<HomeOutlined />} onClick={() => window.open('/', '_blank')}>{t['dashboard.welcome.new.blog.front.end']}</Button>
         </div>
       </div>
     </Card>
@@ -552,7 +559,7 @@ const Dashboard: React.FC = () => {
           <div className={`${styles.metricCardNew} ${darkMode}`}>
             <FileAddOutlined className={styles.metricIconBadge} />
             <Statistic
-              title="文章总数"
+              title={t['dashboard.stats.totalPosts']}
               value={stats.totalPosts}
               className={styles.metricStatisticNew}
             />
@@ -562,7 +569,7 @@ const Dashboard: React.FC = () => {
           <div className={`${styles.metricCardNew} ${darkMode}`}>
             <BarChartOutlined className={styles.metricIconBadge} />
             <Statistic
-              title="本月新增"
+              title={t['dashboard.stats.monthlyNew']}
               value={monthlyNewPosts}
               className={styles.metricStatisticNew}
             />
@@ -572,7 +579,7 @@ const Dashboard: React.FC = () => {
           <div className={`${styles.metricCardNew} ${darkMode}`}>
             <EditOutlined className={styles.metricIconBadge} />
             <Statistic
-              title="草稿数"
+              title={t['dashboard.stats.drafts']}
               value={stats.draftPosts}
               className={styles.metricStatisticNew}
             />
@@ -582,7 +589,7 @@ const Dashboard: React.FC = () => {
           <div className={`${styles.metricCardNew} ${darkMode}`}>
             <ClockCircleOutlined className={styles.metricIconBadge} />
             <Statistic
-              title="待办事项"
+              title={t['dashboard.stats.todos']}
               value={todoItems.length}
               className={styles.metricStatisticNew}
             />
@@ -599,7 +606,7 @@ const Dashboard: React.FC = () => {
         {/* 文章产出柱状图 */}
         <Col xl={8} xs={24} md={24}>
           <Card
-            title={<><BarChartOutlined /> 最近 6 月文章发布趋势 <Text type="secondary" style={{fontSize:12,marginLeft:8}}>（零值月份自动隐藏）</Text></>}
+            title={<><BarChartOutlined /> {t['dashboard.chart.postTrend']} <Text type="secondary" style={{fontSize:12,marginLeft:8}}>{t['dashboard.chart.postTrendNote']}</Text></>}
             className={`${styles.dashboardCard} ${darkMode}`}
             bodyStyle={{ padding: 10 }}
           >
@@ -611,6 +618,7 @@ const Dashboard: React.FC = () => {
                 theme={theme}
                 darkMode={darkMode}
                 styles={styles}
+                t={t}
               />
             </div>
           </Card>
@@ -619,7 +627,7 @@ const Dashboard: React.FC = () => {
         {/* 分类饼图 */}
         <Col xl={8} xs={24} md={24}>
           <Card
-            title={<><PieChartOutlined /> 分类分布</>}
+            title={<><PieChartOutlined /> {t['dashboard.chart.categoryDist']}</>}
             className={`${styles.dashboardCard} ${darkMode}`}
             bodyStyle={{ padding: 10 }}
           >
@@ -630,6 +638,7 @@ const Dashboard: React.FC = () => {
               theme={theme}
               darkMode={darkMode}
               styles={styles}
+              t={t}
             />
           </Card>
         </Col>
@@ -645,7 +654,7 @@ const Dashboard: React.FC = () => {
   // 渲染标签词云图
   const renderTagsWordCloud = () => (
     <Card
-      title={<><TagsOutlined /> 热门标签</>}
+      title={<><TagsOutlined /> {t['dashboard.chart.tagCloud']}</>}
       className={`${styles.dashboardCard} ${darkMode}`}
     >
       <div className={`${styles.tagsContainer} ${darkMode}`}>
@@ -656,6 +665,7 @@ const Dashboard: React.FC = () => {
           theme={theme}
           darkMode={darkMode}
           styles={styles}
+          t={t}
         />
       </div>
     </Card>
@@ -750,24 +760,24 @@ const Dashboard: React.FC = () => {
         {/* 系统信息卡片 */}
         <Col xs={24} md={8}>
           <Card
-            title={<><SettingOutlined /> 系统信息</>}
+            title={<><SettingOutlined /> {t['dashboard.system.title']}</>}
             className={`${styles.dashboardCard} ${styles.systemInfoCard}`}
           >
             <List
               size="small"
               dataSource={[
                 { 
-                  label: 'Hexo 版本', 
+                  label: t['dashboard.system.hexoVersion'],
                   value: systemInfo.hexoVersion || 'N/A',
                   icon: <CodeOutlined style={{ marginRight: 8, color: '#1890ff' }} />
                 },
                 { 
-                  label: '主题', 
+                  label: t['dashboard.system.theme'],
                   value: systemInfo.theme || 'N/A',
                   icon: <BgColorsOutlined style={{ marginRight: 8, color: '#722ed1' }} />
                 },
                 { 
-                  label: '最近部署', 
+                  label: t['dashboard.system.lastDeploy'],
                   value: systemInfo.lastDeployTime || '暂无记录',
                   icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#fa8c16' }} />
                 }
@@ -785,15 +795,17 @@ const Dashboard: React.FC = () => {
         {/* 插件状态卡片 */}
         <Col xs={24} md={8}>
           <Card
-            title={<><TagsOutlined /> 插件状态</>}
+            title={<><TagsOutlined /> {t['dashboard.system.plugins']}</>}
             className={`${styles.dashboardCard} ${styles.pluginsCard}`}
             bodyStyle={{ padding: '0 16px' }}
           >
             <div className={styles.pluginsHeader}>
               <span className={styles.pluginsCount}>
-                已启用 {enabledPluginsCount}/{systemInfo.plugins ? systemInfo.plugins.length : 0} 个插件
+                {t['dashboard.system.pluginsCount']
+                  .replace('{enabled}', enabledPluginsCount)
+                  .replace('{total}', systemInfo.plugins ? systemInfo.plugins.length : 0)}
               </span>
-              <Tooltip title="查看所有插件">
+              <Tooltip title={t['dashboard.system.pluginsViewAll']}>
                 <Button type="link" size="small" icon={<EllipsisOutlined />} onClick={() => navigate('/settings/plugins')} />
               </Tooltip>
             </div>
@@ -832,15 +844,15 @@ const Dashboard: React.FC = () => {
         {/* 构建记录卡片 */}
         <Col xs={24} md={8}>
           <Card
-            title={<><BarChartOutlined /> 构建记录</>}
+            title={<><BarChartOutlined /> {t['dashboard.system.buildHistory']}</>}
             className={`${styles.dashboardCard} ${styles.buildCard}`}
             bodyStyle={{ padding: '0 16px' }}
           >
             <div className={styles.buildHeader}>
               <span className={styles.buildCount}>
-                最近 {buildRecords.length} 次构建记录
+                {t['dashboard.system.buildCount'].replace('{count}', buildRecords.length)}
               </span>
-              <Tooltip title="查看所有记录">
+              <Tooltip title={t['dashboard.system.buildViewAll']}>
                 <Button type="link" size="small" icon={<EllipsisOutlined />} onClick={() => navigate('/deploy/history')} />
               </Tooltip>
             </div>
@@ -900,7 +912,7 @@ const renderRecentArticlesSection = () => {
 
   return (
     <Card
-      title={<><EditOutlined /> 最近文章</>}
+      title={<><EditOutlined /> {t['dashboard.articles.recent']}</>}
       className={`${styles.dashboardCard} ${styles.recentArticlesCard} ${darkMode}`}
       bodyStyle={{ padding: '0 16px', height: 'calc(100% - 57px)' }}
     >
@@ -919,7 +931,7 @@ const renderRecentArticlesSection = () => {
             >
               <div className={styles.articleInfo}>
                 <div className={styles.articleTitle}>
-                  {article.isDraft && <Badge status="warning" text="草稿" style={{ marginRight: 8 }} />}
+                  {article.isDraft && <Badge status="warning" text={t['dashboard.articles.draftBadge']} style={{ marginRight: 8 }} />}
                   <Text ellipsis style={{ maxWidth: '100%' }}>{article.title}</Text>
                 </div>
                 <div className={styles.articleMeta}>
@@ -933,11 +945,11 @@ const renderRecentArticlesSection = () => {
                 size="small"
                 className={styles.editButton}
               >
-                编辑
+                {t['dashboard.todo.editTooltip']}
               </Button>
             </List.Item>
           )}
-          locale={{ emptyText: <Empty description="暂无文章" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+          locale={{ emptyText: <Empty description={t['dashboard.articles.empty']} image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
         />
       )}
     </Card>
@@ -993,13 +1005,13 @@ const renderRecentArticlesSection = () => {
 
     return (
       <Card
-            title={<><EditOutlined style={{ marginRight: 8 }} />待办事项</>}
+            title={<><EditOutlined style={{ marginRight: 8 }} />{t['dashboard.todo.title']}</>}
             bordered={false}
             className={`${styles.todoCard} ${styles.dashboardCard}  ${darkMode}`}
             extra={
               <Search
-                placeholder="添加新的待办事项"
-                enterButton="添加"
+                placeholder={t['dashboard.todo.addPlaceholder']}
+                enterButton={t['dashboard.todo.addButton']}
                 value={todoInput}
                 onChange={(e) => setTodoInput(e.target.value)}
                 onSearch={addTodoItem}
@@ -1016,7 +1028,7 @@ const renderRecentArticlesSection = () => {
                   renderItem={(item: any) => ( // 添加类型注解
                     <List.Item
                       actions={[
-                        <Tooltip title="删除">
+                        <Tooltip title={t['dashboard.todo.deleteTooltip']}>
                           <Button
                             type="text"
                             danger
@@ -1038,14 +1050,14 @@ const renderRecentArticlesSection = () => {
                             {item.content}
                           </Text>
                         }
-                        description={`创建于: ${item.createdAt}`}
+                        description={t['dashboard.todo.createdAt'].replace('{date}', item.createdAt)}
                       />
                     </List.Item>
                   )}
                   className={styles.todoList} // 添加样式类
                 />
               ) : (
-                <Empty description="还没有待办事项" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <Empty description={t['dashboard.todo.empty']} image={Empty.PRESENTED_IMAGE_SIMPLE} />
               )}
             </Spin>
           </Card>

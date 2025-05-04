@@ -45,12 +45,12 @@ const SettingsPage: React.FC = () => {
             setFetchLoading(false)
           }
         } else {
-          message.error(res.data.msg || '检查系统状态失败')
+          message.error(res.data.msg || t['settings.checkSystemStatusFailed'])
           setFetchLoading(false)
         }
       } catch (error) {
         console.error('检查系统状态失败:', error)
-        message.error('检查系统状态失败')
+        message.error(t['settings.checkSystemStatusFailed'])
         setFetchLoading(false)
       }
     }
@@ -93,7 +93,7 @@ const SettingsPage: React.FC = () => {
       })
       
       if (res.data.code === 0) {
-        message.success('注册成功！')
+        message.success(t['settings.registerSuccess'])
         
         // 只保存令牌
         localStorage.setItem('hexoProToken', res.data.data.token)
@@ -112,11 +112,11 @@ const SettingsPage: React.FC = () => {
         // 刷新页面以应用新状态
         window.location.reload()
       } else {
-        message.error(res.data.msg || '注册失败')
+        message.error(res.data.msg || t['settings.registerFailed'])
       }
     } catch (error) {
       console.error('注册失败:', error)
-      message.error('注册失败')
+      message.error(t['settings.registerFailed'])
     } finally {
       setLoading(false)
     }
@@ -186,7 +186,7 @@ const SettingsPage: React.FC = () => {
   const skipSettings = () => {
     // 设置一个标记，表示用户选择了跳过设置
     localStorage.setItem('hexoProSkipSettings', 'true');
-    message.success('您可以稍后再设置账号密码');
+    message.success(t['settings.skipSetupMessage']);
     window.location.href = '/pro';
   }
 
@@ -206,10 +206,10 @@ const SettingsPage: React.FC = () => {
         // 延迟一点时间再设置，避免刚上传完图片还没写入磁盘
         setTimeout(() => {
           setAvatarUrl(uniqueUrl)
-          message.success('头像上传成功')
+          message.success(t['settings.avatarUploadSuccess'])
         }, 400)
       } else {
-        message.error('头像上传失败')
+        message.error(t['settings.avatarUploadFailed'])
       }
     }
   }
@@ -243,7 +243,7 @@ const SettingsPage: React.FC = () => {
       setTotal(res.data.total)
       setCurrentPage(page)
     } catch (error) {
-      message.error('获取图片列表失败')
+      message.error(t['settings.getImageListFailed'])
       console.error(error)
     } finally {
       setImageLoading(false)
@@ -254,7 +254,7 @@ const SettingsPage: React.FC = () => {
   const selectImage = (imageUrl) => {
     setAvatarUrl(imageUrl)
     setImagePickerVisible(false)
-    message.success('已选择图片作为头像')
+    message.success(t['settings.imageSelectedAsAvatar'])
   }
 
   // 分页变化
@@ -266,18 +266,18 @@ const SettingsPage: React.FC = () => {
     <div className={styles.container}>
       <Spin spinning={fetchLoading}>
         <Card className={styles.card}>
-          <Title level={2}>{isFirstUse ? '初始化设置' : t['settings.title']}</Title>
+          <Title level={2}>{isFirstUse ? t['settings.initTitle'] : t['settings.title']}</Title>
           
           {isFirstUse && (
             <Alert
-              message="欢迎使用 Hexo Pro"
-              description='这是您首次使用系统，请设置管理员账号和密码。如果您不想现在设置，可以点击"跳过设置"按钮。"'
+              message={t['settings.welcomeTitle']}
+              description={t['settings.welcomeAlertDesc']}
               type="info"
               showIcon
               style={{ marginBottom: 24 }}
               action={
                 <Button size="small" onClick={skipSettings}>
-                  跳过设置
+                  {t['settings.skipSetupButton']}
                 </Button>
               }
             />
@@ -312,36 +312,36 @@ const SettingsPage: React.FC = () => {
                     folder: '' // 上传到根目录
                   }}
                 >
-                  <Button icon={<UploadOutlined />}>上传头像</Button>
+                  <Button icon={<UploadOutlined />}>{t['settings.upload.avatar']}</Button>
                 </Upload>
                 <Button 
                   icon={<PictureOutlined />} 
                   onClick={openImagePicker}
                 >
-                  从图床选择
+                  {t['settings.select.from.gallery']}
                 </Button>
               </Space>
             </div>
             
             <Form.Item
-              label="用户名"
+              label={t['settings.username']}
               name="username"
-              rules={[{ required: true, message: '请输入用户名' }]}
+              rules={[{ required: true, message: t['settings.usernameRequired'] }]}
             >
               <Input prefix={<UserOutlined />} placeholder="请输入用户名" />
             </Form.Item>
             
             <Form.Item
-              label="密码"
+              label={t['settings.password']}
               name="password"
               rules={[
-                { 
+                {
                   validator: (_, value) => {
                     if (isFirstUse && !value) {
-                      return Promise.reject('首次使用必须设置密码')
+                      return Promise.reject(t['settings.firstUsePasswordRequired'])
                     }
                     if (value && value.length < 6) {
-                      return Promise.reject('密码长度不能少于6位')
+                      return Promise.reject(t['settings.passwordLengthError'])
                     }
                     return Promise.resolve()
                   }
@@ -352,7 +352,7 @@ const SettingsPage: React.FC = () => {
             </Form.Item>
             
             <Form.Item
-              label="确认密码"
+              label={t['settings.confirmPassword']}
               name="confirmPassword"
               dependencies={['password']}
               rules={[
@@ -362,10 +362,10 @@ const SettingsPage: React.FC = () => {
                       return Promise.resolve()
                     }
                     if (!value && getFieldValue('password')) {
-                      return Promise.reject('请确认密码')
+                      return Promise.reject(t['settings.confirmPasswordRequired'])
                     }
                     if (value !== getFieldValue('password')) {
-                      return Promise.reject('两次输入的密码不一致')
+                      return Promise.reject(t['settings.passwordNotMatch'])
                     }
                     return Promise.resolve()
                   },
@@ -382,7 +382,7 @@ const SettingsPage: React.FC = () => {
                 icon={<SaveOutlined />}
                 style={{ width: '100%' }}
               >
-                {isFirstUse ? '创建账号' : '保存设置'}
+                {isFirstUse ? t['settings.createAccount'] : t['settings.saveSettingsButton']}
               </Button>
             </Form.Item>
           </Form>
@@ -391,7 +391,7 @@ const SettingsPage: React.FC = () => {
 
       {/* 图片选择器模态框 */}
       <Modal
-        title="选择头像"
+        title={t['settings.selectAvatarTitle']}
         open={imagePickerVisible}
         onCancel={() => setImagePickerVisible(false)}
         footer={null}
@@ -438,7 +438,7 @@ const SettingsPage: React.FC = () => {
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '24px' }}>
-              <p>暂无图片，请先上传图片到图床</p>
+              <p>{t['settings.noImagesPrompt']}</p>
             </div>
           )}
         </Spin>

@@ -1,9 +1,9 @@
 import React, { useContext, useRef, useState, useEffect } from "react"
 import _ from 'lodash'
 import styles from './style/index.module.less'
-import Logo from '@/assets/logo.svg'
+import Logo from '@/assets/logo3.svg'
 import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Tag, message, notification } from "antd"
-import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled } from "@ant-design/icons"
+import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled, UserOutlined } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
 import IconLangLight from "@/assets/langLight.svg"
 import useLocale from "@/hooks/useLocale"
@@ -297,8 +297,10 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             {/* 左侧 */}
             <div className={styles.left}>
                 <div className={styles.logo}>
-                    <Logo />
-                    <div className={styles['logo-name']}>Hexo Pro</div>
+                    <Logo  />
+                    <div className={styles['logo-name']}>
+                        <span style={{fontWeight: 'bold'}}>Hexo</span> Pro
+                    </div>
                 </div>
             </div>
             {/* 右侧 */}
@@ -335,7 +337,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 {
                     userInfo && <li>
                         <Dropdown menu={{ items: settingDropList, onClick: handleLogout }}>
-                            <Avatar size={32} style={{ cursor: "pointer" }} className={`${styles.customAvatar} ${styles[theme]}`} src={userInfo.avatar} />
+                            <Avatar size={32} style={{ cursor: "pointer" }} className={`${styles.customAvatar} ${styles[theme]}`} src={userInfo.avatar}  icon={<UserOutlined />}/>
                         </Dropdown>
                     </li>
                 }
