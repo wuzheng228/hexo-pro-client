@@ -5,7 +5,7 @@ import _ from 'lodash'
 // import { GlobalState } from '@/store';
 import { Button, Card, Image, Input, Popconfirm, Space, Table, TableColumnProps, TableProps, message } from 'antd'
 import useLocale from '@/hooks/useLocale'
-import ArticleList from '../components/ArticleList'
+import ArticleList from '../components/ArticleList/ArticleList'
 
 
 interface DataType {

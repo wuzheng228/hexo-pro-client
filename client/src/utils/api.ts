@@ -11,7 +11,6 @@ service.interceptors.request.use(config => {
     // 在这里可以为每个请求添加请求头
     const token = localStorage.getItem('hexoProToken')
     if (token) {
-        console.log('发送请求，添加token:', token)
         config.headers['Authorization'] = 'Bearer ' + token
     } else {
         console.log('发送请求，无token', config)

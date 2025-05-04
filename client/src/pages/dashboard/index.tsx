@@ -597,7 +597,7 @@ const Dashboard: React.FC = () => {
     <div style={{width: '100%'}}>
       <Row gutter={[16, 16]} className={styles.trendsRow}>
         {/* 文章产出柱状图 */}
-        <Col span={8} xs={24} md={8}>
+        <Col xl={8} xs={24} md={24}>
           <Card
             title={<><BarChartOutlined /> 最近 6 月文章发布趋势 <Text type="secondary" style={{fontSize:12,marginLeft:8}}>（零值月份自动隐藏）</Text></>}
             className={`${styles.dashboardCard} ${darkMode}`}
@@ -617,7 +617,7 @@ const Dashboard: React.FC = () => {
         </Col>
 
         {/* 分类饼图 */}
-        <Col span={8} xs={24} md={8}>
+        <Col xl={8} xs={24} md={24}>
           <Card
             title={<><PieChartOutlined /> 分类分布</>}
             className={`${styles.dashboardCard} ${darkMode}`}
@@ -633,7 +633,7 @@ const Dashboard: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={8} xs={24} md={8}>
+        <Col xl={8} xs={24} md={24}>
           {renderTodoSection()}
         </Col>
       </Row>

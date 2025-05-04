@@ -11,6 +11,7 @@ import IconLink from "@/assets/link.svg"
 import IconLinkLight from "@/assets/linkLight.svg"
 import Iconllipsis from "@/assets/ellipsis.svg"
 import IconllipsisLight from "@/assets/ellipsisLight.svg"
+import styles from './style/index.module.less'
 
 const { Text } = Typography
 
@@ -238,16 +239,32 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                     <Col key={item._id} xs={24} sm={12} md={8} lg={8} xl={8}>
                         <Card
                             hoverable
-                            cover={item.cover ? <Image
-                                src={item.cover}
-                                alt={item.title}
-                                style={{
-                                    height: 190,
-                                    objectFit: 'cover',
-                                    borderBottom: '1px solid #f0f0f0'
-                                }}
-                                preview={false}
-                            /> : null}
+                            cover={
+                                item.cover ? (
+                                    <Image
+                                        src={item.cover}
+                                        alt={item.title}
+                                        style={{
+                                            height: 190,
+                                            objectFit: 'cover',
+                                            borderBottom: '1px solid #f0f0f0'
+                                        }}
+                                        preview={false}
+                                    />
+                                ) : (
+                                    <Image
+                                        src="https://fakeimg.pl/400x190/?text=HexoPro&font=Roboto"
+                                        alt="默认封面"
+                                        style={{
+                                            height: 190,
+                                            objectFit: 'cover',
+                                            borderBottom: '1px solid #f0f0f0',
+                                            background: '#f5f5f5'
+                                        }}
+                                        preview={false}
+                                    />
+                                )
+                            }
                             style={{
                                 transition: 'all 0.3s',
                                 borderRadius: 8,
@@ -260,87 +277,98 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                     {/* 添加发布/撤销发布按钮 */}
                                     {!isPage && (
                                         published ? (
-                                            <Button
-                                                type="text"
-                                                style={{ color: 'rgba(0, 0, 0, 0.45)' }}
-                                                onClick={(e) => handleUnpublish(item, e)}
-                                                icon={<RollbackOutlined />}
-                                                title={t['content.articleList.btn.unpublish'] || '撤回到草稿箱'}
-                                            />
+                                            <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
+                                                <Button
+                                                    type="text"
+                                                    style={{ color: 'rgba(0, 0, 0, 0.45)' }}
+                                                    onClick={(e) => handleUnpublish(item, e)}
+                                                    icon={<RollbackOutlined />}
+                                                    title={t['content.articleList.btn.unpublish'] || '撤回到草稿箱'}
+                                                />
+                                            </span>
                                         ) : (
-                                            <Button
-                                                type="text"
-                                                style={{ color: 'rgba(0, 0, 0, 0.45)' }}
-                                                onClick={(e) => handlePublish(item, e)}
-                                                icon={<SendOutlined />}
-                                                title={t['content.articleList.btn.publish'] || '发布文章'}
-                                            />
+                                            <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
+                                                <Button
+                                                    type="text"
+                                                    style={{ color: 'rgba(0, 0, 0, 0.45)' }}
+                                                    onClick={(e) => handlePublish(item, e)}
+                                                    icon={<SendOutlined />}
+                                                    title={t['content.articleList.btn.publish'] || '发布文章'}
+                                                />
+                                            </span>
                                         )
                                     )}
-                                    <Button
-                                        type="text"
-                                        style={{ color: 'rgba(0, 0, 0, 0.45)' }}
-                                        onClick={(event) => {
-                                            event.stopPropagation()
-                                            window.open(item.permalink, '_blank')
-                                        }}
-                                        icon={theme === 'dark' ? <IconLinkLight /> : <IconLink />}
-                                    >
-                                    </Button>
-                                    {/* 其他按钮保持不变 */}
-                                    <Dropdown
-                                        menu={{
-                                            items: [
-                                                {
-                                                    key: 'edit',
-                                                    label: (
-                                                        <Link to={isPage ? `/page/${base64Encode(item.permalink)}/edit` : `/post/${base64Encode(item.permalink)}`} onClick={(event) => event.stopPropagation()}>
-                                                            {t['content.articleList.btn.edit']}
-                                                        </Link>
-                                                    )
-                                                },
-                                                {
-                                                    key: 'setCover',
-                                                    label: (
-                                                        <div onClick={(e) => openCoverModal(item, e)}>
-                                                            {t['content.articleList.btn.setCover'] || '封面'}
-                                                        </div>
-                                                    )
-                                                },
-                                                {
-                                                    key: 'delete',
-                                                    label: (
-                                                        <div onClick={(e) => e.stopPropagation()}>
-                                                            <Popconfirm
-                                                                title={t['editor.header.pop.title']}
-                                                                description={t['list.editor.header.pop.des']}
-                                                                onConfirm={(event) => {
-                                                                    if (event && event.stopPropagation) event.stopPropagation()
-                                                                    removeSource(item)
-                                                                }}
-                                                            >
-                                                                <Text type="danger" onClick={(event) => {
-                                                                    event.stopPropagation()
-                                                                    event.preventDefault()
-                                                                }}>
-                                                                    {t['content.articleList.btn.delete']}
-                                                                </Text>
-                                                            </Popconfirm>
-                                                        </div>
-                                                    )
-                                                }
-                                            ]
-                                        }}
-                                        placement="bottomRight"
-                                    >
+                                    <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
                                         <Button
                                             type="text"
-                                            icon={theme === 'dark' ? <IconllipsisLight /> : <Iconllipsis />}
+                                            style={{ color: 'rgba(0, 0, 0, 0.45)' }}
                                             onClick={(event) => {
                                                 event.stopPropagation()
+                                                window.open(item.permalink, '_blank')
                                             }}
-                                        />
-                                    </Dropdown>
+                                            icon={theme === 'dark' ? <IconLink /> : <IconLink />}
+                                        >
+                                        </Button>
+                                    </span>
+                                    
+                                    {/* 其他按钮保持不变 */}
+                                    
+                                        <Dropdown
+                                            menu={{
+                                                items: [
+                                                    {
+                                                        key: 'edit',
+                                                        label: (
+                                                            <Link to={isPage ? `/page/${base64Encode(item.permalink)}/edit` : `/post/${base64Encode(item.permalink)}`} onClick={(event) => event.stopPropagation()}>
+                                                                {t['content.articleList.btn.edit']}
+                                                            </Link>
+                                                        )
+                                                    },
+                                                    {
+                                                        key: 'setCover',
+                                                        label: (
+                                                            <div onClick={(e) => openCoverModal(item, e)}>
+                                                                {t['content.articleList.btn.setCover'] || '封面'}
+                                                            </div>
+                                                        )
+                                                    },
+                                                    {
+                                                        key: 'delete',
+                                                        label: (
+                                                            <div onClick={(e) => e.stopPropagation()}>
+                                                                <Popconfirm
+                                                                    title={t['editor.header.pop.title']}
+                                                                    description={t['list.editor.header.pop.des']}
+                                                                    onConfirm={(event) => {
+                                                                        if (event && event.stopPropagation) event.stopPropagation()
+                                                                        removeSource(item)
+                                                                    }}
+                                                                >
+                                                                    <Text type="danger" onClick={(event) => {
+                                                                        event.stopPropagation()
+                                                                        event.preventDefault()
+                                                                    }}>
+                                                                        {t['content.articleList.btn.delete']}
+                                                                    </Text>
+                                                                </Popconfirm>
+                                                            </div>
+                                                        )
+                                                    }
+                                                ]
+                                            }}
+                                            placement="bottomRight"
+                                        >
+                                        <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
+                                                <Button
+                                                    type="text"
+                                                    icon={theme === 'dark' ? <Iconllipsis /> : <Iconllipsis />}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation()
+                                                    }}
+                                                />
+                                            </span>
+                                        </Dropdown>
+                                    
                                 </Space>
                             </div>
 
