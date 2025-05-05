@@ -16,7 +16,7 @@ const SettingsPage: React.FC = () => {
   const [fetchLoading, setFetchLoading] = useState(true)
   const [avatarUrl, setAvatarUrl] = useState(defaultAvatar)
   const [menuCollapsed, setMenuCollapsed] = useState(false)
-  const { setTheme } = useContext(GlobalContext)
+  const { theme, setTheme } = useContext(GlobalContext)
   const dispatch = useDispatch()
   const [isFirstUse, setIsFirstUse] = useState(false)
   // 新增状态
@@ -263,7 +263,7 @@ const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-theme={theme}>
       <Spin spinning={fetchLoading}>
         <Card className={styles.card}>
           <Title level={2}>{isFirstUse ? t['settings.initTitle'] : t['settings.title']}</Title>

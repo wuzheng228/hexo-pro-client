@@ -1,6 +1,6 @@
 .container {
   padding: 24px;
-  background: #fff;
+  background: var(--background-color, #fff);
   min-height: calc(100vh - 64px);
 }
 
@@ -18,4 +18,10 @@
 
 .save-btn {
   width: 120px;
+}
+
+:global([data-theme='dark']) {
+  .container {
+    --background-color: #141414;
+  }
 }
