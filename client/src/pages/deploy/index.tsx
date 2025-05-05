@@ -40,6 +40,9 @@ const DeployPage: React.FC = () => {
   const fetchDeployStatus = async () => {
     try {
       const statusRes = await service.get('/hexopro/api/deploy/status')
+      
+      statusRes.data.logs = statusRes.data.logs.map((item)=>t[item] || item)
+      console.log(statusRes.data)
       setDeployStatus(statusRes.data)
       return statusRes.data
     } catch (error) {
@@ -329,10 +332,10 @@ const DeployPage: React.FC = () => {
             >
               <div className={styles.deployLogs}>
                 <Timeline style={{ padding: '10px 10px', maxHeight: '300px', overflowY: 'auto' }}>
-                  {deployStatus.logs.slice(-10).map((log, index) => (
+                  {deployStatus.logs.map((log, index) => (
                     <Timeline.Item 
                       key={index}
-                      dot={index === deployStatus.logs.slice(-10).length - 1 ? getStageIcon(deployStatus.stage) : null}
+                      dot={index === deployStatus.logs.length - 1 ? getStageIcon(deployStatus.stage) : null}
                     >
                       <Text style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{log}</Text>
                     </Timeline.Item>

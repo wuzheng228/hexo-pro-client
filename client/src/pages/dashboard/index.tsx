@@ -487,7 +487,10 @@ const Dashboard: React.FC = () => {
   const fetchDeployLogs = async () => {
     try {
       const res = await service.get('/hexopro/api/deploy/status')
-      setDeployLogs(res.data.logs || [])
+
+      const logs =  res.data.logs.map((item)=>t[item] || item)
+      console.log('获取部署日志成功', logs)
+      setDeployLogs(logs || [])
     } catch (error) {
       // 可以根据需要显示错误提示
       console.error('获取部署日志失败', error)
@@ -697,7 +700,7 @@ const Dashboard: React.FC = () => {
     if (stats.tags.length === 0) {
       return (
         <div className={`${styles.emptyContainer} ${darkMode}`}>
-          <Empty description="暂无标签数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty description={t['universal.empty']} image={Empty.PRESENTED_IMAGE_SIMPLE} />
         </div>
       )
     }
@@ -784,7 +787,7 @@ const Dashboard: React.FC = () => {
                 },
                 { 
                   label: t['dashboard.system.lastDeploy'],
-                  value: systemInfo.lastDeployTime || '暂无记录',
+                  value: systemInfo.lastDeployTime || t['universal.empty'],
                   icon: <ClockCircleOutlined style={{ marginRight: 8, color: '#fa8c16' }} />
                 }
               ]}
@@ -839,7 +842,7 @@ const Dashboard: React.FC = () => {
               ) : (
                 <Empty 
                   image={Empty.PRESENTED_IMAGE_SIMPLE} 
-                  description="暂无插件信息" 
+                  description={t['universal.empty']} 
                   style={{ margin: '20px 0' }} 
                 />
               )}
@@ -856,7 +859,7 @@ const Dashboard: React.FC = () => {
           >
             <div style={{ maxHeight: 300, overflowY: 'auto', padding: 20}}>
               {deployLogs.length === 0 ? (
-                <Empty description="暂无构建记录" />
+                <Empty description={t['universal.empty']} />
               ) : (
                 <Timeline>
                   {deployLogs.slice(-10).map((log, idx) => (
@@ -961,11 +964,11 @@ const renderRecentArticlesSection = () => {
     try {
       setTodoLoading(true);
       await service.delete(`/hexopro/api/dashboard/todos/delete/${id}`);
-      message.success('删除成功');
+      message.success(t['universal.delete.success']);
       // 更新本地状态
       setTodoItems(prevItems => prevItems.filter(item => item.id !== id));
     } catch (error) {
-      message.error('删除失败');
+      message.error(t['universal.delete.failed']);
       console.error(error);
     } finally {
       setTodoLoading(false);

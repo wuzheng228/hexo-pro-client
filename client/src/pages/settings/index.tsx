@@ -6,7 +6,7 @@ import useLocale from '../../hooks/useLocale'
 import service from '@/utils/api'
 import { GlobalContext } from '@/context'
 import { useDispatch } from 'react-redux'
-
+import defaultAvatar from '../../assets/defaultAvatar2.png'
 const { Title, Text } = Typography;
 
 const SettingsPage: React.FC = () => {
@@ -14,7 +14,7 @@ const SettingsPage: React.FC = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
-  const [avatarUrl, setAvatarUrl] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState(defaultAvatar)
   const [menuCollapsed, setMenuCollapsed] = useState(false)
   const { setTheme } = useContext(GlobalContext)
   const dispatch = useDispatch()
@@ -33,9 +33,9 @@ const SettingsPage: React.FC = () => {
       try {
         setFetchLoading(true)
         const res = await service.get('/hexopro/api/settings/check-first-use')
-        console.log(res)
+        // console.log(res)
         if (res.data.code === 0) {
-          console.log(res)
+          // console.log(res)
           setIsFirstUse(res.data.data.isFirstUse)
           
           // 如果是首次使用，不需要获取设置

@@ -13,7 +13,7 @@ service.interceptors.request.use(config => {
     if (token) {
         config.headers['Authorization'] = 'Bearer ' + token
     } else {
-        console.log('发送请求，无token', config)
+        // console.log('发送请求，无token', config)
     }
     return config
 })

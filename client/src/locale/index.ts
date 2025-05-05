@@ -3,6 +3,8 @@ const i18n = {
         'universal.create': 'Create',
         'universal.edit': 'Edit',
         'universal.delete': 'Delete',
+        'universal.delete.success': 'Delete Success',
+        'universal.delete.failed': 'Delete Failed',
         'universal.cancel': 'Cancel',
         'universal.submit': 'Submit',
         'universal.save': 'Save',
@@ -18,6 +20,8 @@ const i18n = {
         'universal.uploadFailed': 'Upload Failed',
         'universal.uploadImageTypeError': 'You can only upload JPG/PNG file!',
         'universal.input.placeholder': 'Please input...',
+        'universal.empty': 'Empty',
+
         'settings.title': 'Settings',
         'settings.saveSuccess': 'Settings saved successfully',
         'settings.uploadImageTypeError': 'You can only upload JPG/PNG file!',
@@ -198,6 +202,16 @@ const i18n = {
         'menu.system': 'System Management',
         'menu.settings': 'Settings',
 
+
+        'deploy.started': 'Deploy started...',
+        'deploy.cleaning': 'Carry out the cleanup...',
+        'deploy.generating': 'Generating static files...',
+        'deploy.deploying': 'Deploy to GitHub...',
+        'deploy.success': 'Deploy success',
+        'deploy.failed': 'Deploy failed',
+        'deploy.interruption.cause.by.service.restart': 'The restart of the service caused a deployment interruption.',
+        'deploy.interruption.cause.by.service.restart.status.reset': 'The service restart caused a deployment interruption, and the deployment status has been reset.',
+        'deploy.status.reset': 'deploy status has been reset',
         'deploy.config.title': 'GitHub Deploy Config',
         'deploy.config.save': 'Save Config',
         'deploy.config.repository': 'GitHub Repository',
@@ -242,9 +256,11 @@ const i18n = {
         'deploy.status.fetchFailed': 'Failed to fetch deploy status',
         'deploy.status.resetSuccess': 'Deploy status reset',
         'deploy.status.resetFailed': 'Failed to reset deploy status',
-        'deploy.status.deploySuccess': 'Deploy started, please wait',
+        'deploy.status.deployStarted': 'Deploy started, please wait',
         'deploy.status.deployFailed': 'Deploy failed: ',
         'deploy.status.deployCompleted': 'Deploy completed!',
+        'deploy.status.deploySuccess': 'Deploy success',
+        'deploy.status.completedMessage': 'Deploy completed, please check the deploy log for details',
 
 
         'settings.fetchError': 'Failed to fetch settings',
@@ -252,6 +268,10 @@ const i18n = {
         'settings.passwordChangedRelogin': 'Password changed, you need to login again',
         
         // Dashboard internationalization
+        'dashboard.system.lastDeploy': 'Last Deploy',
+        'dashboard.system.theme': 'theme',
+        'dashboard.system.hexoVersion': 'hexo version',
+        'dashboard.deploy.log.title': 'deploy log',
         'dashboard.welcome.new.post': 'New Post',
         'dashboard.welcome.new.draft': 'Draft Box',
         'dashboard.welcome.new.deploy': 'Deploy',
@@ -336,6 +356,8 @@ const i18n = {
         'universal.create': '创建',
         'universal.edit': '编辑',
         'universal.delete': '删除',
+        'universal.delete.success': '删除成功',
+        'universal.delete.failed': '删除失败',
         'universal.cancel': '取消',
         'universal.submit': '提交',
         'universal.save': '保存',
@@ -366,6 +388,7 @@ const i18n = {
         'universal.select.folder': '选择文件夹',
         'universal.select.target': '选择目标',
         'universal.input.placeholder': '请输入...',
+        'universal.empty': '暂无',
 
 
         'settings.title': '设置',
@@ -572,6 +595,15 @@ const i18n = {
         'menu.system': "系统管理",
         'menu.settings': "设置",
 
+        'deploy.started': '开始部署过程...',
+        'deploy.cleaning': '执行清理...',
+        'deploy.generating': '生成静态文件...',
+        'deploy.deploying': '部署到 GitHub...',
+        'deploy.success': '部署成功完成！',
+        'deploy.failed': '部署失败:',
+        'deploy.interruption.cause.by.service.restart': '服务重启导致部署中断',
+        'deploy.interruption.cause.by.service.restart.status.reset': '服务重启导致部署中断, 部署状态已重置',
+        'deploy.status.reset': '部署状态已重置',
         'deploy.config.title': 'GitHub 部署配置',
         'deploy.config.save': '保存配置',
         'deploy.config.repository': 'GitHub 仓库地址',
@@ -616,8 +648,9 @@ const i18n = {
         'deploy.status.fetchFailed': '获取部署状态失败',
         'deploy.status.resetSuccess': '部署状态已重置',
         'deploy.status.resetFailed': '重置部署状态失败',
-        'deploy.status.deploySuccess': '部署已开始，请等待完成',
+        'deploy.status.deployStarted': '部署已开始，请等待完成',
         'deploy.status.deployFailed': '部署失败: ',
+        'deploy.status.deploySuccess': '部署成功',
         'deploy.status.deployCompleted': '部署成功完成！',
         'deploy.status.completedMessage': '部署成功完成！',
         'deploy.status.unknownTime': '未知',
@@ -628,6 +661,10 @@ const i18n = {
         'settings.passwordChangedRelogin': '密码已修改，需要重新登录',
         
         // Dashboard 国际化
+        'dashboard.system.lastDeploy': '上次部署',
+        'dashboard.system.theme': '主题',
+        'dashboard.system.hexoVersion': 'Hexo 版本',
+        'dashboard.deploy.log.title': '部署日志',
         'dashboard.welcome.new.post': '新建文章',
         'dashboard.welcome.new.draft': '草稿箱',
         'dashboard.welcome.new.deploy': '部署',
