@@ -270,9 +270,9 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
 
     const onClickSerchitem = (item) => {
         if (!item.isPage) {
-            navigate(`/post/${item.id}`)
+            navigate(`/post/${base64Encode(item.permalink)}`)
         } else {
-            navigate(`/page/${item.id}`)
+            navigate(`/page/${base64Encode(item.permalink)}`)
         }
     }
 
