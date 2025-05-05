@@ -306,18 +306,19 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             </div>
             {/* 右侧 */}
             <ul className={styles.right}>
-                {isMobile && (
+                {isMobile ? (
                     <li>
-                        <Button
-                            type="default"
-                            shape="circle"
-                            icon={<MenuOutlined />}
-                            onClick={() => setDrawerVisible(true)}
-                            className={`${styles.customButtonHover} ${styles[theme]}`}
-                        />
+                    <Button
+                        type="default"
+                        shape="circle"
+                        icon={<MenuOutlined />}
+                        onClick={() => setDrawerVisible(true)}
+                        className={`${styles.customButtonHover} ${styles[theme]}`}
+                    />
                     </li>
-                )}
-                <li>
+                ) : (
+                    <>
+                         <li>
                     <Button type="default" shape="circle" icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} />
                 </li>
                 <li>
@@ -342,6 +343,11 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                         </Dropdown>
                     </li>
                 }
+                    </>
+                )
+            
+            }
+               
             </ul>
             <Modal
                 open={open}
@@ -404,6 +410,35 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 width={220}
                 className={`${styles.mobileMenuDrawer} ${styles[theme]}`}
             >
+                {/* Drawer 内部展示所有操作项 */}
+                <div className={styles.mobileMenuActions}>
+                    <Button block icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                        {locale['navbar.search']}
+                    </Button>
+                    <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
+                        <Button block icon={theme === 'dark' ? <IconLangLight /> : <IconLang />} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                            {locale['navbar.lang']}
+                        </Button>
+                    </Dropdown>
+                    <Button block icon={theme === 'dark' ? <SunFilled /> : <MoonOutlined />} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}
+                        onClick={theme === 'light' ? () => setTheme('dark') : () => setTheme('light')}
+                    >
+                        {theme === 'light' ? locale['navbar.theme.dark'] : locale['navbar.theme.light']}
+                    </Button>
+                    <Dropdown menu={{ items: writeDropList, onClick: handleCreateBlog }}>
+                        <Button block type="primary" className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                            {locale['navbar.create']}
+                        </Button>
+                    </Dropdown>
+                    {
+                        userInfo &&
+                        <Dropdown menu={{ items: settingDropList, onClick: handleLogout }}>
+                            <Button block icon={<UserOutlined />} className={`${styles.customButtonHover} ${styles[theme]}`}>
+                                {locale['navbar.logout']}
+                            </Button>
+                        </Dropdown>
+                    }
+                </div>
                 <MenuItems />
             </Drawer>
         </div>

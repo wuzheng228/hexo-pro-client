@@ -1073,10 +1073,10 @@ const renderRecentArticlesSection = () => {
           <Col span={24}>
             <Row gutter={[16, 16]}>
                 {/* 标签词云区域 */}
-                <Col xl={12} sm={24}>
+                <Col xl={12} sm={24} xs={24}>
                   {renderTagsWordCloud()}
                 </Col>
-                <Col xl={12} sm={24}>
+                <Col xl={12} sm={24} xs={24}>
                   {renderRecentArticlesSection()}
                 </Col>
             </Row>
