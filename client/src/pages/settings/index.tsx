@@ -416,10 +416,10 @@ const SettingsPage: React.FC = () => {
                       justifyContent: 'center',
                       overflow: 'hidden'
                     }}
-                    onClick={() => selectImage(image.url)}
+                    onClick={() => selectImage(image.path)}
                   >
                     <img 
-                      src={image.url} 
+                      src={image.path} 
                       alt={image.name} 
                       style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
                     />

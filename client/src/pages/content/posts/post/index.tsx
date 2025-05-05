@@ -25,7 +25,7 @@ function Post() {
     const postRef = useRef(null)
     const editorWapperRef = useRef(null)
     const { _id } = useParams()
-    const [post, setPost] = useState({ isDraft: true, source: null })
+    const [post, setPost] = useState({ isDraft: true, source: null, permalink: null })
     const [tagsCatMeta, setTagsCatMeta] = useState({})
     const [postMetaData, setPostMetadata] = useState({ tags: [], categories: [], frontMatter: {} })
     const [doc, setDoc] = useState('')
@@ -358,6 +358,7 @@ function Post() {
                     <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
                     <EditorHeader
                         isPage={false}
+                        permalink={post.permalink}
                         isDraft={post.isDraft}
                         handlePublish={publish}
                         handleUnpublish={unpublish}

@@ -20,9 +20,9 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
     }
 
     function isPathValid(path) {
-        // 匹配以.md为扩展名的文件名，并且路径只包含合法字符（字母、数字、斜杠、下划线和短横线）
-        const regex = /^([a-zA-Z0-9-_\/]+)\/([a-zA-Z0-9-_]+\.md)$/i // i标志表示不区分大小写
-        return regex.test(path)
+        // 匹配以.md为扩展名的文件名，并且路径只包含合法字符（字母、数字、斜杠、下划线、短横线和中文字符）
+        const regex = /^([\u4e00-\u9fa5a-zA-Z0-9-_\/]+)\/([\u4e00-\u9fa5a-zA-Z0-9-_]+\.md)$/i;
+        return regex.test(path);
     }
 
     return (
@@ -84,9 +84,12 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
             </Row>
             <Row style={{ marginTop: 15, marginBottom: 15 }}>
                 <Col>
-                    <Input style={{ width: 350 }} allowClear placeholder='请输入页面存放路径' value={pageMeta.source} onChange={(v) => {
-                        const newMeta = { ...pageMeta, source: v }
-                        setPageMeta(newMeta)
+                    <Input style={{ width: 350 }}  placeholder='请输入页面存放路径' value={pageMeta.source} onChange={(v) => {
+                        console.log(v.target.value)
+                        console.log(pageMeta)
+                        const newMeta = { ...pageMeta, source: v.target.value }
+                        console.log(newMeta)
+                        setPageMeta((pre)=>newMeta)
                     }} />
                 </Col>
             </Row>

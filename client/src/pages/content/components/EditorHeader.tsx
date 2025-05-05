@@ -9,8 +9,10 @@ import { useDispatch } from "react-redux"
 import { GlobalContext } from "@/context"
 import useLocale from "@/hooks/useLocale"
 import useDeviceDetect from "@/hooks/useDeviceDetect"
+import IconLink from "@/assets/link.svg"
+import IconLinkLight from "@/assets/linkLight.svg"
 
-export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', handleChangeTitle, handleTitleBlur, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
+export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleTitleBlur = () => {}, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
 
     const [isPin, setIsPin] = useState(true)
     const dispatch = useDispatch()
@@ -134,6 +136,20 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
 
                         </>
                     )}
+                    {
+                        (isPage || (!isPage && !isDraft)) && (
+                            <Button
+                                    type="default"
+                                    style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}
+                                    onClick={(event) => {
+                                        event.stopPropagation()
+                                        window.open(permalink, '_blank')
+                                    }}
+                                    icon={theme === 'dark' ? <IconLinkLight /> : <IconLink />}
+                                >
+                            </Button>
+                        )
+                    }
                     <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />}
                         onClick={handlePinClick}
                         style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />

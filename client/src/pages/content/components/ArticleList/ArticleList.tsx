@@ -77,9 +77,10 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
 
             // 更新列表
             setPostList(result)
-
+            
             // 保持当前页码
             setCurrentPage(currentPage)
+            setTotal(res.data.total)
         } catch (err) {
             message.error(err.message)
         }
@@ -197,13 +198,13 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
     }
 
     const queryPosts = () => {
-        console.log('queryPosts', pageSize)
+        // console.log('queryPosts', pageSize)
         const listApiPath = isPage ? '/hexopro/api/pages/list' : '/hexopro/api/posts/list'
         service.get(listApiPath, { params: { published: published, page: currentPage, pageSize: pageSize } })
             .then(res => {
                 const result = res.data.data.map((obj, i) => {
                     setTotal(res.data.total)
-                    return { _id: obj._id, slug: obj.slug, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, source: obj.source, updated: obj.updated, key: i + 1 }
+                    return { _id: obj._id, slug: obj.slug, title: obj.title, cover: obj.cover, date: obj.date, permalink: obj.permalink, source: obj.source, updated: obj.updated, key: i + 1, isDraft: obj.isDraft }
                 })
                 setPostList(result)
             })
@@ -298,19 +299,22 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                             </span>
                                         )
                                     )}
-                                    <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
-                                        <Button
-                                            type="text"
-                                            style={{ color: 'rgba(0, 0, 0, 0.45)' }}
-                                            onClick={(event) => {
-                                                event.stopPropagation()
-                                                window.open(item.permalink, '_blank')
-                                            }}
-                                            icon={theme === 'dark' ? <IconLink /> : <IconLink />}
-                                        >
-                                        </Button>
-                                    </span>
-                                    
+                                    {
+                                        (!item.isDraft) && (
+                                            <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
+                                                <Button
+                                                    type="text"
+                                                    style={{ color: 'rgba(0, 0, 0, 0.45)' }}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation()
+                                                        window.open(item.permalink, '_blank')
+                                                    }}
+                                                    icon={theme === 'dark' ? <IconLink /> : <IconLink />}
+                                                >
+                                                </Button>
+                                            </span>
+                                        )
+                                    }
                                     {/* 其他按钮保持不变 */}
                                     
                                         <Dropdown
@@ -520,14 +524,14 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                             cover={
                                                 <div style={{ height: 120, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                     <Image
-                                                        src={image.url}
+                                                        src={image.path}
                                                         alt={image.name}
                                                         style={{ maxHeight: '100%', objectFit: 'contain' }}
                                                         preview={false}
                                                     />
                                                 </div>
                                             }
-                                            onClick={() => selectImageAsCover(image.url)}
+                                            onClick={() => selectImageAsCover(image.path)}
                                             bodyStyle={{ padding: '8px', textAlign: 'center' }}
                                         >
                                             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

@@ -153,7 +153,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         const exists = await checkTitleExists(title)
         if (exists) {
             // 如果存在，自动添加时间戳后缀
-            const uniqueTitle = `${title} (${Date.now()})`
+            const uniqueTitle = `${title}${Date.now()}`
             message.info('已存在同名文章，已自动添加区分字符')
             
             service.post('/hexopro/api/posts/new', { title: uniqueTitle }).then((res) => {
@@ -199,7 +199,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             const exists = await checkPageTitleExists(title)
             if (exists) {
                 // 如果存在，自动添加时间戳后缀
-                const uniqueTitle = `${title} (${Date.now()})`
+                const uniqueTitle = `${title}${Date.now()}`
                 message.info(locale['navbar.page.exists'] || '已存在同名页面，已自动添加区分字符')
                 
                 const res = await service.post('/hexopro/api/pages/new', { title: uniqueTitle })
