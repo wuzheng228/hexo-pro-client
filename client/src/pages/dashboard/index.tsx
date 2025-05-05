@@ -489,7 +489,7 @@ const Dashboard: React.FC = () => {
       const res = await service.get('/hexopro/api/deploy/status')
 
       const logs =  res.data.logs.map((item)=>t[item] || item)
-      console.log('获取部署日志成功', logs)
+      // console.log('获取部署日志成功', logs)
       setDeployLogs(logs || [])
     } catch (error) {
       // 可以根据需要显示错误提示

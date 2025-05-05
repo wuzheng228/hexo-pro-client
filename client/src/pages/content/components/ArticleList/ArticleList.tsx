@@ -229,8 +229,8 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
     }, [currentPage, pageSize])
 
     useEffect(() => {
-        console.log('isMobile', typeof (isMobile))
-        console.log('pageSize', isMobile ? 6 : 9)
+        // console.log('isMobile', typeof (isMobile))
+        // console.log('pageSize', isMobile ? 6 : 9)
         setPageSize(isMobile ? 6 : 9)
     }, [isMobile])
 

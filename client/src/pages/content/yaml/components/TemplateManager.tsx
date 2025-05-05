@@ -414,14 +414,13 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
       >
         {editedTemplate && (
           <Form layout="vertical">
-            {/* Template Name and Description Form Items remain the same */}
             <Form.Item
               label={t['content.yaml.templateName'] || '模板名称'}
               required
             >
               <Input
                 value={editedTemplate.name}
-                onChange={e => setEditedTemplate({ ...editedTemplate, name: e.target.value })}
+                onChange={e => setEditedTemplate(prev => ({ ...prev, name: e.target.value }))}
                 placeholder={t['content.yaml.templateNamePlaceholder'] || '请输入模板名称'}
               />
             </Form.Item>
@@ -430,7 +429,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
             >
               <Input.TextArea
                 value={editedTemplate.description}
-                onChange={e => setEditedTemplate({ ...editedTemplate, description: e.target.value })}
+                onChange={e => setEditedTemplate(prev => ({ ...prev, description: e.target.value }))}
                 placeholder={t['content.yaml.templateDescriptionPlaceholder'] || '请输入模板描述'}
                 rows={3}
               />
@@ -479,7 +478,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     try {
                       // 尝试解析 YAML 以确保其有效性，但仅在编辑时更新字符串状态
                       yaml.load(value)
-                      setEditedTemplate({ ...editedTemplate, structure: value })
+                      setEditedTemplate(prev => ({ ...prev, structure: value }))
                     } catch (e) {
                       // 如果 YAML 无效，仍然更新编辑器的内容，但不改变状态中的 structure
                       // 或者可以添加一个错误提示
@@ -557,6 +556,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                   danger
                   icon={<DeleteOutlined />}
                   onClick={() => removeVariable(index)}
+                  style={{ marginTop: 30 }}
                 />
               </Col>
             </Row>
