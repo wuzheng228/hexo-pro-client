@@ -11,6 +11,7 @@ import IconLink from "@/assets/link.svg"
 import IconLinkLight from "@/assets/linkLight.svg"
 import Iconllipsis from "@/assets/ellipsis.svg"
 import IconllipsisLight from "@/assets/ellipsisLight.svg"
+import defaultCover from "@/assets/defaultCover.png"
 import styles from './style/index.module.less'
 
 const { Text } = Typography
@@ -104,7 +105,11 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
     }
 
     const handleCoverSubmit = async () => {
-        service.post('/hexopro/api/updateFrontMatter', {
+        let url = '/hexopro/api/updateFrontMatter'
+        if (isPage) {
+            url = '/hexopro/api/updatePageFrontMatter'
+        }
+        service.post(url, {
             permalink: base64Encode(currentPost.permalink),
             key: form.getFieldValue('key'),
             value: form.getFieldValue('value')
@@ -254,8 +259,8 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                     />
                                 ) : (
                                     <Image
-                                        src="https://fakeimg.pl/400x190/?text=HexoPro&font=Roboto"
-                                        alt="默认封面"
+                                        src={defaultCover}
+                                        alt="cover"
                                         style={{
                                             height: 190,
                                             objectFit: 'cover',
@@ -332,7 +337,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                                         key: 'setCover',
                                                         label: (
                                                             <div onClick={(e) => openCoverModal(item, e)}>
-                                                                {t['content.articleList.btn.setCover'] || '封面'}
+                                                                {t['content.articleList.table.cover'] || '封面'}
                                                             </div>
                                                         )
                                                     },
@@ -397,7 +402,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
 
             {/* 封面设置对话框 */}
             <Modal
-                title={t['content.articleList.cover.title'] || '封面'}
+                title={t['content.articleList.table.cover'] || '封面'}
                 open={coverModalVisible}
                 onOk={handleCoverSubmit}
                 onCancel={() => setCoverModalVisible(false)}
@@ -423,7 +428,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                         rules={[{ required: true, message: t['content.articleList.cover.valueRequired'] || '请输入图片URL' }]}
                     >
                         <Input
-                            placeholder={t['content.articleList.cover.valuePlaceholder'] || '例如: https://example.com/image.jpg'}
+                            placeholder={t['content.articleList.cover.valuePlaceholder'] || 'example: https://example.com/image.jpg'}
                             onChange={(e) => {
                                 // 当输入值变化时，更新预览URL
                                 setPreviewUrl(e.target.value)
@@ -450,7 +455,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                         color: theme === 'dark' ? '#e6e6e6' : '#000000'
                                     }}
                                 >
-                                    从图床选择
+                                    {t['content.articleList.imagePicker.title']}
                                 </Button>
                             }
                         />

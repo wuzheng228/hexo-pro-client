@@ -103,27 +103,27 @@ export default function LoginForm() {
     if (checkingFirstUse) {
         return <div className={styles['login-form-wrapper']}>
             <div className={styles['login-form-title']}>{t['login.form.title']}</div>
-            <div className={styles['login-form-sub-title']}>正在检查系统状态...</div>
+            <div className={styles['login-form-sub-title']}>{t['settings.system.check.status']}</div>
         </div>
     }
 
     if (isFirstUse) {
         return (
             <div className={styles['login-form-wrapper']}>
-                <div className={styles['login-form-title']}>欢迎使用 Hexo Pro</div>
-                <div className={styles['login-form-sub-title']}>这是您首次使用系统</div>
+                <div className={styles['login-form-title']}>{t['settings.welcomeTitle']}</div>
+                <div className={styles['login-form-sub-title']}>{t['settings.welcomeSubtitle']}</div>
                 <Alert
-                    message="首次使用提示"
-                    description="您可以选择现在设置账号密码，或者稍后再设置。"
+                    message={t['settings.firstUsePrompt']}
+                    description={t['settings.firstUseDescription']}
                     type="info"
                     showIcon
                     style={{ marginBottom: 16 }}
                 />
                 <Button type="primary" onClick={goToSettings} style={{ marginBottom: 12, width: '100%' }}>
-                    现在设置账号密码
+                    {t['settings.setupNow']}
                 </Button>
                 <Button onClick={skipSettings} style={{ width: '100%' }}>
-                    稍后再设置
+                    {t['settings.setupLater']}
                 </Button>
             </div>
         )

@@ -3,7 +3,7 @@ import axios from "axios"
 
 const service = axios.create({
     validateStatus: function (status) {
-        return status >= 200 && status < 500 // 允许处理400状态码
+        return status >= 200 && status <= 500 // 允许处理400状态码
     }
 })
 
