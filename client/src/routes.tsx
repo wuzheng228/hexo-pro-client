@@ -1,8 +1,5 @@
 import React from "react"
 import { useMemo, useState } from "react"
-import useLocale from "./hooks/useLocale"
-import Dashboard from "./pages/dashboard"
-
 export type IRoute = {
   name: string
   key: string
@@ -51,7 +48,6 @@ export type IRoute = {
 // }
 
 export default function useRoute() {
-  const t = useLocale()
   const routes = [
     {
       key: 'dashboard',

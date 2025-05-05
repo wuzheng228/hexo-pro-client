@@ -77,8 +77,8 @@ export default function LoginForm() {
     function onSubmitClick() {
         formRef.current.validateFields().then((values) => {
             login(values)
-        }).catch((_) => {
-            message.error(t['login.form.validate.errMsg'])
+        }).catch((err) => {
+            message.error(t['login.form.validate.errMsg'] + err)
         })
     }
 
@@ -95,9 +95,9 @@ export default function LoginForm() {
     // 跳过设置直接进入
     const skipSettings = () => {
         // 设置一个标记，表示用户选择了跳过设置
-        localStorage.setItem('hexoProSkipSettings', 'true');
+        localStorage.setItem('hexoProSkipSettings', 'true')
         // 首次使用不需要token，直接跳转到首页
-        window.location.href = '/pro';
+        window.location.href = '/pro'
     }
 
     if (checkingFirstUse) {

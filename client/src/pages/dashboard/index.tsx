@@ -2,14 +2,13 @@ import React, { useContext, useEffect, useState } from 'react'
 import {
   Row, Col, Card, Statistic, List, Button, Input,
   Typography, Timeline, Spin, Modal, Form, // 移除 Calendar
-  message, Tooltip, Badge, Checkbox, Avatar, Empty
+  message, Tooltip, Badge, Checkbox, Empty
 } from 'antd'
 import {
   FileAddOutlined, EditOutlined,
-  EyeOutlined, SettingOutlined,
+  SettingOutlined,
   TagsOutlined, ClockCircleOutlined, HomeOutlined,
   RocketOutlined, BarChartOutlined,
-  InfoCircleOutlined, // 保留 CalendarOutlined 图标
   PieChartOutlined, // 添加 PieChartOutlined 图标
   DeleteOutlined,
   EllipsisOutlined,
@@ -143,7 +142,7 @@ const MonthlyPostsChart = React.memo(({ loading, monthlyPostStats, theme, darkMo
   }
 
   return <Column {...config} />
-});
+})
 
 interface CategoryPieChartProps extends ChartProps {
   categories: { name: string; count: number }[];
@@ -203,7 +202,7 @@ const CategoryPieChart = React.memo(({ loading, categories, theme, darkMode, sty
               color: theme === 'dark' ? '#40a9ff' : '#1890ff'
             },
             formatter: (_, data) => {
-              return data.reduce((total, item) => total + item.value, 0);
+              return data.reduce((total, item) => total + item.value, 0)
             },
           },
         }}
@@ -239,7 +238,7 @@ const CategoryPieChart = React.memo(({ loading, categories, theme, darkMode, sty
       />
     </div>
   )
-});
+})
 
 interface TagWordCloudProps extends ChartProps {
   tags: { name: string; count: number; path: string }[];
@@ -299,11 +298,11 @@ const TagWordCloud = React.memo(({ loading, tags, theme, darkMode, styles, t }: 
       interactions={[{ type: 'element-active' }]}
       onReady={(plot) => {
         plot.chart.on('element:click', (e) => {
-          const { data } = e.data;
+          const { data } = e.data
           if (data.datum?.path) {
-            window.open(data.datum.path, '_blank');
+            window.open(data.datum.path, '_blank')
           }
-        });
+        })
       }}
       style={{
         background: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(245, 250, 255, 0.7)',
@@ -312,14 +311,14 @@ const TagWordCloud = React.memo(({ loading, tags, theme, darkMode, styles, t }: 
       theme={theme === 'dark' ? 'dark' : 'light'}
     />
   )
-});
+})
 
 // --- Dashboard 组件 ---
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate()
   const { theme } = useContext(GlobalContext)
-  const [todoLoading, setTodoLoading] = useState(false); // 添加待办事项加载状态
+  const [todoLoading, setTodoLoading] = useState(false) // 添加待办事项加载状态
   const darkMode = theme === 'dark' ? styles.darkMode : ''
   const t = useLocale()
   const { isMobile } = useDeviceDetect()
@@ -505,20 +504,20 @@ const Dashboard: React.FC = () => {
 
   // 渲染顶部欢迎区域
   const renderWelcomeSection = () => {
-    const [modalVisible, setModalVisible] = useState(false);
-    const [postTitle, setPostTitle] = useState('');
-    const [form] = Form.useForm();
+    const [modalVisible, setModalVisible] = useState(false)
+    const [postTitle, setPostTitle] = useState('')
+    const [form] = Form.useForm()
 
     const handleCreatePost = async () => {
       try {
-        const values = await form.validateFields();
-        await createNewPost(values.title);
-        setModalVisible(false);
-        form.resetFields();
+        const values = await form.validateFields()
+        await createNewPost(values.title)
+        setModalVisible(false)
+        form.resetFields()
       } catch (error) {
-        console.error('创建文章失败:', error);
+        console.error('创建文章失败:', error)
       }
-    };
+    }
 
     return (
     <Card className={`${styles.dashboardCard} ${styles.welcomeCard} ${darkMode}`}>
@@ -544,8 +543,8 @@ const Dashboard: React.FC = () => {
             visible={modalVisible}
             onOk={handleCreatePost}
             onCancel={() => {
-              setModalVisible(false);
-              form.resetFields();
+              setModalVisible(false)
+              form.resetFields()
             }}
             okText={t['universal.create']}
             cancelText={t['universal.cancel']}
@@ -742,11 +741,11 @@ const Dashboard: React.FC = () => {
             interactions={[{ type: 'element-active' }]}
             onReady={(plot) => {
               plot.on('element:click', (e) => {
-                const { data } = e.data;
+                const { data } = e.data
                 if (data?.path) {
-                  window.open(data.path, '_blank');
+                  window.open(data.path, '_blank')
                 }
-              });
+              })
             }}
             style={{ 
               background: theme === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(245, 250, 255, 0.7)', 
@@ -762,7 +761,7 @@ const Dashboard: React.FC = () => {
   const renderSystemInfoSection = () => {
     // 获取启用的插件数量
     const enabledPluginsCount = systemInfo.plugins ? 
-      systemInfo.plugins.filter(plugin => plugin.enabled).length : 0;
+      systemInfo.plugins.filter(plugin => plugin.enabled).length : 0
 
     return (
       <Row gutter={[16, 16]} className={styles.systemRow}>
@@ -876,32 +875,32 @@ const Dashboard: React.FC = () => {
 
   // 添加最近文章组件
 const renderRecentArticlesSection = () => {
-  const [recentArticles, setRecentArticles] = useState([]);
-  const [recentLoading, setRecentLoading] = useState(true);
+  const [recentArticles, setRecentArticles] = useState([])
+  const [recentLoading, setRecentLoading] = useState(true)
 
   // 获取最近文章列表
   const fetchRecentArticles = async () => {
     try {
-      setRecentLoading(true);
+      setRecentLoading(true)
       const response = await service.get('/hexopro/api/dashboard/posts/recent', {
         params: { limit: 10, sortBy: 'updated' }
-      });
-      setRecentArticles(response.data || []);
+      })
+      setRecentArticles(response.data || [])
     } catch (error) {
-      console.error('获取最近文章失败:', error);
+      console.error('获取最近文章失败:', error)
     } finally {
-      setRecentLoading(false);
+      setRecentLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchRecentArticles();
-  }, []);
+    fetchRecentArticles()
+  }, [])
 
   // 跳转到文章编辑页面
   const handleEditArticle = (permalink) => {
-    navigate(`/post/${base64Encode(permalink)}`);
-  };
+    navigate(`/post/${base64Encode(permalink)}`)
+  }
 
   return (
     <Card
@@ -946,55 +945,55 @@ const renderRecentArticlesSection = () => {
         />
       )}
     </Card>
-  );
-};
+  )
+}
 
   // 渲染待办事项区域
   const renderTodoSection = () => {
-    const [inputValue, setInputValue] = useState('');
+    const [inputValue, setInputValue] = useState('')
     const handleAdd = async () => {
       if (inputValue.trim()) {
-        await addTodoItem(inputValue.trim());
-        setInputValue('');
+        await addTodoItem(inputValue.trim())
+        setInputValue('')
       }
-    };
+    }
 
     // 删除待办事项
   const handleDeleteTodo = async (id) => {
     try {
-      setTodoLoading(true);
-      await service.delete(`/hexopro/api/dashboard/todos/delete/${id}`);
-      message.success(t['universal.delete.success']);
+      setTodoLoading(true)
+      await service.delete(`/hexopro/api/dashboard/todos/delete/${id}`)
+      message.success(t['universal.delete.success'])
       // 更新本地状态
-      setTodoItems(prevItems => prevItems.filter(item => item.id !== id));
+      setTodoItems(prevItems => prevItems.filter(item => item.id !== id))
     } catch (error) {
-      message.error(t['universal.delete.failed']);
-      console.error(error);
+      message.error(t['universal.delete.failed'])
+      console.error(error)
     } finally {
-      setTodoLoading(false);
+      setTodoLoading(false)
     }
-  };
+  }
 
     // 处理切换待办事项状态
     const handleToggleTodo = async (id: string) => {
-        console.log('Toggling todo with ID:', id); // 添加日志
+        console.log('Toggling todo with ID:', id) // 添加日志
         try {
-            setTodoLoading(true);
-            await service.put(`/hexopro/api/dashboard/todos/toggle/${id}`);
+            setTodoLoading(true)
+            await service.put(`/hexopro/api/dashboard/todos/toggle/${id}`)
             // fetchTodos(); // 重新获取列表 - 注意：原始代码没有 fetchTodos，这里先注释掉，如果需要，需要定义 fetchTodos
             // 暂时保留本地更新逻辑，如果需要强制刷新，取消注释 fetchTodos() 并确保其已定义
             setTodoItems(prevItems =>
               prevItems.map(item =>
                 item.id === id ? { ...item, completed: !item.completed } : item
               )
-            );
+            )
         } catch (error) {
-            console.error('Failed to toggle todo:', error);
-            message.error('切换待办事项状态失败');
+            console.error('Failed to toggle todo:', error)
+            message.error('切换待办事项状态失败')
         } finally {
-            setTodoLoading(false);
+            setTodoLoading(false)
         }
-    };
+    }
 
     return (
       <Card
@@ -1054,8 +1053,8 @@ const renderRecentArticlesSection = () => {
               )}
             </Spin>
           </Card>
-    );
-  };
+    )
+  }
 
   return (
       <div className={styles.dashboardContainer}>

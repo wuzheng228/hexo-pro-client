@@ -42,7 +42,7 @@ const DeployPage: React.FC = () => {
       const statusRes = await service.get('/hexopro/api/deploy/status')
       
       statusRes.data.logs = statusRes.data.logs.map((item)=>t[item] || item)
-      console.log(statusRes.data)
+      // console.log(statusRes.data)
       setDeployStatus(statusRes.data)
       return statusRes.data
     } catch (error) {

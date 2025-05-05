@@ -10,8 +10,8 @@ import useLocale from '@/hooks/useLocale'
 // import { use } from 'marked'
 // import { useDeviceDetect } from 'use-device-detection'
 import useDeviceDetect from '@/hooks/useDeviceDetect'
-import { Button, Modal, Pagination, Image, Spin, Empty, Select, Space, Row, Col, Card, Typography, Upload, Input, message } from 'antd'
-import { PictureOutlined, InboxOutlined } from '@ant-design/icons'
+import { Modal, Pagination, Image, Spin, Empty, Select, Row, Col, Card, Typography, Upload, Input, message } from 'antd'
+import { InboxOutlined } from '@ant-design/icons'
 
 const { Text } = Typography
 const { Option } = Select

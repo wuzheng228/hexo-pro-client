@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Card, Form, Input, Button, Upload, message, Switch, Spin, Divider, Typography, Alert, Modal, Avatar, Space, Pagination } from 'antd'
+import { Card, Form, Input, Button, Upload, message, Spin, Typography, Alert, Modal, Avatar, Space, Pagination } from 'antd'
 import { UploadOutlined, UserOutlined, LockOutlined, SaveOutlined, PictureOutlined } from '@ant-design/icons'
 import styles from './style/index.module.less'
 import useLocale from '../../hooks/useLocale'
@@ -7,7 +7,7 @@ import service from '@/utils/api'
 import { GlobalContext } from '@/context'
 import { useDispatch } from 'react-redux'
 import defaultAvatar from '../../assets/defaultAvatar2.png'
-const { Title, Text } = Typography;
+const { Title } = Typography
 
 const SettingsPage: React.FC = () => {
   const t = useLocale()
@@ -185,9 +185,9 @@ const SettingsPage: React.FC = () => {
   // 跳过设置直接进入
   const skipSettings = () => {
     // 设置一个标记，表示用户选择了跳过设置
-    localStorage.setItem('hexoProSkipSettings', 'true');
-    message.success(t['settings.skipSetupMessage']);
-    window.location.href = '/pro';
+    localStorage.setItem('hexoProSkipSettings', 'true')
+    message.success(t['settings.skipSetupMessage'])
+    window.location.href = '/pro'
   }
 
   // 上传头像
