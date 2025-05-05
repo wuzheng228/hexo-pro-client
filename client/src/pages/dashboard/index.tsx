@@ -633,7 +633,7 @@ const Dashboard: React.FC = () => {
                 monthlyPostStats={monthlyPostStats}
                 theme={theme}
                 darkMode={darkMode}
-                styles={styles}
+                styles={{marginLeft:"10px", marginRight:"10px"}}
                 t={t}
               />
             </div>
