@@ -158,30 +158,35 @@ function Post() {
 
         // 直接更新标题状态，不立即检查重复
         setTitle(v)
-        return
         // 如果标题没有变化，直接返回
         if (v === title) {
             return
         }
 
-        // 使用防抖函数延迟更新文件名和检查重复
-        const debouncedUpdate = _.debounce(async (newTitle) => {
-            // 检查是否存在同名文章
-            const exists = await checkTitleExists(newTitle)
+         // 检查是否存在同名文章
+        const exists = await checkTitleExists(v)
 
-            if (exists) {
-                // 提示用户但不阻止输入
-                message.warning('已存在同名文章，保存时将自动添加区分字符')
-            }
+         if (exists) {
+             // 提示用户但不阻止输入
+             message.warning('已存在同名文章，保存时将自动添加区分字符')
+              // 如果重复，自动添加时间戳后缀
+              const uniqueTitle = `${v} (${Date.now()})`
+              setTitle(uniqueTitle)
+  
+              // 更新文件名
+              const parts = post.source.split('/')
+              parts[parts.length - 1] = uniqueTitle + '.md'
+              const newSource = parts.join('/')
+              postRef.current({ title: uniqueTitle, source: newSource })
+              setPost({...post, title: uniqueTitle })
+              return
+         }
 
-            // 无论是否重复，都更新文件名
-            const parts = post.source.split('/')
-            parts[parts.length - 1] = newTitle + '.md'
-            const newSource = parts.join('/')
-            postRef.current({ title: newTitle, source: newSource })
-        }, 800) // 800ms 的延迟
-
-        debouncedUpdate(v)
+         // 无论是否重复，都更新文件名
+         const parts = post.source.split('/')
+         parts[parts.length - 1] = v + '.md'
+         const newSource = parts.join('/')
+         postRef.current({ title: v, source: newSource })
     }
 
     // 添加标题失去焦点时的处理函数

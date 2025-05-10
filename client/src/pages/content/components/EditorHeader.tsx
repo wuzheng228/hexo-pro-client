@@ -1,4 +1,4 @@
-import { DeleteOutlined, SettingOutlined } from "@ant-design/icons"
+import { DeleteOutlined, SettingOutlined, EditOutlined, SaveOutlined } from "@ant-design/icons"
 import { Button, Col, message, Popconfirm, Row } from "antd"
 import ButtonGroup from "antd/es/button/button-group"
 import React, { useContext, useState } from "react"
@@ -12,9 +12,11 @@ import useDeviceDetect from "@/hooks/useDeviceDetect"
 import IconLink from "@/assets/link.svg"
 import IconLinkLight from "@/assets/linkLight.svg"
 
-export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleTitleBlur = () => {}, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
+export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
 
     const [isPin, setIsPin] = useState(true)
+    const [isEditingTitle, setIsEditingTitle] = useState(false)
+    const [tempTitle, setTempTitle] = useState('')
     const dispatch = useDispatch()
     const locale = useLocale()
     const { isMobile } = useDeviceDetect()
@@ -78,6 +80,34 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
         })
     }
 
+    // 开始编辑标题
+    const startEditTitle = () => {
+        setTempTitle(initTitle)
+        setIsEditingTitle(true)
+    }
+
+    // 保存标题
+    const saveTitle = () => {
+        if (tempTitle.trim() === '') {
+            message.error('标题不能为空')
+            return
+        }
+        
+        handleChangeTitle(tempTitle) // 添加这行，确保父组件的标题状态更新
+        setIsEditingTitle(false)
+    }
+
+    // 取消编辑
+    const cancelEditTitle = () => {
+        setTempTitle(initTitle)
+        setIsEditingTitle(false)
+    }
+
+    // 处理标题输入变化
+    const handleTitleChange = (value) => {
+        setTempTitle(value)
+    }
+
     return (
         <Row style={{
             width: "100%",
@@ -88,23 +118,35 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
         }} align='middle' className={cs("editor-header", className)}>
             {/* 标题输入 */}
             <Col xs={23} md={16} lg={14}>
-                <input
-                    style={{
-                        width: "100%",
-                        border: 'none',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        fontWeight: 500,
-                        backgroundColor: currentTheme.inputBackgroundColor,
-                        color: currentTheme.inputColor,
-                        ...responsiveInputStyles
-                    }}
-                    value={initTitle}
-                    onChange={(v) => {
-                        handleChangeTitle(v.target.value)
-                    }}
-                    onBlur={handleTitleBlur}
-                />
+                {isEditingTitle ? (
+                    <input
+                        style={{
+                            width: "100%",
+                            border: 'none',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                            fontWeight: 500,
+                            backgroundColor: currentTheme.inputBackgroundColor,
+                            color: currentTheme.inputColor,
+                            ...responsiveInputStyles
+                        }}
+                        value={tempTitle}
+                        onChange={(e) => handleTitleChange(e.target.value)}
+                        autoFocus
+                    />
+                ) : (
+                    <div
+                        style={{
+                            width: "100%",
+                            boxSizing: 'border-box',
+                            fontWeight: 500,
+                            color: currentTheme.inputColor,
+                            ...responsiveInputStyles
+                        }}
+                    >
+                        {initTitle}
+                    </div>
+                )}
             </Col>
 
             {/* 操作按钮组 */}
@@ -130,6 +172,44 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     flexWrap: isMobile ? 'nowrap' : 'wrap',
                     overflowX: isMobile ? 'auto' : 'visible'
                 }}>
+                    {/* 标题编辑按钮 */}
+                    {isEditingTitle ? (
+                        <>
+                            <Button 
+                                type='primary'
+                                icon={<SaveOutlined />}
+                                onClick={saveTitle}
+                                style={{ 
+                                    backgroundColor: currentTheme.buttonBackgroundColor, 
+                                    color: currentTheme.buttonColor,
+                                    borderColor: theme === 'dark' ? '#555' : '#d9d9d9' // 添加适合主题的边框颜色
+                                }}
+                            >
+                                {isMobile ? '' : locale["editor.header.edit.title.save"]}
+                            </Button>
+                            <Button 
+                                type='default'
+                                onClick={cancelEditTitle}
+                                style={{ 
+                                    backgroundColor: currentTheme.buttonBackgroundColor, 
+                                    color: currentTheme.buttonColor,
+                                    borderColor: theme === 'dark' ? '#555' : '#d9d9d9' // 添加适合主题的边框颜色
+                                }}
+                            >
+                                {isMobile ? locale["editor.header.edit.title.cancel"] : locale["editor.header.edit.title.cancel"]}
+                            </Button>
+                        </>
+                    ) : (
+                        <Button 
+                            type='default'
+                            icon={<EditOutlined />}
+                            onClick={startEditTitle}
+                            style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}
+                        >
+                            {isMobile ? '' : locale["editor.header.edit.title"]}
+                        </Button>
+                    )}
+                    
                     {/* 移动端优先显示主要操作 */}
                     {!isMobile && (
                         <>
