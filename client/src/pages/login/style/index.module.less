@@ -29,6 +29,9 @@
     --input-autofill-text-color: #ecf0f1;
     --input-focus-background: #444444;
     --input-focus-text-color: #ecf0f1;
+    --text-color: #ffffff;  /* 添加这行，确保暗黑模式下文字颜色为白色 */
+    --title-color: #ffffff; /* 添加这行，专门为标题设置颜色 */
+    --subtitle-color: #cccccc; /* 添加这行，为副标题设置稍微暗一点的颜色 */
 
     input,
     textarea {
@@ -207,7 +210,7 @@
     &-title {
         font-size: 24px;
         font-weight: 600;
-        color: var(--text-color);
+        color: var(--title-color, var(--text-color)); /* 修改这行，使用新的变量 */
         line-height: 32px;
         margin-bottom: 16px;
     }
@@ -215,7 +218,7 @@
     &-sub-title {
         font-size: 16px;
         line-height: 24px;
-        color: var(--text-color);
+        color: var(--subtitle-color, var(--text-color)); /* 修改这行，使用新的变量 */
         margin-bottom: 24px;
     }
 
