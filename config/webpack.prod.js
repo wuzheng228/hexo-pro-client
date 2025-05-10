@@ -82,7 +82,7 @@ module.exports = {
                     // },
                     {
                         test: /\.(png|jpe?g|gif)$/,
-                        type: "assets",
+                        type: "asset",
                         parser: {
                             dataUrlCondition: {
                                 maxSize: 10 * 1024, // 小于10kb的图片会被base64处理
@@ -95,7 +95,7 @@ module.exports = {
                     },
                     {
                         test: /\.(ttf|woff2?)$/,
-                        type: "assets/resource",
+                        type: "asset/resource",
                     },
                     // {
                     //     enforce: 'pre',

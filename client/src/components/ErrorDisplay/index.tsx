@@ -1,5 +1,4 @@
 import React, { useContext } from 'react'
-import { message } from 'antd'
 import { GlobalContext } from '@/context'
 import styles from './style/index.module.less'
 

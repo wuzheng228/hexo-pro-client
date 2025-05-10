@@ -1,0 +1,27 @@
+.container {
+  padding: 24px;
+  background: var(--background-color, #fff);
+  min-height: calc(100vh - 64px);
+}
+
+.avatar-uploader {
+  text-align: center;
+  margin-bottom: 24px;
+
+  .ant-upload {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+}
+
+.save-btn {
+  width: 120px;
+}
+
+:global([data-theme='dark']) {
+  .container {
+    --background-color: #141414;
+  }
+}

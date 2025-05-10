@@ -103,6 +103,51 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
     }
   }
 
+  // 添加变量
+  const addVariable = () => {
+    if (!editedTemplate) return
+    
+    const newVariable = {
+      name: '',
+      type: 'string',
+      default: '',
+      description: ''
+    }
+    
+    setEditedTemplate({
+      ...editedTemplate,
+      variables: [...editedTemplate.variables, newVariable]
+    })
+  }
+  
+  // 更新变量
+  const updateVariable = (index, field, value) => {
+    if (!editedTemplate) return
+    
+    const updatedVariables = [...editedTemplate.variables]
+    updatedVariables[index] = {
+      ...updatedVariables[index],
+      [field]: value
+    }
+    
+    setEditedTemplate({
+      ...editedTemplate,
+      variables: updatedVariables
+    })
+  }
+  
+  // 删除变量
+  const removeVariable = (index) => {
+    if (!editedTemplate) return
+    
+    const updatedVariables = [...editedTemplate.variables]
+    updatedVariables.splice(index, 1)
+    
+    setEditedTemplate({
+      ...editedTemplate,
+      variables: updatedVariables
+    })
+  }
   // 应用模板
   const handleApplyTemplate = async () => {
     try {
@@ -369,14 +414,13 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
       >
         {editedTemplate && (
           <Form layout="vertical">
-            {/* Template Name and Description Form Items remain the same */}
             <Form.Item
               label={t['content.yaml.templateName'] || '模板名称'}
               required
             >
               <Input
                 value={editedTemplate.name}
-                onChange={e => setEditedTemplate({ ...editedTemplate, name: e.target.value })}
+                onChange={e => setEditedTemplate(prev => ({ ...prev, name: e.target.value }))}
                 placeholder={t['content.yaml.templateNamePlaceholder'] || '请输入模板名称'}
               />
             </Form.Item>
@@ -385,7 +429,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
             >
               <Input.TextArea
                 value={editedTemplate.description}
-                onChange={e => setEditedTemplate({ ...editedTemplate, description: e.target.value })}
+                onChange={e => setEditedTemplate(prev => ({ ...prev, description: e.target.value }))}
                 placeholder={t['content.yaml.templateDescriptionPlaceholder'] || '请输入模板描述'}
                 rows={3}
               />
@@ -434,7 +478,7 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
                     try {
                       // 尝试解析 YAML 以确保其有效性，但仅在编辑时更新字符串状态
                       yaml.load(value)
-                      setEditedTemplate({ ...editedTemplate, structure: value })
+                      setEditedTemplate(prev => ({ ...prev, structure: value }))
                     } catch (e) {
                       // 如果 YAML 无效，仍然更新编辑器的内容，但不改变状态中的 structure
                       // 或者可以添加一个错误提示
@@ -449,94 +493,82 @@ const TemplateManager: React.FC<TemplateManagerProps> = ({
 
             <Divider>{t['content.yaml.templateVariables'] || '模板变量'}</Divider>
             {/* Form.List for variables remains the same */}
-            <Form.List
-              name="variables"
-              initialValue={editedTemplate.variables}
-            >
-              {(fields, { add, remove }, { errors }) => (
-                <>
-                  {fields.map((field, index) => ( // 使用 index
-                    <Row key={field.key} gutter={16} style={{ alignItems: 'flex-start' }}>
-                      <Col xs={24} sm={6}>
-                        <Form.Item
-                          {...field}
-                          label={t['content.yaml.variableName'] || '变量名'}
-                          name={[field.name, 'name']}
-                          fieldKey={[field.fieldKey, 'name']} // 添加 fieldKey
-                          rules={[{ required: true, message: '请输入变量名' }]}
-                        >
-                          <Input
-                            placeholder="title"
-                          // 移除 value 和 onChange，让 Form.List 控制
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} sm={6}>
-                        <Form.Item
-                          {...field}
-                          label={t['content.yaml.variableType'] || '类型'}
-                          name={[field.name, 'type']}
-                          fieldKey={[field.fieldKey, 'type']} // 添加 fieldKey
-                          initialValue="string" // 设置默认值
-                        >
-                          <Select
-                          // 移除 value 和 onChange
-                          >
-                            <Option value="string">字符串</Option>
-                            <Option value="number">数字</Option>
-                            <Option value="boolean">布尔值</Option>
-                            <Option value="array">数组</Option>
-                            <Option value="object">对象</Option>
-                          </Select>
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} sm={6}>
-                        <Form.Item
-                          {...field}
-                          label={t['content.yaml.variableDefault'] || '默认值'}
-                          name={[field.name, 'default']}
-                          fieldKey={[field.fieldKey, 'default']} // 添加 fieldKey
-                        >
-                          <Input
-                            placeholder="默认值"
-                          // 移除 value 和 onChange
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} sm={5}>
-                        <Form.Item
-                          {...field}
-                          label={t['content.yaml.variableDescription'] || '描述'}
-                          name={[field.name, 'description']}
-                          fieldKey={[field.fieldKey, 'description']} // 添加 fieldKey
-                        >
-                          <Input
-                            placeholder="变量描述"
-                          // 移除 value 和 onChange
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} sm={1} style={{ display: 'flex', alignItems: 'center', height: '32px', marginTop: '30px' }}>
-                        <DeleteOutlined
-                          onClick={() => remove(field.name)} // 使用 Form.List 提供的 remove
-                        />
-                      </Col>
-                    </Row>
-                  ))}
-                  <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => add({ name: '', type: 'string', default: '', description: '' })} // 使用 Form.List 提供的 add
-                      block
-                      icon={<PlusOutlined />}
-                    >
-                      {t['content.yaml.addVariable'] || '添加变量'}
-                    </Button>
-                    <Form.ErrorList errors={errors} />
-                  </Form.Item>
-                </>
-              )}
-            </Form.List>
+            {editedTemplate.variables.map((variable, index) => (
+            <Row key={index} gutter={[16, 16]} align="middle" style={{ marginBottom: 16 }}>
+              <Col span={5}>
+                <Form.Item
+                  label={t['content.yaml.variableName'] || '变量名'}
+                  required
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input
+                    value={variable.name}
+                    onChange={(e) => updateVariable(index, 'name', e.target.value)}
+                    placeholder="title"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={4}>
+                <Form.Item
+                  label={t['content.yaml.variableType'] || '类型'}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Select
+                    value={variable.type}
+                    onChange={(value) => updateVariable(index, 'type', value)}
+                    style={{ width: '100%' }}
+                  >
+                    <Option value="string">string</Option>
+                    <Option value="number">number</Option>
+                    <Option value="boolean">boolean</Option>
+                    <Option value="array">array</Option>
+                    <Option value="object">object</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={6}>
+                <Form.Item
+                  label={t['content.yaml.variableDefault'] || '默认值'}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input
+                    value={variable.default}
+                    onChange={(e) => updateVariable(index, 'default', e.target.value)}
+                    placeholder="默认值"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={7}>
+                <Form.Item
+                  label={t['content.yaml.variableDescription'] || '描述'}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input
+                    value={variable.description}
+                    onChange={(e) => updateVariable(index, 'description', e.target.value)}
+                    placeholder={t['content.yaml.variableDescription']}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={2} style={{ display: 'flex', alignItems: 'flex-space-between', height: '100%' }}>
+                <Button
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => removeVariable(index)}
+                  style={{ marginTop: 30 }}
+                />
+              </Col>
+            </Row>
+          ))}
+           <Button
+            type="dashed"
+            onClick={addVariable}
+            style={{ width: '100%', marginTop: 16 }}
+            icon={<PlusOutlined />}
+          >
+            {t['content.yaml.addVariable'] || '添加变量'}
+          </Button>
           </Form>
         )}
       </Modal>

@@ -1,9 +1,9 @@
 import React, { useContext, useRef, useState, useEffect } from "react"
 import _ from 'lodash'
 import styles from './style/index.module.less'
-import Logo from '@/assets/logo.svg'
+import Logo from '@/assets/logo3.svg'
 import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Tag, message, notification } from "antd"
-import { DownOutlined, EditOutlined, MenuOutlined, MoonOutlined, PoweroffOutlined, SearchOutlined, SunFilled } from "@ant-design/icons"
+import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled, UserOutlined } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
 import IconLangLight from "@/assets/langLight.svg"
 import useLocale from "@/hooks/useLocale"
@@ -18,6 +18,7 @@ import cs from 'classnames'
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import useRoute from "@/routes"
 import { base64Encode } from "@/utils/encodeUtils"
+import SettingIcon from '../../assets/setting.svg'
 
 type NavbarProps = {
     style?: React.CSSProperties; // 增加style属性
@@ -110,7 +111,11 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
 
     const handleLogout: MenuProps['onClick'] = ({ key }) => {
         if (key === '1') {
+            // 清除登录状态
             setUserStatus('logout')
+            // 清除token
+            localStorage.removeItem('hexoProToken')
+            // 跳转到登录页面
             window.location.href = '/pro/login'
         }
     }
@@ -148,7 +153,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         const exists = await checkTitleExists(title)
         if (exists) {
             // 如果存在，自动添加时间戳后缀
-            const uniqueTitle = `${title} (${Date.now()})`
+            const uniqueTitle = `${title}${Date.now()}`
             message.info('已存在同名文章，已自动添加区分字符')
             
             service.post('/hexopro/api/posts/new', { title: uniqueTitle }).then((res) => {
@@ -194,7 +199,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             const exists = await checkPageTitleExists(title)
             if (exists) {
                 // 如果存在，自动添加时间戳后缀
-                const uniqueTitle = `${title} (${Date.now()})`
+                const uniqueTitle = `${title}${Date.now()}`
                 message.info(locale['navbar.page.exists'] || '已存在同名页面，已自动添加区分字符')
                 
                 const res = await service.post('/hexopro/api/pages/new', { title: uniqueTitle })
@@ -265,9 +270,9 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
 
     const onClickSerchitem = (item) => {
         if (!item.isPage) {
-            navigate(`/post/${item.id}`)
+            navigate(`/post/${base64Encode(item.permalink)}`)
         } else {
-            navigate(`/page/${item.id}`)
+            navigate(`/page/${base64Encode(item.permalink)}`)
         }
     }
 
@@ -293,24 +298,27 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             {/* 左侧 */}
             <div className={styles.left}>
                 <div className={styles.logo}>
-                    <Logo />
-                    <div className={styles['logo-name']}>Hexo Pro</div>
+                    <Logo  />
+                    <div className={styles['logo-name']}>
+                        <span style={{fontWeight: 'bold'}}>Hexo</span> Pro
+                    </div>
                 </div>
             </div>
             {/* 右侧 */}
             <ul className={styles.right}>
-                {isMobile && (
+                {isMobile ? (
                     <li>
-                        <Button
-                            type="default"
-                            shape="circle"
-                            icon={<MenuOutlined />}
-                            onClick={() => setDrawerVisible(true)}
-                            className={`${styles.customButtonHover} ${styles[theme]}`}
-                        />
+                    <Button
+                        type="default"
+                        shape="circle"
+                        icon={<MenuOutlined />}
+                        onClick={() => setDrawerVisible(true)}
+                        className={`${styles.customButtonHover} ${styles[theme]}`}
+                    />
                     </li>
-                )}
-                <li>
+                ) : (
+                    <>
+                         <li>
                     <Button type="default" shape="circle" icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} />
                 </li>
                 <li>
@@ -331,10 +339,15 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 {
                     userInfo && <li>
                         <Dropdown menu={{ items: settingDropList, onClick: handleLogout }}>
-                            <Avatar size={32} style={{ cursor: "pointer" }} className={`${styles.customAvatar} ${styles[theme]}`} src={userInfo.avatar} />
+                            <Avatar size={32} style={{ cursor: "pointer" }} className={`${styles.customAvatar} ${styles[theme]}`} src={userInfo.avatar}  icon={<UserOutlined />}/>
                         </Dropdown>
                     </li>
                 }
+                    </>
+                )
+            
+            }
+               
             </ul>
             <Modal
                 open={open}
@@ -397,6 +410,35 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 width={220}
                 className={`${styles.mobileMenuDrawer} ${styles[theme]}`}
             >
+                {/* Drawer 内部展示所有操作项 */}
+                <div className={styles.mobileMenuActions}>
+                    <Button block icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                        {locale['navbar.search']}
+                    </Button>
+                    <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
+                        <Button block icon={theme === 'dark' ? <IconLangLight /> : <IconLang />} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                            {locale['navbar.lang']}
+                        </Button>
+                    </Dropdown>
+                    <Button block icon={theme === 'dark' ? <SunFilled /> : <MoonOutlined />} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}
+                        onClick={theme === 'light' ? () => setTheme('dark') : () => setTheme('light')}
+                    >
+                        {theme === 'light' ? locale['navbar.theme.dark'] : locale['navbar.theme.light']}
+                    </Button>
+                    <Dropdown menu={{ items: writeDropList, onClick: handleCreateBlog }}>
+                        <Button block type="primary" className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                            {locale['navbar.create']}
+                        </Button>
+                    </Dropdown>
+                    {
+                        userInfo &&
+                        <Dropdown menu={{ items: settingDropList, onClick: handleLogout }}>
+                            <Button block icon={<UserOutlined />} className={`${styles.customButtonHover} ${styles[theme]}`}>
+                                {locale['navbar.logout']}
+                            </Button>
+                        </Dropdown>
+                    }
+                </div>
                 <MenuItems />
             </Drawer>
         </div>
@@ -484,10 +526,27 @@ const getFlatternRoute = (routes) => {
     return res
 }
 
-const getIconFromKey = (key: string) => {
+function getIconFromKey(key: string) {
     switch (key) {
-        case 'posts': return <EditOutlined />
-        default: return <div className={styles['icon-empty']}></div>
+        case 'posts':
+            return <EditOutlined />
+        case 'dashboard':
+            return <HomeOutlined />
+        case 'content_management':
+            return <AppstoreOutlined />
+        case 'system':
+            return <SettingOutlined />
+        case 'deploy':
+            return <CloudUploadOutlined />
+        case 'content/pages':
+            return <FileTextOutlined />
+        case 'content/images':
+            return <PictureOutlined />
+        case 'content/yaml':
+                return <CodeOutlined />
+        case 'settings': 
+                return <SettingIcon />
+        default:
+            return <div className={styles['icon-empty']}></div>
     }
 }
-

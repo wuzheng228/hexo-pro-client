@@ -7,9 +7,8 @@
 }
 
 .dashboardCard {
-  margin-bottom: 16px;
+  height: 100%;  
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  
   :global(.ant-card-head) {
     border-bottom: 1px solid #f0f0f0;
   }
@@ -19,10 +18,13 @@
   }
 }
 
-// 欢迎卡片样式
+// 优化欢迎卡片
 .welcomeCard {
   background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
   color: white;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
   
   :global(.ant-card-body) {
     padding: 24px;
@@ -30,6 +32,7 @@
   
   :global(.ant-typography) {
     color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -65,9 +68,22 @@
 }
 
 // 核心指标卡片样式
-.metricsRow {
-  margin-bottom: 8px;
+.metricsGroupCard {
+  margin-bottom: 14px; // 增加底部边距，使其与 trendsRow 上方间距一致
 }
+
+// .trendsRow {
+//   // margin-bottom: 14px;
+//   width: 100%;
+//   height: 327px;
+//   margin-top: 0; // 去掉顶部边距，保证与上方卡片间距一致
+//   @media (max-width: 768px) {
+//     height: auto; // 移动端不固定高度，防止内容重叠
+    
+//     flex-direction: column;
+//     display: block;
+//   }
+// }
 
 .metricCard {
   height: 100%;
@@ -97,9 +113,31 @@
   }
 }
 
-// 趋势图表样式
-.trendsRow {
-  margin-bottom: 8px;
+// 优化饼图容器
+.pieChartContainer {
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  
+  .pieTitle {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: #1890ff;
+    display: flex;
+    align-items: center;
+    
+    svg {
+      margin-right: 8px;
+    }
+  }
+  
+  .pieWrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .calendarContainer {
@@ -116,6 +154,13 @@
   
   @media (max-width: 768px) {
     height: 200px; // 移动端高度
+  }
+
+  > * {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0;
+    min-height: 0;
   }
 }
 
@@ -136,154 +181,416 @@
   color: #1890ff;
 }
 
-// 系统信息区域样式
+// 优化系统信息区域样式
 .systemRow {
+  margin-bottom: 16px;
+}
+
+// 系统信息卡片样式优化
+.systemInfoCard {
+  height: 100%;
+  
+  :global(.ant-list-item) {
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  
+  :global(.ant-list-item-meta-title) {
+    margin-bottom: 0;
+  }
+}
+
+// 插件状态卡片样式优化
+.pluginsCard {
+  height: 100%;
+  
+  :global(.ant-card-body) {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .pluginsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 8px;
+    
+    .pluginsCount {
+      font-size: 13px;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+  
+  .pluginsList {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 180px;
+    padding-right: 4px;
+    
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    
+    :global(.ant-list-item) {
+      padding: 8px 0;
+      display: flex;
+      align-items: center;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+  
+  .pluginName {
+    flex: 1;
+    margin-left: 8px;
+    font-size: 14px;
+  }
+  
+  .pluginVersion {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.45);
+    margin-left: 8px;
+  }
+  
+  .pluginStatus {
+    margin-left: auto;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background-color: #f6ffed;
+    color: #52c41a;
+    
+    &.disabled {
+      background-color: #f5f5f5;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+}
+
+// 构建记录卡片样式优化
+.buildCard {
+  height: 100%;
+  
+  :global(.ant-card-body) {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .buildHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 8px;
+    
+    .buildCount {
+      font-size: 13px;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+  
+  .buildTimeline {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 180px;
+    padding-right: 4px;
+    
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+  }
+  
+  :global(.ant-timeline-item) {
+    padding-bottom: 12px;
+    
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+  
+  :global(.ant-timeline-item-content) {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .buildItemTitle {
+    font-weight: 500;
+    font-size: 14px;
+  }
+  
+  .buildItemTime {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.45);
+    margin-top: 2px;
+  }
+  
+  .buildItemStatus {
+    font-size: 12px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background-color: #f6ffed;
+    color: #52c41a;
+    margin-left: 8px;
+    
+    &.failed {
+      background-color: #fff2f0;
+      color: #ff4d4f;
+    }
+  }
+}
+
+// 新增/优化核心指标卡片区域样式
+.metricCardNew {
+  background: linear-gradient(135deg, #f8fafc 0%, #e6f7ff 100%);
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(24, 144, 255, 0.08);
+  padding: 24px 12px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.3s, transform 0.3s;
+  min-height: 120px;
+  position: relative;
+
+  &:hover {
+    box-shadow: 0 6px 24px rgba(24, 144, 255, 0.18);
+    transform: translateY(-4px) scale(1.03);
+  }
+
+  &.darkMode {
+    background: linear-gradient(135deg, #23272f 0%, #1a2233 100%);
+    box-shadow: 0 2px 12px rgba(24, 144, 255, 0.12);
+  }
+}
+
+.metricIconBadge {
+  font-size: 32px;
+  color: #1890ff;
   margin-bottom: 8px;
+  transition: color 0.3s;
+  display: block;
+
+  .darkMode & {
+    color: #40a9ff;
+  }
 }
 
-// 暗色主题适配
-:global(.dark) {
-  .dashboardCard {
-    background-color: #1f1f1f;
-    border-color: #303030;
-    
-    :global(.ant-card-head) {
-      border-bottom-color: #303030;
+.metricStatisticNew {
+  :global(.ant-statistic-title) {
+    font-size: 15px;
+    color: #888;
+    margin-bottom: 6px;
+    text-align: center;
+    letter-spacing: 1px;
+    .darkMode & {
+      color: #bbb;
     }
   }
-  
-  .welcomeCard {
-    background: linear-gradient(135deg, #096dd9 0%, #08979c 100%);
-  }
-  
-  .categoryTag, .tagItem {
-    border-color: #303030;
+  :global(.ant-statistic-content) {
+    font-size: 32px;
+    font-weight: 700;
+    color: #222;
+    text-align: center;
+    .darkMode & {
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(24,144,255,0.12);
+    }
   }
 }
 
-// 移动端适配
+// 响应式优化
 @media (max-width: 768px) {
-  .dashboardCard {
-    :global(.ant-card-head-title) {
-      font-size: 16px;
-    }
-    
-    :global(.ant-card-body) {
-      padding: 12px;
-    }
+  .metricCardNew {
+    padding: 16px 6px 12px 6px;
+    min-height: 90px;
   }
-  
-  .welcomeInfo {
-    h3 {
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-    
-    p {
-      margin-bottom: 8px;
-    }
+  .metricIconBadge {
+    font-size: 26px;
+    margin-bottom: 4px;
   }
-  
-  .metricStatistic {
+  .metricStatisticNew {
     :global(.ant-statistic-title) {
-      font-size: 14px;
+      font-size: 13px;
     }
-    
     :global(.ant-statistic-content) {
       font-size: 22px;
     }
   }
-  
-  .chartContainer {
-    height: 180px;
-  }
 }
 
-.categoriesContainer, .tagsContainer {
+// 待办事项区域样式优化
+.rightColumn {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px; // 新增：让右侧所有卡片有间隙
 }
 
-.categoryTag, .tagItem {
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
+// 待办事项卡片样式
+// ... existing code ...
+.todoCard {
+  // margin-bottom: 16px;
+  flex-shrink: 0;
+  max-height: 327px;
   
-  &:hover {
-    transform: scale(1.05);
+  :global(.ant-card-head) {
+    border-bottom: 1px solid #f0f0f0;
+    background: linear-gradient(90deg, #e6f7ff 0%, #f8fafc 100%);
+    border-radius: 10px 10px 0 0;
   }
-}
+  
+  :global(.ant-card-body) {
+    padding: 18px 12px 12px 12px !important;
+    background: #fcfeff;
+    border-radius: 0 0 10px 10px;
+    max-height: 270px !important;
+    overflow-y: auto !important;
+  }
+  :global(.ant-card-body)::-webkit-scrollbar {
+    display: none;
+  }
 
-.tagItem {
-  font-size: 12px;
-  padding: 0 8px;
-  
-  &:nth-child(3n+1) {
-    font-size: 14px;
-  }
-  
-  &:nth-child(5n+1) {
-    font-size: 16px;
-  }
-}
-
-.calendarContainer {
-  margin-bottom: 16px;
-  
-  :global(.ant-picker-calendar-date-content) {
-    height: 20px;
-  }
-}
-
-// 暗色主题适配
-:global(.dark) {
-  .dashboardCard {
-    background-color: #1f1f1f;
-    border-color: #303030;
-    
+  &.darkMode {
     :global(.ant-card-head) {
-      border-bottom-color: #303030;
+      border-bottom: 1px solid #23272f;
+      background: linear-gradient(90deg, #23272f 0%, #1a2233 100%);
+    }
+    :global(.ant-card-body) {
+      background: #181c24;
+      color: #eee;
     }
   }
-  
-  .categoryTag, .tagItem {
-    border-color: #303030;
+}
+// ... existing code ...
+// 最近文章卡片样式（假设类名为 recentPostsCard，可根据实际组件类名调整）
+.recentArticlesCard {
+  max-height: 327px; // 新增：限制最大高度
+  :global(.ant-card-body) {
+    overflow-y: auto;  // 新增：内容超出时滚动
   }
+  :global(.ant-card-body)::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.recentArticlesCard::-webkit-scrollbar {
+  display: none;
+}
+
+// 热门标签词云下方空白优化（假设类名为 tagWordCloudContainer，可根据实际组件类名调整）
+.tagWordCloudContainer {
+  margin-bottom: 0; // 新增：去除多余底部间距
+}
+
+.todoInputWrapper {
+  margin-bottom: 14px;
+  .ant-input {
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    transition: border-color 0.2s;
+    &:focus, &:hover {
+      border-color: #1890ff;
+      box-shadow: 0 0 0 2px rgba(24,144,255,0.08);
+    }
+  }
+}
+
+.todoItem {
+  display: flex !important;
+  align-items: center;
+  padding: 8px 0 !important;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.2s;
+  &:last-child {
+    border-bottom: none;
+  }
+  &:hover {
+    background: #f4faff;
+    .todoDeleteBtn {
+      opacity: 1;
+    }
+  }
+}
+
+.todoCheckbox {
+  margin-right: 10px;
+  .ant-checkbox-inner {
+    border-radius: 4px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.todoContent {
+  flex: 1;
+  font-size: 15px;
+  color: #222;
+  transition: color 0.2s;
+  &.completed {
+    color: #bfbfbf;
+    text-decoration: line-through;
+  }
+}
+
+.todoTime {
+  font-size: 13px;
+  color: #aaa;
+  margin-left: 18px;
+  min-width: 80px;
+  text-align: right;
+}
+
+.todoDeleteBtn {
+  margin-left: 10px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  &:hover {
+    opacity: 1;
+    color: #ff4d4f !important;
+  }
+}
+
+// 已完成待办的背景色
+.todoItem .ant-checkbox-checked + .todoContent,
+.todoItem .todoContent[style*="line-through"] {
+  color: #bfbfbf !important;
 }
 
 // 移动端适配
 @media (max-width: 768px) {
-  .dashboardCard {
-    :global(.ant-card-head-title) {
-      font-size: 16px;
-    }
-    
-    :global(.ant-card-body) {
-      padding: 12px;
-    }
+  .todoCard .ant-card-body {
+    padding: 12px 4px 8px 4px;
   }
-  
-  .welcomeMessage {
-    h4 {
-      font-size: 18px;
-    }
+  .todoInputWrapper {
+    margin-bottom: 10px;
   }
-  
-  .categoriesContainer, .tagsContainer {
-    gap: 6px;
+  .todoContent {
+    font-size: 13px;
   }
-  
-  .tagItem {
-    font-size: 11px;
-    
-    &:nth-child(3n+1) {
-      font-size: 12px;
-    }
-    
-    &:nth-child(5n+1) {
-      font-size: 13px;
-    }
+  .todoTime {
+    font-size: 12px;
+    min-width: 60px;
   }
 }

@@ -25,7 +25,7 @@ function Post() {
     const postRef = useRef(null)
     const editorWapperRef = useRef(null)
     const { _id } = useParams()
-    const [post, setPost] = useState({ isDraft: true, source: null })
+    const [post, setPost] = useState({ isDraft: true, source: null, permalink: null, title: null })
     const [tagsCatMeta, setTagsCatMeta] = useState({})
     const [postMetaData, setPostMetadata] = useState({ tags: [], categories: [], frontMatter: {} })
     const [doc, setDoc] = useState('')
@@ -132,7 +132,7 @@ function Post() {
         // console.log('update', update)
         // var now = moment()
         const promise = new Promise((resolve, reject) => {
-            service.post('/hexopro/api/posts/' + _id, update).then((res) => {
+            service.post('/hexopro/api/post/update/' + _id, update).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -155,52 +155,77 @@ function Post() {
 
     // 修改标题处理函数
     const handleChangeTitle = async (v) => {
+
         // 直接更新标题状态，不立即检查重复
         setTitle(v)
-
         // 如果标题没有变化，直接返回
         if (v === title) {
             return
         }
 
-        // 使用防抖函数延迟更新文件名和检查重复
+         // 检查是否存在同名文章
+        const exists = await checkTitleExists(v)
+
+         if (exists) {
+             // 提示用户但不阻止输入
+             message.warning('已存在同名文章，保存时将自动添加区分字符')
+              // 如果重复，自动添加时间戳后缀
+              const uniqueTitle = `${v} (${Date.now()})`
+              setTitle(uniqueTitle)
+  
+              // 更新文件名
+              const parts = post.source.split('/')
+              parts[parts.length - 1] = uniqueTitle + '.md'
+              const newSource = parts.join('/')
+              postRef.current({ title: uniqueTitle, source: newSource })
+              setPost({...post, title: uniqueTitle })
+              return
+         }
+
+         // 无论是否重复，都更新文件名
+         const parts = post.source.split('/')
+         parts[parts.length - 1] = v + '.md'
+         const newSource = parts.join('/')
+         postRef.current({ title: v, source: newSource })
+    }
+
+    // 添加标题失去焦点时的处理函数
+    const handleTitleBlur = async (v) => {
+
+        // 如果标题没有变化，直接返回
+        console.log('handleTitleBlur', title, post.title, v.target.value)
+        if (title === post.title) {
+            return
+        }
+
         const debouncedUpdate = _.debounce(async (newTitle) => {
             // 检查是否存在同名文章
             const exists = await checkTitleExists(newTitle)
 
             if (exists) {
-                // 提示用户但不阻止输入
-                message.warning('已存在同名文章，保存时将自动添加区分字符')
+                // 如果重复，自动添加时间戳后缀
+                const uniqueTitle = `${title} (${Date.now()})`
+                setTitle(uniqueTitle)
+    
+                // 更新文件名
+                const parts = post.source.split('/')
+                parts[parts.length - 1] = uniqueTitle + '.md'
+                const newSource = parts.join('/')
+                postRef.current({ title: uniqueTitle, source: newSource })
+    
+                message.info('已自动为重复标题添加区分字符')
+                setPost({...post, title: uniqueTitle })
             }
 
             // 无论是否重复，都更新文件名
             const parts = post.source.split('/')
             parts[parts.length - 1] = newTitle + '.md'
             const newSource = parts.join('/')
+            console.log('handleTitleBlur111', newTitle, newSource)
             postRef.current({ title: newTitle, source: newSource })
-        }, 800) // 800ms 的延迟
+        }, 100) // 800ms 的延迟
 
-        debouncedUpdate(v)
-    }
-
-    // 添加标题失去焦点时的处理函数
-    const handleTitleBlur = async () => {
-        // 检查标题是否重复
-        const exists = await checkTitleExists(title)
-
-        if (exists) {
-            // 如果重复，自动添加时间戳后缀
-            const uniqueTitle = `${title} (${Date.now()})`
-            setTitle(uniqueTitle)
-
-            // 更新文件名
-            const parts = post.source.split('/')
-            parts[parts.length - 1] = uniqueTitle + '.md'
-            const newSource = parts.join('/')
-            postRef.current({ title: uniqueTitle, source: newSource })
-
-            message.info('已自动为重复标题添加区分字符')
-        }
+        debouncedUpdate(v.target.value)
     }
 
     const handleChangeContent = (text) => {
@@ -274,7 +299,7 @@ function Post() {
     const handleUpdate = (update) => {
         // console.log(update)
         return new Promise((resolve, reject) => {
-            service.post('/hexopro/api/posts/' + _id, update).then((res) => {
+            service.post('/hexopro/api/post/update/' + _id, update).then((res) => {
                 resolve(res.data)
             }).catch(err => {
                 reject(err)
@@ -358,6 +383,7 @@ function Post() {
                     <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
                     <EditorHeader
                         isPage={false}
+                        permalink={post.permalink}
                         isDraft={post.isDraft}
                         handlePublish={publish}
                         handleUnpublish={unpublish}

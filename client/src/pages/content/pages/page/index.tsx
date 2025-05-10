@@ -26,7 +26,7 @@ function Page() {
     const postRef = useRef(null)
     const editorWapperRef = useRef(null)
     const { _id } = useParams()
-    const [page, setPage] = useState({ isDraft: true, source: null })
+    const [page, setPage] = useState({ isDraft: true, source: null, permalink: null })
     const [pageMetaData, setPageMetadata] = useState({ tags: [], categories: [], frontMatter: {}, source: '' })
     const [fmtKeys, setFmtKeys] = useState([])
     const [doc, setDoc] = useState('')
@@ -213,6 +213,7 @@ function Page() {
             <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
             <EditorHeader
                 isPage={true}
+                permalink={page.permalink}
                 isDraft={false}
                 handlePublish={() => { }}
                 handleUnpublish={() => { }}

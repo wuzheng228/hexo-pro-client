@@ -11,84 +11,79 @@ const DeployPage: React.FC = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [deployLoading, setDeployLoading] = useState(false)
+  const t = useLocale()
   const [deployStatus, setDeployStatus] = useState({
     isDeploying: false,
     progress: 0,
     stage: 'idle',
-    lastDeployTime: '未知',
+    lastDeployTime: t['deploy.status.unknownTime'],
     logs: [],
     hasDeployGit: false,
     error: null
   })
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
-  const t = useLocale()
 
-  // 获取部署配置
   const fetchDeployConfig = async () => {
     try {
       setLoading(true)
       const res = await service.get('/hexopro/api/deploy/config')
       form.setFieldsValue(res.data)
-      
-      // 获取部署状态
       await fetchDeployStatus()
     } catch (error) {
-      message.error('获取部署配置失败')
+      message.error(t['deploy.config.fetchFailed'])
       console.error(error)
     } finally {
       setLoading(false)
     }
   }
 
-  // 获取部署状态
   const fetchDeployStatus = async () => {
     try {
       const statusRes = await service.get('/hexopro/api/deploy/status')
+      
+      statusRes.data.logs = statusRes.data.logs.map((item)=>t[item] || item)
+      // console.log(statusRes.data)
       setDeployStatus(statusRes.data)
       return statusRes.data
     } catch (error) {
-      console.error('获取部署状态失败', error)
+      message.error(t['deploy.status.fetchFailed'])
+      console.error(error)
       return null
     }
   }
 
-  // 保存配置
   const saveConfig = async (values) => {
     try {
       setLoading(true)
       const res = await service.post('/hexopro/api/deploy/save-config', values)
-      message.success('配置保存成功，_config.yml 已自动更新')
+      message.success(t['deploy.config.saveSuccess'])
       form.setFieldsValue(res.data)
     } catch (error) {
-      message.error('保存配置失败')
+      message.error(t['deploy.config.saveFailed'])
       console.error(error)
     } finally {
       setLoading(false)
     }
   }
 
-  // 执行部署
   const executeDeploy = async () => {
     try {
       setDeployLoading(true)
       const res = await service.post('/hexopro/api/deploy/execute')
-      
       if (res.data.isDeploying) {
-        message.success('部署已开始，请等待完成')
-        // 开始轮询部署状态
+        message.success(t['deploy.status.deploySuccess'])
         startPolling()
       } else {
-        message.success('部署成功')
+        message.success(t['deploy.status.deployCompleted'])
       }
     } catch (error) {
-      message.error('部署失败: ' + (error.response?.data || error.message))
+      message.error(t['deploy.status.deployFailed'] + (error.response?.data || error.message))
       console.error(error)
     } finally {
       setDeployLoading(false)
     }
   }
 
-  // 开始轮询部署状态
   const startPolling = () => {
     // 清除现有的轮询
     if (pollingRef.current) {
@@ -102,9 +97,9 @@ const DeployPage: React.FC = () => {
       // 如果部署完成或失败，停止轮询
       if (status && !status.isDeploying) {
         if (status.error) {
-          message.error(`部署失败: ${status.error}`)
+          message.error(t['deploy.status.deployFailed'] + status.error)
         } else if (status.stage === 'completed') {
-          message.success('部署成功完成！')
+          message.success(t['deploy.status.completedMessage'])
         }
         
         stopPolling()
@@ -112,7 +107,6 @@ const DeployPage: React.FC = () => {
     }, 3000) // 每3秒轮询一次
   }
 
-  // 停止轮询
   const stopPolling = () => {
     if (pollingRef.current) {
       clearInterval(pollingRef.current)
@@ -120,21 +114,19 @@ const DeployPage: React.FC = () => {
     }
   }
 
-  // 获取部署阶段的显示文本
   const getStageText = (stage) => {
     const stageMap = {
-      'idle': '空闲',
-      'started': '已开始',
-      'cleaning': '清理中',
-      'generating': '生成静态文件',
-      'deploying': '部署到 GitHub',
-      'completed': '已完成',
-      'failed': '失败'
+      'idle': t['deploy.status.idle'],
+      'started': t['deploy.status.started'],
+      'cleaning': t['deploy.status.cleaning'],
+      'generating': t['deploy.status.generating'],
+      'deploying': t['deploy.status.deployingStage'],
+      'completed': t['deploy.status.completed'],
+      'failed': t['deploy.status.failed']
     }
     return stageMap[stage] || stage
   }
 
-  // 获取部署阶段的图标
   const getStageIcon = (stage) => {
     if (deployStatus.isDeploying) {
       return <LoadingOutlined style={{ color: '#1890ff' }} />
@@ -167,15 +159,14 @@ const DeployPage: React.FC = () => {
     }
   }, [])
 
-  // 重置部署状态
   const resetDeployStatus = async () => {
     try {
       setLoading(true)
       await service.post('/hexopro/api/deploy/reset-status')
-      message.success('部署状态已重置')
+      message.success(t['deploy.status.resetSuccess'])
       await fetchDeployStatus()
     } catch (error) {
-      message.error('重置部署状态失败')
+      message.error(t['deploy.status.resetFailed'])
       console.error(error)
     } finally {
       setLoading(false)
@@ -190,7 +181,7 @@ const DeployPage: React.FC = () => {
             title={
               <Space>
                 <GithubOutlined />
-                <span>GitHub 部署配置</span>
+                <span>{t['deploy.config.title']}</span>
               </Space>
             }
             extra={
@@ -200,7 +191,7 @@ const DeployPage: React.FC = () => {
                 onClick={() => form.submit()}
                 loading={loading}
               >
-                保存配置
+                {t['deploy.config.save']}
               </Button>
             }
           >
@@ -217,41 +208,41 @@ const DeployPage: React.FC = () => {
                 }}
               >
                 <Form.Item
-                  label="GitHub 仓库地址"
+                  label={t['deploy.config.repository']}
                   name="repository"
-                  rules={[{ required: true, message: '请输入 GitHub 仓库地址' }]}
-                  tooltip="格式: username/repository"
+                  rules={[{ required: true, message: t['deploy.config.repository'] + t['settings.usernameRequired'] }]}
+                  tooltip={t['deploy.config.repositoryTooltip']}
                 >
-                  <Input placeholder="例如: username/blog" prefix={<GithubOutlined />} />
+                  <Input placeholder={t['deploy.config.repositoryPlaceholder']} prefix={<GithubOutlined />} />
                 </Form.Item>
 
                 <Form.Item
-                  label="分支"
+                  label={t['deploy.config.branch']}
                   name="branch"
-                  rules={[{ required: true, message: '请输入分支名称' }]}
+                  rules={[{ required: true, message: t['deploy.config.branch'] + t['settings.usernameRequired'] }]}
                 >
-                  <Input placeholder="例如: main, master, gh-pages" />
+                  <Input placeholder={t['deploy.config.branchPlaceholder']} />
                 </Form.Item>
 
                 <Form.Item
-                  label="提交信息"
+                  label={t['deploy.config.message']}
                   name="message"
-                  rules={[{ required: true, message: '请输入提交信息' }]}
+                  rules={[{ required: true, message: t['deploy.config.message'] + t['settings.usernameRequired'] }]}
                 >
-                  <Input placeholder="提交信息模板" />
+                  <Input placeholder={t['deploy.config.messagePlaceholder']} />
                 </Form.Item>
 
                 <Form.Item
-                  label="GitHub Token (可选)"
+                  label={t['deploy.config.token']}
                   name="token"
-                  tooltip="用于私有仓库或需要认证的操作，请妥善保管"
+                  tooltip={t['deploy.config.tokenTooltip']}
                 >
-                  <Input.Password placeholder="如果需要认证，请输入 GitHub Token" />
+                  <Input.Password placeholder={t['deploy.config.tokenPlaceholder']} />
                 </Form.Item>
 
                 <Alert
-                  message="提示"
-                  description="保存配置后，系统将自动更新 _config.yml 文件中的部署配置，无需手动修改。"
+                  message={t['deploy.config.alertTitle']}
+                  description={t['deploy.config.alertDesc']}
                   type="info"
                   showIcon
                   style={{ marginBottom: 16 }}
@@ -266,7 +257,7 @@ const DeployPage: React.FC = () => {
             title={
               <Space>
                 <RocketOutlined />
-                <span>部署操作</span>
+                <span>{t['deploy.action.title']}</span>
               </Space>
             }
             extra={
@@ -276,23 +267,23 @@ const DeployPage: React.FC = () => {
                 onClick={resetDeployStatus}
                 loading={loading}
               >
-                重置状态
+                {t['deploy.action.reset']}
               </Button>
             }
           >
             <Spin spinning={loading}>
               <div className={styles.deployStatus}>
                 <Paragraph>
-                  <Text strong>最近部署时间: </Text> 
+                  <Text strong>{t['deploy.status.lastTime'] + ': '}</Text> 
                   <Text>{deployStatus.lastDeployTime}</Text>
                 </Paragraph>
                 
                 <Paragraph>
-                  <Text strong>部署状态: </Text>
+                  <Text strong>{t['deploy.status.status'] + ': '}</Text>
                   {deployStatus.hasDeployGit ? (
-                    <Text type="success">已初始化</Text>
+                    <Text type="success">{t['deploy.status.inited']}</Text>
                   ) : (
-                    <Text type="warning">未初始化</Text>
+                    <Text type="warning">{t['deploy.status.notInited']}</Text>
                   )}
                 </Paragraph>
 
@@ -301,7 +292,7 @@ const DeployPage: React.FC = () => {
                     <Divider />
                     <div className={styles.deployProgress}>
                       <Paragraph>
-                        <Text strong>当前阶段: </Text>
+                        <Text strong>{t['deploy.status.currentStage'] + ': '}</Text>
                         <Text>{getStageText(deployStatus.stage)}</Text>
                       </Paragraph>
                       <Progress 
@@ -323,7 +314,7 @@ const DeployPage: React.FC = () => {
                   onClick={executeDeploy}
                   disabled={deployStatus.isDeploying}
                 >
-                  {deployStatus.isDeploying ? '部署进行中...' : '执行部署'}
+                  {deployStatus.isDeploying ? t['deploy.status.inProgress'] : t['deploy.status.deploy']}
                 </Button>
               </div>
             </Spin>
@@ -334,17 +325,17 @@ const DeployPage: React.FC = () => {
               title={
                 <Space>
                   <InfoCircleOutlined />
-                  <span>部署日志</span>
+                  <span>{t['deploy.log.title']}</span>
                 </Space>
               }
               style={{ marginTop: 16 }}
             >
               <div className={styles.deployLogs}>
                 <Timeline style={{ padding: '10px 10px', maxHeight: '300px', overflowY: 'auto' }}>
-                  {deployStatus.logs.slice(-10).map((log, index) => (
+                  {deployStatus.logs.map((log, index) => (
                     <Timeline.Item 
                       key={index}
-                      dot={index === deployStatus.logs.slice(-10).length - 1 ? getStageIcon(deployStatus.stage) : null}
+                      dot={index === deployStatus.logs.length - 1 ? getStageIcon(deployStatus.stage) : null}
                     >
                       <Text style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{log}</Text>
                     </Timeline.Item>
@@ -358,24 +349,24 @@ const DeployPage: React.FC = () => {
             title={
               <Space>
                 <InfoCircleOutlined />
-                <span>部署帮助</span>
+                <span>{t['deploy.help.title']}</span>
               </Space>
             }
             style={{ marginTop: 16 }}
           >
             <Typography>
-              <Title level={5}>如何配置 GitHub 部署?</Title>
+              <Title level={5}>{t['deploy.help.how']}</Title>
               <Paragraph>
-                1. 确保已安装 <Text code>hexo-deployer-git</Text> 插件
+                {t['deploy.help.step1']}
               </Paragraph>
               <Paragraph>
-                2. 填写上方表单并保存（系统会自动更新 <Text code>_config.yml</Text>）
+                {t['deploy.help.step2']}
               </Paragraph>
               <Paragraph>
-                3. 点击"执行部署"按钮
+                {t['deploy.help.step3']}
               </Paragraph>
               <Paragraph>
-                <Text type="secondary">注意：如果使用 Token，系统会自动配置带认证的仓库地址</Text>
+                <Text type="secondary">{t['deploy.help.note']}</Text>
               </Paragraph>
             </Typography>
           </Card>

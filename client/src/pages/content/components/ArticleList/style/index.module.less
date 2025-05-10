@@ -1,0 +1,26 @@
+// ... existing code ...
+.card-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.7);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background 0.3s;
+}
+
+.dark .card-action-btn {
+  background: rgba(0,0,0,0.4);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.16);
+}
+
+.card-action-btn :global(.ant-btn) {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.dark .card-action-btn :global(.ant-btn) {
+  color: #fff;
+}
+// ... existing code ...

@@ -1,10 +1,10 @@
 import { Button, Menu, MenuProps, message } from 'antd'
 import Sider from 'antd/es/layout/Sider'
 import Layout, { Content } from 'antd/es/layout/layout'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './style/layout.module.less'
 import useRoute, { IRoute } from './routes'
-import { EditOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuFoldOutlined, MenuUnfoldOutlined, PictureOutlined, SettingOutlined } from '@ant-design/icons'
 import useLocale from './hooks/useLocale'
 import lazyload from './utils/lazyload'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
@@ -12,13 +12,32 @@ import qs from 'query-string'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import useDeviceDetect from './hooks/useDeviceDetect'
-
+import SettingIcon from './assets/setting.svg'
+import SettingIconLight from './assets/settingLight.svg'
+import { GlobalContext } from './context'
 type MenuItem = Required<MenuProps>['items'][number];
 
 function getIconFromKey(key: string) {
+    const {theme} = useContext(GlobalContext)
     switch (key) {
         case 'posts':
             return <EditOutlined />
+        case 'dashboard':
+            return <HomeOutlined />
+        case 'content_management':
+            return <AppstoreOutlined />
+        case 'system':
+            return <SettingOutlined />
+        case 'deploy':
+            return <CloudUploadOutlined />
+        case 'content/pages':
+            return <FileTextOutlined />
+        case 'content/images':
+            return <PictureOutlined />
+        case 'content/yaml':
+                return <CodeOutlined />
+        case 'settings': 
+            return theme == 'dark' ? <SettingIconLight /> : <SettingIcon />
         default:
             return <div className={styles['icon-empty']}></div>
     }
