@@ -59,9 +59,11 @@ function App() {
     }
 
     useEffect(() => {
+        console.log('App mount', window.location.pathname.replace(/\//g, ''))
+        // debugger;
         if (checkLogin()) {
             fetchUserInfo()
-        } else if (window.location.pathname.replace(/\//g, '') !== 'prologin') {
+        } else {
             // 检查是否已跳过设置
             const skipSettings = localStorage.getItem('hexoProSkipSettings') === 'true'
             
@@ -75,13 +77,15 @@ function App() {
             service.get('/hexopro/api/settings/check-first-use')
                 .then(res => {
                     if (res.data.code === 0 && res.data.data.isFirstUse) {
+                        // console.log('首次使用，允许访问')
                         // 首次使用，允许访问设置页面或首页
-                        if (window.location.pathname === '/pro/settings' || window.location.pathname === '/pro/') {
+                        if (window.location.pathname === '/pro/settings' || window.location.pathname === '/pro/login') {
                             // 不做重定向
                             // console.log('首次使用，允许访问：', window.location.pathname)
-                        } else {
+                        } 
+                        else {
                             // 其他页面重定向到首页
-                            window.location.pathname = '/pro'
+                            window.location.pathname = '/pro/login'
                         }
                     } else {
                         // 清除可能存在的过期token
