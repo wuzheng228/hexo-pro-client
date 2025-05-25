@@ -26,6 +26,7 @@ interface HexoProVditorProps {
 // 添加上传结果接口
 interface UploadResult {
     url?: string;
+    path?: string;
     src?: string;
     msg?: string;
     code?: number;
@@ -442,7 +443,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                 setTimeout(() => {
                                     const currentValue = vditor.getValue()
                                     // 对图片 URL 进行编码处理
-                                    const encodedSrc = encodeURI(res.url || res.src)
+                                    const encodedSrc = encodeURI(res.path || res.src)   
                                     if (isEditorFocus) {
                                         vditor.setValue(currentValue + `\n![${filename}](${encodedSrc})`)
                                     } else {
