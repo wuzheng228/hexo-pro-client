@@ -173,6 +173,20 @@ const DeployPage: React.FC = () => {
     }
   }
 
+  const cleanupDeployDir = async () => {
+    try {
+      setLoading(true)
+      const res = await service.post('/hexopro/api/deploy/cleanup')
+      message.success(res.data.message)
+      await fetchDeployStatus()
+    } catch (error) {
+      message.error(t['deploy.cleanup.failed'] || '清理部署目录失败')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className={styles.deployContainer}>
       <Row gutter={[16, 16]}>
@@ -316,6 +330,21 @@ const DeployPage: React.FC = () => {
                 >
                   {deployStatus.isDeploying ? t['deploy.status.inProgress'] : t['deploy.status.deploy']}
                 </Button>
+
+                {deployStatus.hasDeployGit && (
+                  <Button 
+                    type="default" 
+                    danger
+                    size="large" 
+                    block
+                    style={{ marginTop: 8 }}
+                    loading={loading}
+                    onClick={cleanupDeployDir}
+                    disabled={deployStatus.isDeploying}
+                  >
+                    {t['deploy.cleanup.button'] || '清理部署目录'}
+                  </Button>
+                )}
               </div>
             </Spin>
           </Card>

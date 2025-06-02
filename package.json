@@ -7,6 +7,10 @@
     "start": "npm run dev",
     "dev": "yarn cross-env NODE_ENV=development webpack serve --config ./config/webpack.dev.js",
     "build": "cross-env NODE_ENV=production webpack --config ./config/webpack.prod.js",
+    "build:desktop": "yarn build && cd hexo-pro-desktop && yarn copy-core && yarn build:electron",
+    "dev:desktop": "yarn build && cd hexo-pro-desktop && yarn copy-core && yarn dev",
+    "setup:desktop": "cd hexo-pro-desktop && yarn install && yarn copy-core",
+    "cleanup-db": "node scripts/cleanup-db.js",
     "lint": "eslint ./client/src/",
     "eslint": "eslint --fix ./client/src/ --ext .ts,.tsx,.js,.jsx --cache"
   },

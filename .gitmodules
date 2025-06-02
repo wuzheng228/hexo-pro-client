@@ -1,3 +1,7 @@
 [submodule "hexo-pro"]
 	path = hexo-pro
 	url = https://github.com/wuzheng228/hexo-pro
+
+[submodule "hexo-pro-desktop"]
+	path = hexo-pro-desktop
+	url = https://github.com/wuzheng228/hexo-pro-desktop.git

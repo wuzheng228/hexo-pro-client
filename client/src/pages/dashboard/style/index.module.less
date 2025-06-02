@@ -449,7 +449,6 @@
 }
 
 // 待办事项卡片样式
-// ... existing code ...
 .todoCard {
   // margin-bottom: 16px;
   flex-shrink: 0;
@@ -459,6 +458,43 @@
     border-bottom: 1px solid #f0f0f0;
     background: linear-gradient(90deg, #e6f7ff 0%, #f8fafc 100%);
     border-radius: 10px 10px 0 0;
+    
+    // 卡片头部布局优化
+    :global(.ant-card-head-wrapper) {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      
+      @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+    }
+    
+    // 标题区域
+    :global(.ant-card-head-title) {
+      flex: 0 0 auto;
+      margin-right: 16px;
+      
+      @media (max-width: 768px) {
+        margin-right: 0;
+        margin-bottom: 0;
+      }
+    }
+    
+    // extra 区域
+    :global(.ant-card-extra) {
+      flex: 1 1 auto;
+      display: flex;
+      justify-content: flex-end;
+      min-width: 0;
+      
+      @media (max-width: 768px) {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
   }
   
   :global(.ant-card-body) {
@@ -482,8 +518,70 @@
       color: #eee;
     }
   }
+
+  // 新增：隐藏title时的样式
+  &.noTitle {
+    :global(.ant-card-head) {
+      padding: 12px 16px;
+      border-radius: 10px 10px 0 0;
+      
+      :global(.ant-card-head-wrapper) {
+        justify-content: center;
+      }
+      
+      :global(.ant-card-extra) {
+        flex: 1;
+        justify-content: center;
+        margin-left: 0;
+      }
+    }
+    
+    // 增加body的高度，因为header变小了
+    :global(.ant-card-body) {
+      max-height: 295px !important;
+    }
+  }
 }
-// ... existing code ...
+
+// 待办事项搜索框容器样式
+.todoSearchWrapper {
+  width: 100%;
+  max-width: 280px;
+  min-width: 200px;
+  
+  @media (max-width: 768px) {
+    max-width: 100%;
+    min-width: auto;
+  }
+  
+  // 新增：占满宽度的样式
+  &.fullWidth {
+    max-width: 100%;
+    min-width: 300px;
+    
+    @media (max-width: 768px) {
+      min-width: auto;
+    }
+  }
+  
+  :global(.ant-input-search) {
+    width: 100%;
+    
+    :global(.ant-input) {
+      border-radius: 6px 0 0 6px;
+    }
+    
+    :global(.ant-btn) {
+      border-radius: 0 6px 6px 0;
+      white-space: nowrap;
+      
+      @media (max-width: 768px) {
+        padding: 0 8px;
+      }
+    }
+  }
+}
+
 // 最近文章卡片样式（假设类名为 recentPostsCard，可根据实际组件类名调整）
 .recentArticlesCard {
   max-height: 327px; // 新增：限制最大高度
