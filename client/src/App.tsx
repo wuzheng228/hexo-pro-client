@@ -60,46 +60,12 @@ function App() {
 
     useEffect(() => {
         console.log('App mount', window.location.pathname.replace(/\//g, ''))
-        // debugger;
+        // 简化逻辑，只检查当前用户是否已登录
         if (checkLogin()) {
             fetchUserInfo()
-        } else {
-            // 检查是否已跳过设置
-            const skipSettings = localStorage.getItem('hexoProSkipSettings') === 'true'
-            
-            if (skipSettings) {
-                // 用户已选择跳过设置，不再检查首次使用状态
-                // console.log('用户已选择跳过设置，允许访问')
-                return
-            }
-            
-            // 检查是否是首次使用
-            service.get('/hexopro/api/settings/check-first-use')
-                .then(res => {
-                    if (res.data.code === 0 && res.data.data.isFirstUse) {
-                        // console.log('首次使用，允许访问')
-                        // 首次使用，允许访问设置页面或首页
-                        if (window.location.pathname === '/pro/settings' || window.location.pathname === '/pro/login') {
-                            // 不做重定向
-                            // console.log('首次使用，允许访问：', window.location.pathname)
-                        } 
-                        else {
-                            // 其他页面重定向到首页
-                            window.location.pathname = '/pro/login'
-                        }
-                    } else {
-                        // 清除可能存在的过期token
-                        localStorage.removeItem('hexoProToken')
-                        window.location.pathname = '/pro/login'
-                    }
-                })
-                .catch(_ => {
-                    // 出错时默认重定向到登录页
-                    localStorage.removeItem('hexoProToken')
-                    window.location.pathname = '/pro/login'
-                })
         }
-    }, [])
+        // 登录相关的逻辑现在由LoginForm组件处理
+    }, [window.location.pathname])
 
 
     useEffect(() => {
@@ -183,9 +149,13 @@ function App() {
                 <Provider store={store}>
                     <GlobalContext.Provider value={contextValue}>
                         <Routes>
-                            <Route path="/login" element={<Login />} />
-                            {/* fix: 这里存在子路由 path不能使用 / 而应该使用/* */}
-                            <Route path="/*" element={<PageLayout />} />
+                            <Route path="/login" element={(() => {
+                                return <Login />;
+                            })()} />
+                            {/* 确保登录页面优先匹配，其他页面使用PageLayout */}
+                            <Route path="/*" element={(() => {
+                                return <PageLayout />;
+                            })()} />
                         </Routes>
                     </GlobalContext.Provider>
                 </Provider>

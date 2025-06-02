@@ -951,6 +951,19 @@ const renderRecentArticlesSection = () => {
   // 渲染待办事项区域
   const renderTodoSection = () => {
     const [inputValue, setInputValue] = useState('')
+    const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
+    
+    useEffect(() => {
+      const handleResize = () => {
+        setScreenWidth(window.innerWidth)
+      }
+      
+      if (typeof window !== 'undefined') {
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+      }
+    }, [])
+    
     const handleAdd = async () => {
       if (inputValue.trim()) {
         await addTodoItem(inputValue.trim())
@@ -995,21 +1008,28 @@ const renderRecentArticlesSection = () => {
         }
     }
 
+    // 根据屏幕宽度决定是否显示title和调整布局
+    const shouldHideTitle = screenWidth < 1350
+    const cardTitle = shouldHideTitle ? null : <><EditOutlined style={{ marginRight: 8 }} />{t['dashboard.todo.title']}</>
+
     return (
       <Card
-            title={<><EditOutlined style={{ marginRight: 8 }} />{t['dashboard.todo.title']}</>}
+            title={cardTitle}
             bordered={false}
-            className={`${styles.todoCard} ${styles.dashboardCard}  ${darkMode}`}
+            className={`${styles.todoCard} ${styles.dashboardCard} ${shouldHideTitle ? styles.noTitle : ''} ${darkMode}`}
             extra={
-              <Search
-                placeholder={t['dashboard.todo.addPlaceholder']}
-                enterButton={t['dashboard.todo.addButton']}
-                value={todoInput}
-                onChange={(e) => setTodoInput(e.target.value)}
-                onSearch={addTodoItem}
-                loading={todoLoading} // 添加加载状态到Search按钮
-                style={{ width: isMobile ? '100%' : 300 }}
-              />
+              <div className={`${styles.todoSearchWrapper} `}>
+                <Search
+                  placeholder={shouldHideTitle ? `${t['dashboard.todo.title']} - ${t['dashboard.todo.addPlaceholder']}` : t['dashboard.todo.addPlaceholder']}
+                  enterButton={screenWidth < 900 ? <FileAddOutlined /> : t['dashboard.todo.addButton']}
+                  value={todoInput}
+                  onChange={(e) => setTodoInput(e.target.value)}
+                  onSearch={addTodoItem}
+                  loading={todoLoading}
+                  size={isMobile ? 'small' : 'middle'}
+                  style={{marginLeft: shouldHideTitle ? '00px' : '0px', marginRight: shouldHideTitle ? '0px' : '0px'}}
+                />
+              </div>
             }
           >
             <Spin spinning={todoLoading}> {/* 用Spin包裹List */}

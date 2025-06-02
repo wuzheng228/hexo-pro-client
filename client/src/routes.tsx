@@ -47,7 +47,7 @@ export type IRoute = {
 //     return [finalRoutes, defaultRoute]
 // }
 
-export default function useRoute() {
+export default function useRoute(): [IRoute[], string] {
   const routes = [
     {
       key: 'dashboard',

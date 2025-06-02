@@ -1,21 +1,45 @@
 import { message } from "antd"
 import axios from "axios"
 
+// 扩展Window接口以支持桌面端属性
+declare global {
+    interface Window {
+        isHexoProDesktop?: boolean;
+        electronAPI?: {
+            platform?: string;
+            [key: string]: any;
+        };
+    }
+}
+
 const service = axios.create({
     validateStatus: function (status) {
         return status >= 200 && status <= 500 // 允许处理400状态码
     }
 })
 
+// 检查是否为桌面环境的辅助函数
+function isDesktopEnvironment(): boolean {
+    return typeof window !== 'undefined' && 
+           typeof window.electronAPI === 'object' && 
+           window.electronAPI !== null;
+}
+
 service.interceptors.request.use(config => {
     // 在这里可以为每个请求添加请求头
-    const token = localStorage.getItem('hexoProToken')
-    if (token) {
-        config.headers['Authorization'] = 'Bearer ' + token
+    // 如果请求配置中已经有 Authorization 头，则优先使用它
+    if (config.headers && config.headers['Authorization']) {
+        console.log('[API Interceptor]: 使用请求中预设的 Authorization 头');
     } else {
-        // console.log('发送请求，无token', config)
+        const token = localStorage.getItem('hexoProToken');
+        if (token) {
+            console.log('[API Interceptor]: 从 localStorage 设置 Authorization 头');
+            config.headers['Authorization'] = 'Bearer ' + token;
+        } else {
+            console.log('[API Interceptor]: 发送请求，无预设或localStorage token', config.url);
+        }
     }
-    return config
+    return config;
 })
 // 强化类型定义
 class ApiError extends Error {
@@ -48,7 +72,13 @@ service.interceptors.response.use((resp) => {
     // 处理401未授权
     if (resp.data?.code === 401) {
         localStorage.removeItem('hexoProToken')
-        window.location.pathname = '/pro/login'
+        // 添加路径检查防止重定向循环
+        // 在桌面端，如果已经在登录页面，则不进行重定向
+        if (isDesktopEnvironment() && window.location.pathname.includes('/pro/login')) {
+            console.log('[API Interceptor]: 桌面端且已在登录页，阻止重定向');
+        } else if (!window.location.pathname.includes('/pro/login')) {
+            window.location.href = '/pro/login?reason=token_invalid_or_missing'
+        }
     }
 
     // 处理业务层级错误（400+状态码）
@@ -74,7 +104,13 @@ service.interceptors.response.use((resp) => {
     switch (error.code) {
         case 401:
             localStorage.removeItem('hexoProToken')
-            window.location.pathname = '/pro/login'
+            // 这里也要修改
+            // 在桌面端，如果已经在登录页面，则不进行重定向
+            if (isDesktopEnvironment() && window.location.pathname.includes('/pro/login')) {
+                console.log('[API Interceptor Error]: 桌面端且已在登录页，阻止重定向');
+            } else if (!window.location.pathname.includes('/pro/login')) {
+                window.location.href = '/pro/login?reason=token_invalid_or_missing'
+            }
             break
         case 404:
             message.error(`资源未找到: ${errorMsg}`)
