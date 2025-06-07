@@ -139,18 +139,25 @@ const SettingsPage: React.FC = () => {
       if (res.data.code === 0) {
         message.success(t['settings.saveSuccess'])
         
+        // 如果服务器返回了新的 token（用户名更新时），需要更新本地存储
+        if (res.data.data && res.data.data.token) {
+          localStorage.setItem('hexoProToken', res.data.data.token)
+          console.log('[Settings]: 用户名已更新，保存新的token')
+        }
+        
         // 更新全局状态中的菜单折叠状态和头像
         dispatch({
           type: 'update-menu-collapsed',
           payload: { menuCollapsed }
         })
         
-        // 更新用户信息（包括头像）
+        // 更新用户信息（包括头像和可能的新用户名）
+        const finalUsername = (res.data.data && res.data.data.username) ? res.data.data.username : username
         dispatch({
           type: 'update-userInfo',
           payload: { 
             userInfo: { 
-              username: username,
+              username: finalUsername,
               avatar: avatarUrl
             } 
           }
@@ -170,6 +177,12 @@ const SettingsPage: React.FC = () => {
             localStorage.removeItem('hexoProToken')
             window.location.href = '/pro/login'
           }, 2000)
+        } else if (res.data.data && res.data.data.token) {
+          // 如果只是更新了用户名（返回了新token但没有密码更新），刷新页面以确保状态同步
+          message.info('用户名已更新，正在刷新页面...')
+          setTimeout(() => {
+            window.location.reload()
+          }, 1000)
         }
       } else {
         message.error(res.data.msg || t['settings.saveError'])

@@ -261,7 +261,7 @@ const i18n = {
         'deploy.help.step1': '1. Fill out the form above and save it (the system will automatically update _config.yml).',
         'deploy.help.step2': '2. Configure the GitHub repository and access token (if necessary).',
         'deploy.help.step3': '3. Click the "Execute Deployment" button.',
-        'deploy.help.note': 'Note: The system uses the built-in Git deployment function, so you don’t need to install any additional plugins.',
+        'deploy.help.note': "Note: The system uses the built-in Git deployment function, so you don't need to install any additional plugins.'",
         'deploy.config.saveSuccess': 'Config saved successfully, _config.yml updated',
         'deploy.config.saveFailed': 'Failed to save config',
         'deploy.config.fetchFailed': 'Failed to fetch deploy config',
