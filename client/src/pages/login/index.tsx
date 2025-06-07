@@ -6,13 +6,8 @@ import LoginForm from './form'
 import { GlobalContext } from '@/context'
 
 function Login() {
-    console.log('[Login Component]: 组件开始渲染');
-    console.log('[Login Component]: window.location.href:', window.location.href);
-    console.log('[Login Component]: window.location.search:', window.location.search);
     
     const { theme } = useContext(GlobalContext)
-    
-    console.log('[Login Component]: 准备渲染LoginForm');
 
     return (
         <div className={styles.container} data-theme={theme}>

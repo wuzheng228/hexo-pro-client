@@ -142,7 +142,7 @@ export default function LoginForm() {
         service.post('/hexopro/api/login', params)
             .then((res) => {
                 const { code, msg, token } = res.data;
-                // console.log('[Login Form]: 登录成功，处理token', JSON.stringify(res));
+                console.log('[Login Form]: 登录成功，处理token', JSON.stringify(res));
                 if (code === 0 || code === -2) {
                     afterLoginSuccess(params, token);
                 } else {
