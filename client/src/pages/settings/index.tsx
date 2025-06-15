@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Card, Form, Input, Button, Upload, message, Spin, Typography, Alert, Modal, Avatar, Space, Pagination } from 'antd'
-import { UploadOutlined, UserOutlined, LockOutlined, SaveOutlined, PictureOutlined } from '@ant-design/icons'
+import { Card, Form, Input, Button, Upload, message, Spin, Typography, Alert, Modal, Avatar, Space, Pagination, Switch, Divider, Select } from 'antd'
+import { UploadOutlined, UserOutlined, LockOutlined, SaveOutlined, PictureOutlined, LinkOutlined, GlobalOutlined, EditOutlined } from '@ant-design/icons'
 import styles from './style/index.module.less'
 import useLocale from '../../hooks/useLocale'
 import service from '@/utils/api'
 import { GlobalContext } from '@/context'
 import { useDispatch } from 'react-redux'
+import { updateLinkRedirectSettings, getLinkRedirectSettings } from '@/utils/desktopUtils'
 import defaultAvatar from '../../assets/defaultAvatar2.png'
-const { Title } = Typography
+const { Title, Text } = Typography
+const { Option } = Select
 
 const SettingsPage: React.FC = () => {
   const t = useLocale()
@@ -19,6 +21,14 @@ const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useContext(GlobalContext)
   const dispatch = useDispatch()
   const [isFirstUse, setIsFirstUse] = useState(false)
+  
+  // 链接跳转设置相关状态
+  const [linkRedirectEnabled, setLinkRedirectEnabled] = useState(false)
+  const [customDomain, setCustomDomain] = useState('http://localhost:4000')
+  
+  // 编辑器模式设置相关状态
+  const [editorMode, setEditorMode] = useState('ir')
+  
   // 新增状态
   const [imagePickerVisible, setImagePickerVisible] = useState(false)
   const [imageList, setImageList] = useState([])
@@ -58,6 +68,21 @@ const SettingsPage: React.FC = () => {
     checkFirstUse()
   }, [])
 
+  // 初始化时从localStorage读取链接跳转设置
+  useEffect(() => {
+    const settings = getLinkRedirectSettings()
+    setLinkRedirectEnabled(settings.enabled)
+    setCustomDomain(settings.domain)
+  }, [])
+
+  // 初始化时从localStorage读取编辑器模式设置
+  useEffect(() => {
+    const savedMode = localStorage.getItem('hexoProEditorMode')
+    if (savedMode) {
+      setEditorMode(savedMode)
+    }
+  }, [])
+
   // 获取当前设置
   const fetchSettings = async () => {
     try {
@@ -77,6 +102,39 @@ const SettingsPage: React.FC = () => {
     } finally {
       setFetchLoading(false)
     }
+  }
+
+  // 处理链接重定向开关变化
+  const handleLinkRedirectChange = (checked: boolean) => {
+    setLinkRedirectEnabled(checked)
+    updateLinkRedirectSettings(checked, customDomain)
+    message.success(checked ? '链接重定向已启用' : '链接重定向已禁用')
+  }
+
+  // 处理自定义域名变化
+  const handleCustomDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setCustomDomain(value)
+  }
+
+  // 处理自定义域名失去焦点时保存
+  const handleCustomDomainBlur = () => {
+    // 验证域名格式
+    try {
+      new URL(customDomain)
+      updateLinkRedirectSettings(linkRedirectEnabled, customDomain)
+      message.success('自定义域名已保存')
+    } catch (error) {
+      message.error('域名格式不正确，请输入完整的URL（如：http://localhost:4000）')
+      setCustomDomain('http://localhost:4000') // 重置为默认值
+    }
+  }
+
+  // 处理编辑器模式变化
+  const handleEditorModeChange = (mode: string) => {
+    setEditorMode(mode)
+    localStorage.setItem('hexoProEditorMode', mode)
+    message.success('编辑器模式已保存，重新进入编辑器后生效')
   }
 
   // 注册新用户（首次使用）
@@ -387,6 +445,7 @@ const SettingsPage: React.FC = () => {
             >
               <Input.Password prefix={<LockOutlined />} placeholder="请确认密码" />
             </Form.Item>
+            
             <Form.Item>
               <Button 
                 type="primary" 
@@ -395,10 +454,101 @@ const SettingsPage: React.FC = () => {
                 icon={<SaveOutlined />}
                 style={{ width: '100%' }}
               >
-                {isFirstUse ? t['settings.createAccount'] : t['settings.saveSettingsButton']}
+                {isFirstUse ? t['settings.createAccount'] : '保存账户设置'}
               </Button>
             </Form.Item>
           </Form>
+
+          {/* 链接跳转设置区域 - 独立于表单，实时保存 */}
+          {!isFirstUse && (
+            <Card style={{ marginTop: 24 }}>
+              <Divider orientation="left">
+                <LinkOutlined /> 链接跳转设置
+              </Divider>
+              
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div>
+                    <Text strong>启用链接重定向</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      开启后，预览链接将跳转到自定义域名而不是原始链接
+                    </Text>
+                  </div>
+                  <Switch
+                    checked={linkRedirectEnabled}
+                    onChange={handleLinkRedirectChange}
+                    checkedChildren="开启"
+                    unCheckedChildren="关闭"
+                  />
+                </div>
+              </div>
+              
+              {linkRedirectEnabled && (
+                <div style={{ marginLeft: 16, marginTop: 16 }}>
+                  <div style={{ marginBottom: 8 }}>
+                    <Text strong>自定义域名</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      设置链接重定向的目标域名（如：http://localhost:4000）
+                    </Text>
+                  </div>
+                  <Input
+                    prefix={<GlobalOutlined />}
+                    value={customDomain}
+                    onChange={handleCustomDomainChange}
+                    onBlur={handleCustomDomainBlur}
+                    placeholder="http://localhost:4000"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              )}
+              
+              <div style={{ marginTop: 16, padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  💡 链接跳转设置会自动保存，无需点击保存按钮
+                </Text>
+              </div>
+            </Card>
+          )}
+
+          {/* 编辑器设置区域 */}
+          {!isFirstUse && (
+            <Card style={{ marginTop: 24 }}>
+              <Divider orientation="left">
+                <EditOutlined /> 编辑器设置
+              </Divider>
+              
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ marginBottom: 8 }}>
+                  <Text strong>编辑器模式</Text>
+                  <br />
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    选择你喜欢的编辑器模式，设置后重新进入编辑器生效
+                  </Text>
+                </div>
+                <Select
+                  style={{ width: '100%' }}
+                  value={editorMode}
+                  onChange={handleEditorModeChange}
+                  placeholder="选择编辑器模式"
+                >
+                  <Option value="ir">即时渲染模式（推荐）</Option>
+                  <Option value="wysiwyg">所见即所得模式</Option>
+                  <Option value="sv">分屏预览模式</Option>
+                </Select>
+              </div>
+              
+              <div style={{ padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  💡 编辑器模式说明：<br />
+                  • 即时渲染模式：边编辑边预览，平衡了编辑体验和预览效果<br />
+                  • 所见即所得模式：像Word一样的编辑体验，直接在渲染结果上编辑<br />
+                  • 分屏预览模式：左侧编辑Markdown源码，右侧实时预览渲染结果
+                </Text>
+              </div>
+            </Card>
+          )}
         </Card>
       </Spin>
 

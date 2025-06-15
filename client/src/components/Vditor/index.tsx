@@ -94,6 +94,31 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     const [isEditorFocus, setIsEditorFocus] = useState(false)
 
+    // 从localStorage读取编辑器模式设置
+    const [editorMode, setEditorMode] = useState(() => {
+        return localStorage.getItem('hexoProEditorMode') || 'ir'
+    })
+
+    // 监听localStorage中编辑器模式的变化
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const newMode = localStorage.getItem('hexoProEditorMode') || 'ir'
+            if (newMode !== editorMode) {
+                setEditorMode(newMode)
+            }
+        }
+
+        // 监听storage事件（其他窗口的localStorage变化）
+        window.addEventListener('storage', handleStorageChange)
+        
+        // 每秒检查一次当前窗口的localStorage变化
+        const interval = setInterval(handleStorageChange, 1000)
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange)
+            clearInterval(interval)
+        }
+    }, [editorMode])
 
     const { theme, lang } = useContext(GlobalContext)
 
@@ -287,6 +312,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     useEffect(() => {
         const vditor = new Vditor('vditor', {
+            mode: editorMode as 'ir' | 'wysiwyg' | 'sv', // 设置编辑器模式
             keydown(event) {
                 if (event.shiftKey && event.key === 'Tab') {
                     // 阻止默认行为
@@ -636,7 +662,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             vd?.destroy()
             setVd(undefined)
         }
-    }, [initValue, lang, isMobile]) // 添加 isMobile 作为依赖
+    }, [initValue, lang, isMobile, editorMode]) // 添加 editorMode 作为依赖
 
     return (
         <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, borderRadius: '0px' }}>
