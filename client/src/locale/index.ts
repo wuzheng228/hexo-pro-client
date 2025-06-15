@@ -383,7 +383,29 @@ const i18n = {
         'settings.selectAvatarTitle': 'Select Avatar',
         'settings.noImagesPrompt': 'No images yet, please upload images to the gallery first',
         'settings.setupLaterMessage': 'You can set up your account and password later',
+
         
+        'frontMatterAdder.input.string.placeholder': 'please input string value',
+        'frontMatterAdder.input.boolean.placeholder': 'please input boolean value',
+        'frontMatterAdder.input.number.placeholder': 'please input number value',
+
+        'frontMatterAdder.input.string.value': 'string',
+        'frontMatterAdder.input.boolean.value': 'boolean',
+        'frontMatterAdder.input.number.value': 'number',
+
+        'frontMatterAdder.field.key.name': 'key name',
+
+        'frontMatterAdder.title.addNewFrontMatter': 'Add new Front Matter',
+        'frontMatterAdder.title.selectExistingFrontMatter': 'Select existing Front Matter',
+        'frontMatterAdder.button.addFrontMatter': 'Add Front Matter',
+
+        'pageSettings.addCategory': '+ Add Category',
+        'pageSettings.addTag': '+ Add Tag',
+        'pageSettings.addFrontMatter': 'Custom Front Matter',
+        'pageSettings.articleSettings': 'Article Settings',
+        'pageSettings.input.path.placeholder': 'Please input page path',
+        'pageSettings.input.path.error': 'The configured page path is illegal, please check!',
+        'frontMatterAdder.field.key.placeholder': 'Please input key name, like: title, author, draft',
     },
     'zh-CN': {
         'universal.create': '创建',
@@ -791,8 +813,29 @@ const i18n = {
         'settings.firstUsePasswordRequired': '首次使用必须设置密码',
         'settings.passwordLengthError': '密码长度不能少于6位',
         'settings.setupLaterMessage': '您可以稍后再设置账号密码',
-        // --- 结束新增 ---
+        
 
+        'frontMatterAdder.input.string.placeholder': '请输入字符串值',
+        'frontMatterAdder.input.boolean.placeholder': '请输入布尔值',
+        'frontMatterAdder.input.number.placeholder': '请输入数字',
+
+        'frontMatterAdder.input.string.value': '字符串',
+        'frontMatterAdder.input.boolean.value': '布尔值',
+        'frontMatterAdder.input.number.value': '数字',
+
+        'frontMatterAdder.field.key.name': '键名',
+
+        'frontMatterAdder.title.addNewFrontMatter': '添加新的 Front Matter',
+        'frontMatterAdder.title.selectExistingFrontMatter': '选择现有的 Front Matter',
+        'frontMatterAdder.button.addFrontMatter': '添加 Front Matter',
+
+        'pageSettings.addCategory': '+添加分类',
+        'pageSettings.addTag': '+添加标签',
+        'pageSettings.addFrontMatter': '自定义 Front Matter',
+        'pageSettings.articleSettings': '文章属性',
+        'pageSettings.input.path.placeholder': '请输入页面存放路径',
+        'pageSettings.input.path.error': '配置的页面路径非法请检查！',
+        'frontMatterAdder.field.key.placeholder': '请输入键名，如: title, author, draft',
     }
 }
 

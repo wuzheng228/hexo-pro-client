@@ -2,6 +2,8 @@ import React, { useState } from "react"
 import { TagAdder } from "./tagAdder"
 import { FrontMatterAdder } from "../../components/frontMatterAdder"
 import { Button, Col, Modal, Row, Space, Tag, Tooltip } from "antd"
+import { formatFrontMatterValue } from "@/utils/booleanUtils"
+import useLocale from "@/hooks/useLocale"
 
 
 export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, postMeta, setPostMeta, handleChange }) {
@@ -13,6 +15,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
     const [fmOpenStat, setFmOpenStat] = useState(false)
     const [originFms, setOriginFms] = useState([])
 
+    const t = useLocale()
     // console.log(postMeta)
 
     const tagClose = (v) => {
@@ -33,6 +36,8 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
             if (key === v) {
                 return
             }
+            // 保持原始值，不进行自动转换
+            console.log(key, postMeta.frontMatter[key])
             newfmt[key] = postMeta.frontMatter[key]
         })
         const meta = { ...postMeta, frontMatter: newfmt }
@@ -44,7 +49,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
         <Modal
             title={
                 <div style={{ textAlign: 'left' }}>
-                    文章属性
+                    {t['pageSettings.articleSettings']}
                 </div>
             }
             open={visible}
@@ -79,7 +84,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                             setTagOpenStat(!tagOpenStat)
                             setCatOpenStat(false)
                             setFmOpenStat(false)
-                        }}>+添加标签</Button>
+                        }}>{t['pageSettings.addTag']}</Button>
                     </Space>
                     {/* todo 打开添加标签的界面 */}
                     {
@@ -103,7 +108,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                             setCatOpenStat(!catOpenStat)
                             setFmOpenStat(false)
                             setTagOpenStat(false)
-                        }}>+添加分类</Button>
+                        }}>{t['pageSettings.addCategory']}</Button>
                     </Space>
                     {
                         /* todo 打开添加标签的界面 */
@@ -121,7 +126,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                             /* 遍历渲染已有的fontMatter */
                             Object.keys(postMeta.frontMatter).map((item) => {
                                 return (
-                                    <Tooltip key={item} title={!postMeta.frontMatter[item] ? 'unset' : postMeta.frontMatter[item]}>
+                                    <Tooltip key={item} title={formatFrontMatterValue(postMeta.frontMatter[item])}>
                                         <Tag closable onClose={() => fmtClose(item)} key={item} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
                                     </Tooltip>
                                 )
@@ -133,12 +138,13 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                                 setTagOpenStat(false)
                                 setCatOpenStat(false)
                             }}
-                        >+自定义frontMatter</Button>
+                        >{t['pageSettings.addFrontMatter']}</Button>
                     </Space>
                     {
                         /* todo 打开添加标签的界面 */
                         <FrontMatterAdder existFrontMatter={originFms} onClose={() => { setFmOpenStat(false) }} visible={fmOpenStat} title={'Font-Matter'} frontMatter={postMeta.frontMatter} onChange={
                             (v) => {
+                                // 直接使用用户选择的值，不进行自动转换
                                 const meta = { ...postMeta, frontMatter: v }
                                 setPostMeta(meta)
                             }

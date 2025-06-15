@@ -1,11 +1,15 @@
 import React, { useState } from "react"
 import { Button, Col, Input, message, Modal, Row, Space, Tag, Tooltip } from "antd"
 import { FrontMatterAdder } from "../../components/frontMatterAdder"
+import { formatFrontMatterValue } from "@/utils/booleanUtils"
+import useLocale from "@/hooks/useLocale"
 
 export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handleChange }) {
     // 添加使用的状态
     const [fmOpenStat, setFmOpenStat] = useState(false)
     const [originFms, setOriginFms] = useState([])
+
+    const t = useLocale()
 
     const fmtClose = (v) => {
         const newfmt = {}
@@ -13,6 +17,7 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
             if (key === v) {
                 return
             }
+            // 保持原始值，不进行自动转换
             newfmt[key] = pageMeta.frontMatter[key]
         })
         const meta = { ...pageMeta, frontMatter: newfmt }
@@ -29,7 +34,7 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
         <Modal
             title={
                 <div style={{ textAlign: 'left' }}>
-                    文章属性
+                    {t['pageSettings.articleSettings']}
                 </div>
             }
             visible={visible}
@@ -39,7 +44,7 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
             }}
             onOk={() => {
                 if (!isPathValid(pageMeta.source)) {
-                    message.error('配置的页面路径非法请检查！')
+                    message.error(t['pageSettings.input.path.error'])
                 } else {
                     setVisible(false)
                     handleChange({ frontMatter: pageMeta.frontMatter, source: pageMeta.source })
@@ -57,7 +62,7 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
                             /* 遍历渲染已有的fontMatter */
                             Object.keys(pageMeta.frontMatter).map((item) => {
                                 return (
-                                    <Tooltip key={item} title={!pageMeta.frontMatter[item] ? 'unset' : pageMeta.frontMatter[item]}>
+                                    <Tooltip key={item} title={formatFrontMatterValue(pageMeta.frontMatter[item])}>
                                         <Tag closable onClose={() => fmtClose(item)} key={item} color="blue" style={{ marginBottom: 5 }}>{item}</Tag>
                                     </Tooltip>
 
@@ -68,13 +73,14 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
                             onClick={() => {
                                 setFmOpenStat(!fmOpenStat)
                             }}
-                        >+自定义frontMatter</Button>
+                            >{t['pageSettings.addFrontMatter']}</Button>
                     </Space>
 
                     {
                         /* todo 打开添加标签的界面 */
                         <FrontMatterAdder existFrontMatter={originFms} onClose={() => { setFmOpenStat(false) }} visible={fmOpenStat} title={'Font-Matter'} frontMatter={pageMeta.frontMatter} onChange={
                             (v) => {
+                                // 直接使用用户选择的值，不进行自动转换
                                 const meta = { ...pageMeta, frontMatter: v }
                                 setPageMeta(meta)
                             }
@@ -84,7 +90,7 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
             </Row>
             <Row style={{ marginTop: 15, marginBottom: 15 }}>
                 <Col>
-                    <Input style={{ width: 350 }}  placeholder='请输入页面存放路径' value={pageMeta.source} onChange={(v) => {
+                    <Input style={{ width: 350 }}  placeholder={t['pageSettings.input.path.placeholder']} value={pageMeta.source} onChange={(v) => {
                         console.log(v.target.value)
                         console.log(pageMeta)
                         const newMeta = { ...pageMeta, source: v.target.value }
