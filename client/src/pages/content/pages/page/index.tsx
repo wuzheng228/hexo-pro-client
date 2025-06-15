@@ -213,7 +213,7 @@ function Page() {
             <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
             <EditorHeader
                 isPage={true}
-                permalink={page.permalink}
+                permalink={page.permalink} // 桌面端使用需要替换域名为localhost:4000
                 isDraft={false}
                 handlePublish={() => { }}
                 handleUnpublish={() => { }}

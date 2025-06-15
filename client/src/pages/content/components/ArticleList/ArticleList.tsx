@@ -6,6 +6,7 @@ import service from "@/utils/api"
 import useLocale from "@/hooks/useLocale"
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import { GlobalContext } from "@/context"
+import { openDesktopLink } from "@/utils/desktopUtils"
 import IconLink from "@/assets/link.svg"
 import Iconllipsis from "@/assets/ellipsis.svg"
 import defaultCover from "@/assets/defaultCover.png"
@@ -309,7 +310,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                                     style={{ color: 'rgba(0, 0, 0, 0.45)' }}
                                                     onClick={(event) => {
                                                         event.stopPropagation()
-                                                        window.open(item.permalink, '_blank')
+                                                        openDesktopLink(item.permalink)
                                                     }}
                                                     icon={theme === 'dark' ? <IconLink /> : <IconLink />}
                                                 >

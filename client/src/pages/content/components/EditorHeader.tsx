@@ -9,10 +9,11 @@ import { useDispatch } from "react-redux"
 import { GlobalContext } from "@/context"
 import useLocale from "@/hooks/useLocale"
 import useDeviceDetect from "@/hooks/useDeviceDetect"
+import { openDesktopLink } from "@/utils/desktopUtils"
 import IconLink from "@/assets/link.svg"
 import IconLinkLight from "@/assets/linkLight.svg"
 
-export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
+export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleTitleBlur = undefined, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
 
     const [isPin, setIsPin] = useState(true)
     const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -132,6 +133,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                         }}
                         value={tempTitle}
                         onChange={(e) => handleTitleChange(e.target.value)}
+                        onBlur={handleTitleBlur || undefined}
                         autoFocus
                     />
                 ) : (
@@ -218,15 +220,15 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     )}
                     {
                         (isPage || (!isPage && !isDraft)) && (
-                            <Button
-                                    type="default"
-                                    style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}
-                                    onClick={(event) => {
-                                        event.stopPropagation()
-                                        window.open(permalink, '_blank')
-                                    }}
-                                    icon={theme === 'dark' ? <IconLinkLight /> : <IconLink />}
-                                >
+                                                        <Button
+                                type="default"
+                                style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}
+                                onClick={(event) => {
+                                    event.stopPropagation()
+                                    openDesktopLink(permalink)
+                                }}
+                                icon={theme === 'dark' ? <IconLinkLight /> : <IconLink />}
+                            >
                             </Button>
                         )
                     }
