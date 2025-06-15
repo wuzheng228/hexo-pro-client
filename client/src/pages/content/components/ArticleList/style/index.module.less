@@ -11,16 +11,44 @@
   transition: background 0.3s;
 }
 
+.card-action-btn-compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: background 0.3s;
+  margin-bottom: 1px;
+}
+
 .dark .card-action-btn {
   background: rgba(0,0,0,0.4);
   box-shadow: 0 2px 8px rgba(0,0,0,0.16);
+}
+
+.dark .card-action-btn-compact {
+  background: rgba(0,0,0,0.6);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
 .card-action-btn :global(.ant-btn) {
   color: rgba(0, 0, 0, 0.45);
 }
 
+.card-action-btn-compact :global(.ant-btn) {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 10px;
+  line-height: 1;
+}
+
 .dark .card-action-btn :global(.ant-btn) {
+  color: #fff;
+}
+
+.dark .card-action-btn-compact :global(.ant-btn) {
   color: #fff;
 }
 // ... existing code ...

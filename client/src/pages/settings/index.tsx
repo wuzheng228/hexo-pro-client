@@ -29,6 +29,9 @@ const SettingsPage: React.FC = () => {
   // 编辑器模式设置相关状态
   const [editorMode, setEditorMode] = useState('ir')
   
+  // 封面显示设置相关状态
+  const [showCoverEnabled, setShowCoverEnabled] = useState(true)
+  
   // 新增状态
   const [imagePickerVisible, setImagePickerVisible] = useState(false)
   const [imageList, setImageList] = useState([])
@@ -80,6 +83,14 @@ const SettingsPage: React.FC = () => {
     const savedMode = localStorage.getItem('hexoProEditorMode')
     if (savedMode) {
       setEditorMode(savedMode)
+    }
+  }, [])
+
+  // 初始化时从localStorage读取封面显示设置
+  useEffect(() => {
+    const savedShowCover = localStorage.getItem('hexoProShowCover')
+    if (savedShowCover !== null) {
+      setShowCoverEnabled(savedShowCover === 'true')
     }
   }, [])
 
@@ -135,6 +146,13 @@ const SettingsPage: React.FC = () => {
     setEditorMode(mode)
     localStorage.setItem('hexoProEditorMode', mode)
     message.success('编辑器模式已保存，重新进入编辑器后生效')
+  }
+
+  // 处理封面显示变化
+  const handleShowCoverChange = (checked: boolean) => {
+    setShowCoverEnabled(checked)
+    localStorage.setItem('hexoProShowCover', checked.toString())
+    message.success(checked ? '已启用封面显示' : '已隐藏文章封面，列表更紧凑')
   }
 
   // 注册新用户（首次使用）
@@ -545,6 +563,39 @@ const SettingsPage: React.FC = () => {
                   • 即时渲染模式：边编辑边预览，平衡了编辑体验和预览效果<br />
                   • 所见即所得模式：像Word一样的编辑体验，直接在渲染结果上编辑<br />
                   • 分屏预览模式：左侧编辑Markdown源码，右侧实时预览渲染结果
+                </Text>
+              </div>
+            </Card>
+          )}
+
+          {/* 显示设置区域 */}
+          {!isFirstUse && (
+            <Card style={{ marginTop: 24 }}>
+              <Divider orientation="left">
+                <PictureOutlined /> 显示设置
+              </Divider>
+              
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div>
+                    <Text strong>显示文章封面</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      关闭后文章列表将不显示封面图片，能在同一页面显示更多文章
+                    </Text>
+                  </div>
+                  <Switch
+                    checked={showCoverEnabled}
+                    onChange={handleShowCoverChange}
+                    checkedChildren="显示"
+                    unCheckedChildren="隐藏"
+                  />
+                </div>
+              </div>
+              
+              <div style={{ padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  💡 隐藏封面后，文章列表将以紧凑模式显示，可以在相同空间内浏览更多文章
                 </Text>
               </div>
             </Card>
