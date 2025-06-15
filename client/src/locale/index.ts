@@ -401,7 +401,7 @@ const i18n = {
 
         'pageSettings.addCategory': '+ Add Category',
         'pageSettings.addTag': '+ Add Tag',
-        'pageSettings.addFrontMatter': 'Custom Front Matter',
+        'pageSettings.addFrontMatter': '+ Custom Front Matter',
         'pageSettings.articleSettings': 'Article Settings',
         'pageSettings.input.path.placeholder': 'Please input page path',
         'pageSettings.input.path.error': 'The configured page path is illegal, please check!',
@@ -831,7 +831,7 @@ const i18n = {
 
         'pageSettings.addCategory': '+添加分类',
         'pageSettings.addTag': '+添加标签',
-        'pageSettings.addFrontMatter': '自定义 Front Matter',
+        'pageSettings.addFrontMatter': '+ 自定义 Front Matter',
         'pageSettings.articleSettings': '文章属性',
         'pageSettings.input.path.placeholder': '请输入页面存放路径',
         'pageSettings.input.path.error': '配置的页面路径非法请检查！',

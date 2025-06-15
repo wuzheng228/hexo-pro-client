@@ -40,7 +40,7 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
             options.push({
                 label: (
                     <Tooltip key={i} title={formatFrontMatterValue(frontMatter[name])}>
-                        <Tag color={frontMatter[name] === null || frontMatter[name] === undefined ? 'default' : 'blue'}>{name}</Tag>
+                        <Tag color={frontMatter[name] === null || frontMatter[name] === undefined ? 'default' : 'blue'} style={{fontSize: '11px', padding: '2px 6px'}}>{name}</Tag>
                     </Tooltip>
                 ),
                 value: name
@@ -87,38 +87,33 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
 
     // 渲染值输入控件
     const renderValueInput = () => {
-        const commonStyle = { 
-            width: '100%', 
-            minHeight: '32px',
-            display: 'flex',
-            alignItems: 'center'
-        }
-
         switch (inputValueType) {
             case 'boolean':
                 return (
                     <div style={{
-                        ...commonStyle,
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '4px 12px',
+                        padding: '4px 8px',
                         border: '1px solid #d9d9d9',
-                        borderRadius: '6px',
-                        backgroundColor: '#fafafa'
+                        borderRadius: '4px',
+                        backgroundColor: '#fafafa',
+                        minHeight: '28px'
                     }}>
-                        <span style={{ fontSize: '14px', color: '#666' }}>
+                        <span style={{ fontSize: '12px', color: '#666' }}>
                             {t['frontMatterAdder.input.boolean.value']}:
                         </span>
-                        <Space>
+                        <Space size="small">
                             <Switch 
                                 checked={booleanValue} 
                                 onChange={setBooleanValue}
                                 size="small"
                             />
                             <span style={{ 
-                                fontSize: '12px', 
+                                fontSize: '11px', 
                                 color: booleanValue ? '#52c41a' : '#ff4d4f',
                                 fontWeight: 500,
-                                minWidth: '35px'
+                                minWidth: '30px'
                             }}>
                                 {booleanValue ? 'true' : 'false'}
                             </span>
@@ -132,7 +127,8 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
                         value={numberValue}
                         onChange={(value) => setNumberValue(value || 0)}
                         onPressEnter={onInputEnterKeyPress}
-                        style={{ ...commonStyle }}
+                        style={{ width: '100%' }}
+                        size="small"
                         controls={false}
                     />
                 )
@@ -144,7 +140,7 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
                         value={inputFmtValueValue}
                         onChange={(v) => setInputFmtValueValue(v.target.value)}
                         onPressEnter={onInputEnterKeyPress}
-                        style={{ ...commonStyle }}
+                        size="small"
                     />
                 )
         }
@@ -153,15 +149,15 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
     const addFrontMatter = () => {
         return (
             <div style={{
-                padding: isMobile ? '16px' : '20px',
+                padding: '12px',
                 backgroundColor: '#fafafa',
-                borderRadius: '8px',
+                borderRadius: '4px',
                 border: '1px solid #f0f0f0'
             }}>
                 {/* 标题 */}
                 <div style={{
-                    marginBottom: '16px',
-                    fontSize: '14px',
+                    marginBottom: '8px',
+                    fontSize: '12px',
                     fontWeight: 500,
                     color: '#262626'
                 }}>
@@ -172,72 +168,58 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '12px'
+                    gap: '8px'
                 }}>
-                    {/* 键名输入 */}
-                    <div>
-                        <div style={{ 
-                            marginBottom: '6px', 
-                            fontSize: '12px', 
-                            color: '#666',
-                            fontWeight: 500
-                        }}>
-                            {t['frontMatterAdder.field.key.name']}
+                    {/* 键名和类型选择 - 横向布局 */}
+                    <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'flex-end'
+                    }}>
+                        <div style={{ flex: 2 }}>
+                            <div style={{ 
+                                marginBottom: '4px', 
+                                fontSize: '11px', 
+                                color: '#666'
+                            }}>
+                                {t['frontMatterAdder.field.key.name']}
+                            </div>
+                            <Input
+                                placeholder={t['frontMatterAdder.field.key.placeholder']}
+                                value={inputFmtKeyValue}
+                                onChange={(v) => setInputFmtKeyValue(v.target.value)}
+                                onPressEnter={onInputEnterKeyPress}
+                                status={!inputFmtKeyValue.trim() ? 'error' : undefined}
+                                size="small"
+                            />
                         </div>
-                        <Input
-                            placeholder={t['frontMatterAdder.field.key.placeholder']}
-                            value={inputFmtKeyValue}
-                            onChange={(v) => setInputFmtKeyValue(v.target.value)}
-                            onPressEnter={onInputEnterKeyPress}
-                            status={!inputFmtKeyValue.trim() ? 'error' : undefined}
-                            style={{ width: '100%' }}
-                        />
-                    </div>
-
-                    {/* 类型选择 */}
-                    <div>
-                        <div style={{ 
-                            marginBottom: '6px', 
-                            fontSize: '12px', 
-                            color: '#666',
-                            fontWeight: 500
-                        }}>
-                            数据类型
+                        <div style={{ flex: 1 }}>
+                            <div style={{ 
+                                marginBottom: '4px', 
+                                fontSize: '11px', 
+                                color: '#666'
+                            }}>
+                                数据类型
+                            </div>
+                            <Select
+                                value={inputValueType}
+                                onChange={setInputValueType}
+                                style={{ width: '100%' }}
+                                size="small"
+                            >
+                                <Option value="string">📝 {t['frontMatterAdder.input.string.value']}</Option>
+                                <Option value="boolean">🔘 {t['frontMatterAdder.input.boolean.value']}</Option>
+                                <Option value="number">🔢 {t['frontMatterAdder.input.number.value']}</Option>
+                            </Select>
                         </div>
-                        <Select
-                            value={inputValueType}
-                            onChange={setInputValueType}
-                            style={{ width: '100%' }}
-                            size="middle"
-                        >
-                            <Option value="string">
-                                <Space>
-                                    <span>📝</span>
-                                    <span>{t['frontMatterAdder.input.string.value']}</span>
-                                </Space>
-                            </Option>
-                            <Option value="boolean">
-                                <Space>
-                                    <span>🔘</span>
-                                    <span>{t['frontMatterAdder.input.boolean.value']}</span>
-                                </Space>
-                            </Option>
-                            <Option value="number">
-                                <Space>
-                                    <span>🔢</span>
-                                    <span>{t['frontMatterAdder.input.number.value']}</span>
-                                </Space>
-                            </Option>
-                        </Select>
                     </div>
 
                     {/* 值输入 */}
                     <div>
                         <div style={{ 
-                            marginBottom: '6px', 
-                            fontSize: '12px', 
-                            color: '#666',
-                            fontWeight: 500
+                            marginBottom: '4px', 
+                            fontSize: '11px', 
+                            color: '#666'
                         }}>
                             键值
                         </div>
@@ -249,9 +231,9 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
                         display: 'flex',
                         justifyContent: 'flex-end',
                         alignItems: 'center',
-                        gap: '8px',
-                        marginTop: '8px',
-                        paddingTop: '12px',
+                        gap: '6px',
+                        marginTop: '4px',
+                        paddingTop: '8px',
                         borderTop: '1px solid #f0f0f0'
                     }}>
                         <Button
@@ -282,7 +264,7 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
         <Card
             title={
                 <div style={{ 
-                    fontSize: '16px', 
+                    fontSize: '14px', 
                     fontWeight: 600,
                     color: '#262626'
                 }}>
@@ -290,45 +272,46 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
                 </div>
             }
             bordered={true}
+            size="small"
             style={{
                 position: 'absolute',
                 top: '100%',
                 zIndex: 100,
-                width: isMobile ? '95vw' : '750px',
+                width: isMobile ? '95vw' : '500px',
                 maxWidth: '100vw',
                 left: isMobile ? '2.5vw' : undefined,
                 right: isMobile ? '2.5vw' : undefined,
-                boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
-                borderRadius: '8px',
-                marginTop: '8px'
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                borderRadius: '6px',
+                marginTop: '4px'
             }}
             bodyStyle={{ 
-                padding: isMobile ? '16px' : '24px',
-                maxHeight: '70vh',
+                padding: isMobile ? '12px' : '16px',
+                maxHeight: '60vh',
                 overflowY: 'auto'
             }}
         >
             {/* 现有 Front Matter 选择区域 */}
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '12px' }}>
                 <div style={{
-                    marginBottom: '12px',
-                    fontSize: '14px',
+                    marginBottom: '6px',
+                    fontSize: '12px',
                     fontWeight: 500,
                     color: '#262626'
                 }}>
                     {t['frontMatterAdder.title.selectExistingFrontMatter']}
                 </div>
                 <div style={{
-                    padding: '12px',
+                    padding: '8px',
                     backgroundColor: '#f8f9fa',
-                    borderRadius: '6px',
+                    borderRadius: '4px',
                     border: '1px solid #e9ecef'
                 }}>
                     {existFontMatter()}
                 </div>
             </div>
 
-            <Divider style={{ margin: '20px 0' }} />
+            <Divider style={{ margin: '12px 0' }} />
 
             {/* 添加新 Front Matter 区域 */}
             {addFrontMatter()}
