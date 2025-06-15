@@ -384,6 +384,47 @@ const i18n = {
         'settings.noImagesPrompt': 'No images yet, please upload images to the gallery first',
         'settings.setupLaterMessage': 'You can set up your account and password later',
 
+        // Link redirect settings
+        'settings.linkRedirectTitle': 'Link Redirect Settings',
+        'settings.enableLinkRedirect': 'Enable Link Redirect',
+        'settings.linkRedirectDescription': 'When enabled, preview links will redirect to custom domain instead of original link',
+        'settings.enabled': 'Enabled',
+        'settings.disabled': 'Disabled',
+        'settings.customDomain': 'Custom Domain',
+        'settings.customDomainDescription': 'Set the target domain for link redirect (e.g., http://localhost:4000)',
+        'settings.linkRedirectAutoSave': '💡 Link redirect settings are automatically saved, no need to click save button',
+        
+        // Editor settings
+        'settings.editorTitle': 'Editor Settings',
+        'settings.editorMode': 'Editor Mode',
+        'settings.editorModeDescription': 'Choose your preferred editor mode, takes effect when re-entering the editor',
+        'settings.editorModeSelect': 'Select editor mode',
+        'settings.editorModeIR': 'Instant Rendering Mode (Recommended)',
+        'settings.editorModeWYSIWYG': 'WYSIWYG Mode',
+        'settings.editorModeSV': 'Split View Mode',
+        'settings.editorModeHelp': '💡 Editor mode description:<br />• Instant Rendering Mode: Edit and preview at the same time, balances editing experience and preview effect<br />• WYSIWYG Mode: Word-like editing experience, edit directly on rendered results<br />• Split View Mode: Edit Markdown source on the left, real-time preview on the right',
+        
+        // Display settings
+        'settings.displayTitle': 'Display Settings',
+        'settings.showCover': 'Show Article Cover',
+        'settings.showCoverDescription': 'When disabled, article list will not show cover images, allowing more articles to be displayed on the same page',
+        'settings.show': 'Show',
+        'settings.hide': 'Hide',
+        'settings.showCoverHelp': '💡 After hiding covers, the article list will be displayed in compact mode, allowing you to browse more articles in the same space',
+        
+        // Account settings
+        'settings.saveAccountSettings': 'Save Account Settings',
+        
+        // Success/Error messages
+        'settings.linkRedirectEnabled': 'Link redirect enabled',
+        'settings.linkRedirectDisabled': 'Link redirect disabled',
+        'settings.customDomainSaved': 'Custom domain saved',
+        'settings.customDomainFormatError': 'Invalid domain format, please enter a complete URL (e.g., http://localhost:4000)',
+        'settings.editorModeSaved': 'Editor mode saved, takes effect when re-entering the editor',
+        'settings.showCoverEnabled': 'Cover display enabled',
+        'settings.showCoverDisabled': 'Article covers hidden, list is more compact',
+        'settings.usernameUpdated': 'Username updated, refreshing page...',
+
         
         'frontMatterAdder.input.string.placeholder': 'please input string value',
         'frontMatterAdder.input.boolean.placeholder': 'please input boolean value',
@@ -813,6 +854,47 @@ const i18n = {
         'settings.firstUsePasswordRequired': '首次使用必须设置密码',
         'settings.passwordLengthError': '密码长度不能少于6位',
         'settings.setupLaterMessage': '您可以稍后再设置账号密码',
+
+        // Link redirect settings
+        'settings.linkRedirectTitle': '链接跳转设置',
+        'settings.enableLinkRedirect': '启用链接重定向',
+        'settings.linkRedirectDescription': '开启后，预览链接将跳转到自定义域名而不是原始链接',
+        'settings.enabled': '开启',
+        'settings.disabled': '关闭',
+        'settings.customDomain': '自定义域名',
+        'settings.customDomainDescription': '设置链接重定向的目标域名（如：http://localhost:4000）',
+        'settings.linkRedirectAutoSave': '💡 链接跳转设置会自动保存，无需点击保存按钮',
+        
+        // Editor settings
+        'settings.editorTitle': '编辑器设置',
+        'settings.editorMode': '编辑器模式',
+        'settings.editorModeDescription': '选择你喜欢的编辑器模式，设置后重新进入编辑器生效',
+        'settings.editorModeSelect': '选择编辑器模式',
+        'settings.editorModeIR': '即时渲染模式（推荐）',
+        'settings.editorModeWYSIWYG': '所见即所得模式',
+        'settings.editorModeSV': '分屏预览模式',
+        'settings.editorModeHelp': '💡 编辑器模式说明：<br />• 即时渲染模式：边编辑边预览，平衡了编辑体验和预览效果<br />• 所见即所得模式：像Word一样的编辑体验，直接在渲染结果上编辑<br />• 分屏预览模式：左侧编辑Markdown源码，右侧实时预览渲染结果',
+        
+        // Display settings
+        'settings.displayTitle': '显示设置',
+        'settings.showCover': '显示文章封面',
+        'settings.showCoverDescription': '关闭后文章列表将不显示封面图片，能在同一页面显示更多文章',
+        'settings.show': '显示',
+        'settings.hide': '隐藏',
+        'settings.showCoverHelp': '💡 隐藏封面后，文章列表将以紧凑模式显示，可以在相同空间内浏览更多文章',
+        
+        // Account settings
+        'settings.saveAccountSettings': '保存账户设置',
+        
+        // Success/Error messages
+        'settings.linkRedirectEnabled': '链接重定向已启用',
+        'settings.linkRedirectDisabled': '链接重定向已禁用',
+        'settings.customDomainSaved': '自定义域名已保存',
+        'settings.customDomainFormatError': '域名格式不正确，请输入完整的URL（如：http://localhost:4000）',
+        'settings.editorModeSaved': '编辑器模式已保存，重新进入编辑器后生效',
+        'settings.showCoverEnabled': '已启用封面显示',
+        'settings.showCoverDisabled': '已隐藏文章封面，列表更紧凑',
+        'settings.usernameUpdated': '用户名已更新，正在刷新页面...',
         
 
         'frontMatterAdder.input.string.placeholder': '请输入字符串值',

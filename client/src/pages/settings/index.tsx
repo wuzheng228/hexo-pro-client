@@ -119,7 +119,7 @@ const SettingsPage: React.FC = () => {
   const handleLinkRedirectChange = (checked: boolean) => {
     setLinkRedirectEnabled(checked)
     updateLinkRedirectSettings(checked, customDomain)
-    message.success(checked ? '链接重定向已启用' : '链接重定向已禁用')
+    message.success(checked ? t['settings.linkRedirectEnabled'] : t['settings.linkRedirectDisabled'])
   }
 
   // 处理自定义域名变化
@@ -134,9 +134,9 @@ const SettingsPage: React.FC = () => {
     try {
       new URL(customDomain)
       updateLinkRedirectSettings(linkRedirectEnabled, customDomain)
-      message.success('自定义域名已保存')
+      message.success(t['settings.customDomainSaved'])
     } catch (error) {
-      message.error('域名格式不正确，请输入完整的URL（如：http://localhost:4000）')
+      message.error(t['settings.customDomainFormatError'])
       setCustomDomain('http://localhost:4000') // 重置为默认值
     }
   }
@@ -145,14 +145,14 @@ const SettingsPage: React.FC = () => {
   const handleEditorModeChange = (mode: string) => {
     setEditorMode(mode)
     localStorage.setItem('hexoProEditorMode', mode)
-    message.success('编辑器模式已保存，重新进入编辑器后生效')
+    message.success(t['settings.editorModeSaved'])
   }
 
   // 处理封面显示变化
   const handleShowCoverChange = (checked: boolean) => {
     setShowCoverEnabled(checked)
     localStorage.setItem('hexoProShowCover', checked.toString())
-    message.success(checked ? '已启用封面显示' : '已隐藏文章封面，列表更紧凑')
+    message.success(checked ? t['settings.showCoverEnabled'] : t['settings.showCoverDisabled'])
   }
 
   // 注册新用户（首次使用）
@@ -255,7 +255,7 @@ const SettingsPage: React.FC = () => {
           }, 2000)
         } else if (res.data.data && res.data.data.token) {
           // 如果只是更新了用户名（返回了新token但没有密码更新），刷新页面以确保状态同步
-          message.info('用户名已更新，正在刷新页面...')
+          message.info(t['settings.usernameUpdated'])
           setTimeout(() => {
             window.location.reload()
           }, 1000)
@@ -417,7 +417,7 @@ const SettingsPage: React.FC = () => {
               name="username"
               rules={[{ required: true, message: t['settings.usernameRequired'] }]}
             >
-              <Input prefix={<UserOutlined />} placeholder="请输入用户名" />
+              <Input prefix={<UserOutlined />} placeholder={t['settings.usernamePlaceholder']} />
             </Form.Item>
             
             <Form.Item
@@ -437,7 +437,7 @@ const SettingsPage: React.FC = () => {
                 }
               ]}
             >
-              <Input.Password prefix={<LockOutlined />} placeholder="请输入密码" />
+              <Input.Password prefix={<LockOutlined />} placeholder={t['settings.passwordPlaceholder']} />
             </Form.Item>
             
             <Form.Item
@@ -461,7 +461,7 @@ const SettingsPage: React.FC = () => {
                 }),
               ]}
             >
-              <Input.Password prefix={<LockOutlined />} placeholder="请确认密码" />
+              <Input.Password prefix={<LockOutlined />} placeholder={t['settings.confirmPasswordPlaceholder']} />
             </Form.Item>
             
             <Form.Item>
@@ -472,7 +472,7 @@ const SettingsPage: React.FC = () => {
                 icon={<SaveOutlined />}
                 style={{ width: '100%' }}
               >
-                {isFirstUse ? t['settings.createAccount'] : '保存账户设置'}
+                {isFirstUse ? t['settings.createAccount'] : t['settings.saveAccountSettings']}
               </Button>
             </Form.Item>
           </Form>
@@ -481,23 +481,23 @@ const SettingsPage: React.FC = () => {
           {!isFirstUse && (
             <Card style={{ marginTop: 24 }}>
               <Divider orientation="left">
-                <LinkOutlined /> 链接跳转设置
+                <LinkOutlined /> {t['settings.linkRedirectTitle']}
               </Divider>
               
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div>
-                    <Text strong>启用链接重定向</Text>
+                    <Text strong>{t['settings.enableLinkRedirect']}</Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                      开启后，预览链接将跳转到自定义域名而不是原始链接
+                      {t['settings.linkRedirectDescription']}
                     </Text>
                   </div>
                   <Switch
                     checked={linkRedirectEnabled}
                     onChange={handleLinkRedirectChange}
-                    checkedChildren="开启"
-                    unCheckedChildren="关闭"
+                    checkedChildren={t['settings.enabled']}
+                    unCheckedChildren={t['settings.disabled']}
                   />
                 </div>
               </div>
@@ -505,10 +505,10 @@ const SettingsPage: React.FC = () => {
               {linkRedirectEnabled && (
                 <div style={{ marginLeft: 16, marginTop: 16 }}>
                   <div style={{ marginBottom: 8 }}>
-                    <Text strong>自定义域名</Text>
+                    <Text strong>{t['settings.customDomain']}</Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                      设置链接重定向的目标域名（如：http://localhost:4000）
+                      {t['settings.customDomainDescription']}
                     </Text>
                   </div>
                   <Input
@@ -524,7 +524,7 @@ const SettingsPage: React.FC = () => {
               
               <div style={{ marginTop: 16, padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                  💡 链接跳转设置会自动保存，无需点击保存按钮
+                  {t['settings.linkRedirectAutoSave']}
                 </Text>
               </div>
             </Card>
@@ -534,35 +534,32 @@ const SettingsPage: React.FC = () => {
           {!isFirstUse && (
             <Card style={{ marginTop: 24 }}>
               <Divider orientation="left">
-                <EditOutlined /> 编辑器设置
+                <EditOutlined /> {t['settings.editorTitle']}
               </Divider>
               
               <div style={{ marginBottom: 16 }}>
                 <div style={{ marginBottom: 8 }}>
-                  <Text strong>编辑器模式</Text>
+                  <Text strong>{t['settings.editorMode']}</Text>
                   <br />
                   <Text type="secondary" style={{ fontSize: '12px' }}>
-                    选择你喜欢的编辑器模式，设置后重新进入编辑器生效
+                    {t['settings.editorModeDescription']}
                   </Text>
                 </div>
                 <Select
                   style={{ width: '100%' }}
                   value={editorMode}
                   onChange={handleEditorModeChange}
-                  placeholder="选择编辑器模式"
+                  placeholder={t['settings.editorModeSelect']}
                 >
-                  <Option value="ir">即时渲染模式（推荐）</Option>
-                  <Option value="wysiwyg">所见即所得模式</Option>
-                  <Option value="sv">分屏预览模式</Option>
+                  <Option value="ir">{t['settings.editorModeIR']}</Option>
+                  <Option value="wysiwyg">{t['settings.editorModeWYSIWYG']}</Option>
+                  <Option value="sv">{t['settings.editorModeSV']}</Option>
                 </Select>
               </div>
               
               <div style={{ padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                  💡 编辑器模式说明：<br />
-                  • 即时渲染模式：边编辑边预览，平衡了编辑体验和预览效果<br />
-                  • 所见即所得模式：像Word一样的编辑体验，直接在渲染结果上编辑<br />
-                  • 分屏预览模式：左侧编辑Markdown源码，右侧实时预览渲染结果
+                  <span dangerouslySetInnerHTML={{ __html: t['settings.editorModeHelp'] }} />
                 </Text>
               </div>
             </Card>
@@ -572,30 +569,30 @@ const SettingsPage: React.FC = () => {
           {!isFirstUse && (
             <Card style={{ marginTop: 24 }}>
               <Divider orientation="left">
-                <PictureOutlined /> 显示设置
+                <PictureOutlined /> {t['settings.displayTitle']}
               </Divider>
               
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div>
-                    <Text strong>显示文章封面</Text>
+                    <Text strong>{t['settings.showCover']}</Text>
                     <br />
                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                      关闭后文章列表将不显示封面图片，能在同一页面显示更多文章
+                      {t['settings.showCoverDescription']}
                     </Text>
                   </div>
                   <Switch
                     checked={showCoverEnabled}
                     onChange={handleShowCoverChange}
-                    checkedChildren="显示"
-                    unCheckedChildren="隐藏"
+                    checkedChildren={t['settings.show']}
+                    unCheckedChildren={t['settings.hide']}
                   />
                 </div>
               </div>
               
               <div style={{ padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                  💡 隐藏封面后，文章列表将以紧凑模式显示，可以在相同空间内浏览更多文章
+                  {t['settings.showCoverHelp']}
                 </Text>
               </div>
             </Card>
