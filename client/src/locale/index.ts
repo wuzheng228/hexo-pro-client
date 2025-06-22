@@ -425,6 +425,17 @@ const i18n = {
         'settings.showCoverDisabled': 'Article covers hidden, list is more compact',
         'settings.usernameUpdated': 'Username updated, refreshing page...',
 
+        // 设置页面相关  
+        'settings.deployTitle': 'Deploy Settings',
+        'settings.skipGenerate': 'Skip Static File Generation',
+        'settings.skipGenerateDescription': 'When enabled, deployment will skip hexo clean and hexo generate steps, directly pushing source code to repository. Suitable for scenarios using GitHub Actions or other CI/CD tools for automatic building.',
+        'settings.skipGenerateHelp': 'Note: When this option is enabled, the system will push Hexo source code (including source, themes, _config.yml, etc.) to the specified branch instead of generated static files. Make sure your repository is configured with proper GitHub Actions or other CI/CD tools for automatic building and deployment.',
+        'settings.skipGenerateEnabled': 'Skip generation enabled',
+        'settings.skipGenerateDisabled': 'Skip generation disabled',
+
+        // 部署日志相关
+        'deploy.skip.generate.mode': 'Skip generation mode enabled, pushing source code to repository...',
+
         
         'frontMatterAdder.input.string.placeholder': 'please input string value',
         'frontMatterAdder.input.boolean.placeholder': 'please input boolean value',
@@ -783,6 +794,8 @@ const i18n = {
         'deploy.cleanup.failed': '清理部署目录失败',
         'deploy.cleanup.success': '部署目录已清理成功',
 
+        'deploy.git.config.cleaned': 'Sensitive information cleaned from config file',
+
         'settings.fetchError': '获取设置失败',
         'settings.saveError': '保存设置失败',
         'settings.passwordChangedRelogin': '密码已修改，需要重新登录',
@@ -896,6 +909,19 @@ const i18n = {
         'settings.showCoverDisabled': '已隐藏文章封面，列表更紧凑',
         'settings.usernameUpdated': '用户名已更新，正在刷新页面...',
         
+
+        // 设置页面相关
+        'settings.deployTitle': '部署设置',
+        'settings.skipGenerate': '跳过静态文件生成',
+        'settings.skipGenerateDescription': '启用后，部署时将跳过 hexo clean 和 hexo generate 步骤，直接推送源代码到仓库。适用于使用 GitHub Actions 等 CI/CD 工具自动构建的场景。',
+        'settings.skipGenerateHelp': '注意：启用此选项后，系统将推送 Hexo 源代码（包括 source、themes、_config.yml 等）到指定分支，而不是生成的静态文件。确保你的仓库配置了正确的 GitHub Actions 或其他 CI/CD 工具来自动构建和部署。',
+        'settings.skipGenerateEnabled': '跳过生成已启用',
+        'settings.skipGenerateDisabled': '跳过生成已禁用',
+
+        // 部署日志相关
+        'deploy.skip.generate.mode': '跳过生成模式已启用，推送源代码到仓库...',
+
+        'deploy.git.config.cleaned': '已清理配置文件中的敏感信息',
 
         'frontMatterAdder.input.string.placeholder': '请输入字符串值',
         'frontMatterAdder.input.boolean.placeholder': '请输入布尔值',
