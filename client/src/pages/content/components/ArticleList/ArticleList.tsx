@@ -6,6 +6,7 @@ import service from "@/utils/api"
 import useLocale from "@/hooks/useLocale"
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import { GlobalContext } from "@/context"
+import { openDesktopLink } from "@/utils/desktopUtils"
 import IconLink from "@/assets/link.svg"
 import Iconllipsis from "@/assets/ellipsis.svg"
 import defaultCover from "@/assets/defaultCover.png"
@@ -37,9 +38,28 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
     const { theme } = useContext(GlobalContext)
     const [postList, setPostList] = useState([])
     const [currentPage, setCurrentPage] = useState(1)
-    const [pageSize, setPageSize] = useState(isMobile ? 6 : 9) // 移动端使用较小的 pageSize
     const [total, setTotal] = useState(0)
     const navigate = useNavigate()
+    
+    // 封面显示设置 - 初始化时就从localStorage读取
+    const [showCover, setShowCover] = useState(() => {
+        const savedShowCover = localStorage.getItem('hexoProShowCover')
+        return savedShowCover !== null ? savedShowCover === 'true' : true
+    })
+    
+    // 根据封面显示设置和设备类型计算pageSize
+    const [pageSize, setPageSize] = useState(() => {
+        const savedShowCover = localStorage.getItem('hexoProShowCover')
+        const initialShowCover = savedShowCover !== null ? savedShowCover === 'true' : true
+        if (!initialShowCover) {
+            return isMobile ? 12 : 16
+        } else {
+            return isMobile ? 6 : 9
+        }
+    })
+    
+    // 添加依赖跟踪，避免重复请求
+    const [requestKey, setRequestKey] = useState(0)
 
     // 状态管理封面设置对话框
     const [coverModalVisible, setCoverModalVisible] = useState(false)
@@ -217,19 +237,22 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
         return btoa(unescape(encodeURIComponent(str)))
     }
 
+    // 当设备类型或封面显示设置变化时，更新pageSize
+    useEffect(() => {
+        const newPageSize = !showCover ? (isMobile ? 12 : 16) : (isMobile ? 6 : 9)
+        if (newPageSize !== pageSize) {
+            setPageSize(newPageSize)
+            // 重置到第一页
+            setCurrentPage(1)
+            // 触发数据重新加载
+            setRequestKey(prev => prev + 1)
+        }
+    }, [isMobile, showCover, pageSize])
+
+    // 统一的数据加载Effect，只依赖必要的参数
     useEffect(() => {
         queryPosts()
-    }, [])
-
-    useEffect(() => {
-        queryPosts()
-    }, [currentPage, pageSize])
-
-    useEffect(() => {
-        // console.log('isMobile', typeof (isMobile))
-        // console.log('pageSize', isMobile ? 6 : 9)
-        setPageSize(isMobile ? 6 : 9)
-    }, [isMobile])
+    }, [currentPage, pageSize, published, requestKey])
 
     return (
         <div style={{
@@ -239,50 +262,72 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
         }}>
             <Row gutter={[16, 16]}>
                 {postList.map(item => (
-                    <Col key={item._id} xs={24} sm={12} md={8} lg={8} xl={8}>
+                    <Col key={item._id} 
+                         xs={showCover ? 24 : 12} 
+                         sm={showCover ? 12 : 12} 
+                         md={showCover ? 8 : 6} 
+                         lg={showCover ? 8 : 6} 
+                         xl={showCover ? 8 : 6}>
                         <Card
                             hoverable
                             cover={
-                                item.cover ? (
-                                    <Image
-                                        src={item.cover}
-                                        alt={item.title}
-                                        style={{
-                                            height: 190,
-                                            objectFit: 'cover',
-                                            borderBottom: '1px solid #f0f0f0'
-                                        }}
-                                        preview={false}
-                                    />
-                                ) : (
-                                    <Image
-                                        src={defaultCover}
-                                        alt="cover"
-                                        style={{
-                                            height: 190,
-                                            objectFit: 'cover',
-                                            borderBottom: '1px solid #f0f0f0',
-                                            background: '#f5f5f5'
-                                        }}
-                                        preview={false}
-                                    />
-                                )
+                                showCover ? (
+                                    item.cover ? (
+                                        <Image
+                                            src={item.cover}
+                                            alt={item.title}
+                                            style={{
+                                                height: 190,
+                                                objectFit: 'cover',
+                                                borderBottom: '1px solid #f0f0f0'
+                                            }}
+                                            preview={false}
+                                        />
+                                    ) : (
+                                        <Image
+                                            src={defaultCover}
+                                            alt="cover"
+                                            style={{
+                                                height: 190,
+                                                objectFit: 'cover',
+                                                borderBottom: '1px solid #f0f0f0',
+                                                background: '#f5f5f5'
+                                            }}
+                                            preview={false}
+                                        />
+                                    )
+                                ) : null
                             }
                             style={{
                                 transition: 'all 0.3s',
                                 borderRadius: 8,
-                                position: 'relative'
+                                position: 'relative',
+                                // 当隐藏封面时，减少卡片的高度
+                                minHeight: showCover ? 'auto' : '120px'
+                            }}
+                            bodyStyle={{
+                                padding: showCover ? '24px' : '16px',
+                                paddingTop: showCover ? '24px' : '12px'
                             }}
                             onClick={() => !isPage ? navigate(`/post/${base64Encode(item.permalink)}`) : navigate(`/page/${base64Encode(item.permalink)}`)}
                         >
-                            <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
-                                <Space>
+                            <div style={{ 
+                                position: 'absolute', 
+                                top: showCover ? 8 : 2, 
+                                right: showCover ? 8 : 2, 
+                                zIndex: 1,
+                                display: 'flex',
+                                flexDirection: showCover ? 'row' : 'column',
+                                gap: showCover ? 0 : '2px'
+                            }}>
+                                <Space size={showCover ? 'small' : 4} direction={showCover ? 'horizontal' : 'vertical'}>
                                     {/* 添加发布/撤销发布按钮 */}
                                     {!isPage && (
                                         published ? (
-                                            <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
+                                            <span className={`${showCover ? styles['card-action-btn'] : styles['card-action-btn-compact']} ${theme === 'dark' ? 'dark' : ''}`}>
                                                 <Button
                                                     type="text"
+                                                    size={showCover ? 'middle' : 'small'}
                                                     style={{ color: 'rgba(0, 0, 0, 0.45)' }}
                                                     onClick={(e) => handleUnpublish(item, e)}
                                                     icon={<RollbackOutlined />}
@@ -290,9 +335,10 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                                 />
                                             </span>
                                         ) : (
-                                            <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
+                                            <span className={`${showCover ? styles['card-action-btn'] : styles['card-action-btn-compact']} ${theme === 'dark' ? 'dark' : ''}`}>
                                                 <Button
                                                     type="text"
+                                                    size={showCover ? 'middle' : 'small'}
                                                     style={{ color: 'rgba(0, 0, 0, 0.45)' }}
                                                     onClick={(e) => handlePublish(item, e)}
                                                     icon={<SendOutlined />}
@@ -303,13 +349,14 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                     )}
                                     {
                                         (!item.isDraft) && (
-                                            <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
+                                            <span className={`${showCover ? styles['card-action-btn'] : styles['card-action-btn-compact']} ${theme === 'dark' ? 'dark' : ''}`}>
                                                 <Button
                                                     type="text"
+                                                    size={showCover ? 'middle' : 'small'}
                                                     style={{ color: 'rgba(0, 0, 0, 0.45)' }}
                                                     onClick={(event) => {
                                                         event.stopPropagation()
-                                                        window.open(item.permalink, '_blank')
+                                                        openDesktopLink(item.permalink)
                                                     }}
                                                     icon={theme === 'dark' ? <IconLink /> : <IconLink />}
                                                 >
@@ -364,9 +411,10 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                             }}
                                             placement="bottomRight"
                                         >
-                                        <span className={`${styles['card-action-btn']} ${theme === 'dark' ? 'dark' : ''}`}>
+                                        <span className={`${showCover ? styles['card-action-btn'] : styles['card-action-btn-compact']} ${theme === 'dark' ? 'dark' : ''}`}>
                                                 <Button
                                                     type="text"
+                                                    size={showCover ? 'middle' : 'small'}
                                                     icon={theme === 'dark' ? <Iconllipsis /> : <Iconllipsis />}
                                                     onClick={(event) => {
                                                         event.stopPropagation()
@@ -379,13 +427,30 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                             </div>
 
                             <Card.Meta
-                                title={<Text ellipsis={{ tooltip: item.title }} style={{ maxWidth: 'calc(100% - 80px)' }}>{item.title}</Text>}
+                                title={
+                                    <Text 
+                                        ellipsis={{ tooltip: item.title }} 
+                                        style={{ 
+                                            maxWidth: showCover ? 'calc(100% - 80px)' : 'calc(100% - 50px)',
+                                            fontSize: showCover ? '16px' : '14px',
+                                            fontWeight: showCover ? 'normal' : '500',
+                                            lineHeight: showCover ? 'normal' : '1.3',
+                                            display: 'block'
+                                        }}
+                                    >
+                                        {item.title}
+                                    </Text>
+                                }
                                 description={
-                                    <div style={{ marginTop: 8 }}>
-                                        <div>{t['content.articleList.table.date']}: {item.date}</div>
-                                        <div style={{ marginTop: 4 }}>{t['content.articleList.table.updated']}: {item.updated}</div>
+                                    <div style={{ marginTop: showCover ? 8 : 4, paddingRight: showCover ? 0 : '20px' }}>
+                                        <div style={{ fontSize: showCover ? '14px' : '12px', color: 'rgba(0, 0, 0, 0.45)' }}>
+                                            {t['content.articleList.table.date']}: {item.date}
+                                        </div>
+                                        <div style={{ marginTop: showCover ? 4 : 2, fontSize: showCover ? '14px' : '12px', color: 'rgba(0, 0, 0, 0.45)' }}>
+                                            {t['content.articleList.table.updated']}: {item.updated}
+                                        </div>
                                         {showPublishStatus && (
-                                            <div style={{ marginTop: 4 }}>
+                                            <div style={{ marginTop: showCover ? 4 : 2, fontSize: showCover ? '14px' : '12px' }}>
                                                 {published ? t['content.status.published'] : t['content.status.draft']}
                                             </div>
                                         )}

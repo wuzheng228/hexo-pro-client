@@ -85,52 +85,52 @@ export default function PageLayout() {
         Map<string, { menuItem?: boolean; subMenu?: boolean }>
     >(new Map())
 
-    // 权限验证
-    useEffect(() => {
-        // 检查当前路径，如果是登录页面则不执行权限验证
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/login') || currentPath.includes('/pro/login')) {
-            console.log('[PageLayout]: 当前在登录页面，跳过权限验证');
-            setAuthChecking(false);
-            return;
-        }
+    // // 权限验证
+    // useEffect(() => {
+    //     // 检查当前路径，如果是登录页面则不执行权限验证
+    //     const currentPath = window.location.pathname;
+    //     if (currentPath.includes('/login') || currentPath.includes('/pro/login')) {
+    //         console.log('[PageLayout]: 当前在登录页面，跳过权限验证');
+    //         setAuthChecking(false);
+    //         return;
+    //     }
 
-        const checkAuth = async () => {
-            console.log('[PageLayout]: 开始权限验证...')
-            const token = localStorage.getItem('hexoProToken')
+    //     const checkAuth = async () => {
+    //         console.log('[PageLayout]: 开始权限验证...')
+    //         const token = localStorage.getItem('hexoProToken')
             
-            if (!token) {
-                console.log('[PageLayout]: 未找到token，重定向到登录页面')
-                window.location.href = '/pro/login?reason=session_expired'
-                return
-            }
+    //         if (!token) {
+    //             console.log('[PageLayout]: 未找到token，重定向到登录页面')
+    //             window.location.href = '/pro/login?reason=session_expired'
+    //             return
+    //         }
 
-            try {
-                console.log('[PageLayout]: 验证token有效性...')
-                const res = await service.get('/hexopro/api/userInfo')
+    //         try {
+    //             console.log('[PageLayout]: 验证token有效性...')
+    //             const res = await service.get('/hexopro/api/userInfo')
                 
-                if (res.data && res.data.code !== 401) {
-                    console.log('[PageLayout]: Token验证成功，用户已认证')
-                    setIsAuthenticated(true)
-                } else {
-                    console.log('[PageLayout]: Token验证失败，清除token并重定向')
-                    localStorage.removeItem('hexoProToken')
-                    window.location.href = '/pro/login?reason=token_invalid'
-                    return
-                }
-            } catch (error) {
-                console.error('[PageLayout]: Token验证出错:', error)
-                console.log('[PageLayout]: 清除token并重定向到登录页面')
-                localStorage.removeItem('hexoProToken')
-                window.location.href = '/pro/login?reason=token_error'
-                return
-            } finally {
-                setAuthChecking(false)
-            }
-        }
+    //             if (res.data && res.data.code !== 401) {
+    //                 console.log('[PageLayout]: Token验证成功，用户已认证')
+    //                 setIsAuthenticated(true)
+    //             } else {
+    //                 console.log('[PageLayout]: Token验证失败，清除token并重定向')
+    //                 localStorage.removeItem('hexoProToken')
+    //                 window.location.href = '/pro/login?reason=token_invalid'
+    //                 return
+    //             }
+    //         } catch (error) {
+    //             console.error('[PageLayout]: Token验证出错:', error)
+    //             console.log('[PageLayout]: 清除token并重定向到登录页面')
+    //             localStorage.removeItem('hexoProToken')
+    //             window.location.href = '/pro/login?reason=token_error'
+    //             return
+    //         } finally {
+    //             setAuthChecking(false)
+    //         }
+    //     }
 
-        checkAuth()
-    }, [])
+    //     checkAuth()
+    // }, [])
 
     function reanderRoutes() {
         return function travel(_routes: IRoute[], level = 1): MenuItem[] {
@@ -210,25 +210,25 @@ export default function PageLayout() {
     }, [isMobile])
 
     // 如果正在验证权限，显示加载状态
-    if (authChecking) {
-        return (
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '100vh',
-                flexDirection: 'column'
-            }}>
-                <Spin size="large" />
-                <div style={{ marginTop: 16 }}>正在验证用户权限...</div>
-            </div>
-        )
-    }
+    // if (authChecking) {
+    //     return (
+    //         <div style={{ 
+    //             display: 'flex', 
+    //             justifyContent: 'center', 
+    //             alignItems: 'center', 
+    //             height: '100vh',
+    //             flexDirection: 'column'
+    //         }}>
+    //             <Spin size="large" />
+    //             <div style={{ marginTop: 16 }}>正在验证用户权限...</div>
+    //         </div>
+    //     )
+    // }
 
     // 如果未认证，不渲染任何内容（已经重定向到登录页面）
-    if (!isAuthenticated) {
-        return null
-    }
+    // if (!isAuthenticated) {
+    //     return null
+    // }
 
     return (
         <Layout className={styles.layout}>

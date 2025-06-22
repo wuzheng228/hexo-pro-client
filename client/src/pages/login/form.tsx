@@ -1,5 +1,5 @@
 import { LockOutlined, UserOutlined } from "@ant-design/icons"
-import { Button, Form, Input, message, Alert } from "antd"
+import { Button, Form, Input, message, Alert, Card, Space } from "antd"
 import React, { useRef, useState, useEffect, useCallback } from "react"
 import styles from './style/index.module.less'
 import useLocale from "@/hooks/useLocale"
@@ -60,38 +60,103 @@ export default function LoginForm() {
             });
     }, [navigate]); // useCallback 依赖项包含navigate
 
+    // 检查是否是首次使用
+    const checkFirstUse = useCallback(async () => {
+        try {
+            console.log('[Login Form]: 检查是否首次使用');
+            const res = await service.get('/hexopro/api/settings/check-first-use');
+            if (res.data && res.data.code === 0) {
+                const { isFirstUse, hasTemporaryUser } = res.data.data;
+                console.log('[Login Form]: 首次使用检查结果:', { isFirstUse, hasTemporaryUser });
+                
+                if (isFirstUse) {
+                    // 如果是首次使用（包括只有临时用户的情况），显示选择界面
+                    setPageStatus('first-use');
+                } else {
+                    // 不是首次使用，有正式用户，检查是否有token
+                    const token = localStorage.getItem('hexoProToken');
+                    if (token) {
+                        validateTokenAndProceed(token);
+                    } else {
+                        setPageStatus('login');
+                    }
+                }
+            } else {
+                console.log('[Login Form]: 检查首次使用失败，显示登录表单');
+                setPageStatus('login');
+            }
+        } catch (error) {
+            console.error('[Login Form]: 检查首次使用时发生错误:', error);
+            setPageStatus('login');
+        }
+    }, [validateTokenAndProceed]);
+
     // 主要的副作用钩子，处理页面加载时的逻辑
     useEffect(() => {
         console.log('[Login Form Effect]: 开始执行 useEffect');
-        // 只用 localStorage 检查 token
+        
         if (window.location.pathname.includes('/pro/login')) {
             const urlParams = new URLSearchParams(window.location.search);
             const reason = urlParams.get('reason');
             if (reason) {
-                console.log('[Login Form Effect Browser]: 检测到reason参数，直接显示登录表单:', reason);
-                setPageStatus('login');
+                console.log('[Login Form Effect Browser]: 检测到reason参数，检查是否首次使用:', reason);
+                checkFirstUse();
                 return;
-            }
-            const tokenFromStorage = localStorage.getItem('hexoProToken');
-            if (tokenFromStorage) {
-                console.log('[Login Form Effect Browser]: 在登录页，检测到Storage Token，尝试验证');
-                validateTokenAndProceed(tokenFromStorage);
-                return;
-            }
-            console.log('[Login Form Effect Browser]: 在登录页，无reason且无Storage Token，显示登录表单');
-            setPageStatus('login');
-        } else {
-            // 对于非登录页（例如直接访问 /pro 等）
-            const tokenForProtectedRoute = localStorage.getItem('hexoProToken');
-            if (tokenForProtectedRoute) {
-                console.log('[Login Form Effect Browser]: 非登录页，检测到Token，尝试验证');
-                validateTokenAndProceed(tokenForProtectedRoute);
-            } else {
-                console.log('[Login Form Effect Browser]: 非登录页，没有Token，需要登录，跳转到登录页');
-                window.location.href = '/pro/login?reason=no_token_on_protected_route_browser';
             }
         }
-    }, [validateTokenAndProceed]); // validateTokenAndProceed 作为依赖项
+        
+        // 对于其他情况，都进行首次使用检查
+        checkFirstUse();
+    }, [checkFirstUse]); // checkFirstUse 作为依赖项
+
+    // 处理首次使用 - 选择现在设置
+    const handleSetupNow = () => {
+        console.log('[Login Form]: 用户选择现在设置账号密码');
+        
+        // 清除可能存在的临时或无效 token，避免在路由跳转时触发 userInfo API 调用
+        localStorage.removeItem('hexoProToken');
+        
+        // 使用 window.location.href 确保完整的页面重新加载
+        // 这样可以重新执行首次使用检查逻辑
+        window.location.href = '/pro/settings';
+    };
+
+    // 处理首次使用 - 稍后设置（免密登录）
+    const handleSetupLater = async () => {
+        console.log('[Login Form]: 用户选择稍后设置，进行免密登录');
+        setLoading(true);
+        
+        try {
+            // 调用一个特殊的API来处理免密登录
+            const res = await service.post('/hexopro/api/settings/skip-setup');
+            if (res.data && res.data.code === 0) {
+                console.log('[Login Form]: 免密登录成功');
+                // 保存临时token
+                if (res.data.data && res.data.data.token) {
+                    localStorage.setItem('hexoProToken', res.data.data.token);
+                }
+                message.success(t['settings.setupLaterMessage']);
+                
+                // 跳转到主页
+                setTimeout(() => {
+                    if (typeof navigate === 'function') {
+                        navigate('/pro');
+                    } else {
+                        window.location.href = '/pro';
+                    }
+                }, 1000);
+            } else {
+                message.error(res.data?.msg || '操作失败');
+                setPageStatus('login');
+            }
+        } catch (error) {
+            console.error('[Login Form]: 免密登录失败:', error);
+            message.error('操作失败，请重试');
+            setPageStatus('login');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // 处理登录成功
     function afterLoginSuccess(params, token) {
@@ -142,7 +207,7 @@ export default function LoginForm() {
         service.post('/hexopro/api/login', params)
             .then((res) => {
                 const { code, msg, token } = res.data;
-                // console.log('[Login Form]: 登录成功，处理token', JSON.stringify(res));
+                console.log('[Login Form]: 登录成功，处理token', JSON.stringify(res));
                 if (code === 0 || code === -2) {
                     afterLoginSuccess(params, token);
                 } else {
@@ -174,6 +239,45 @@ export default function LoginForm() {
             <div className={styles['login-form-wrapper']}>
                 <div className={styles['login-form-title']}>{t['login.form.title']}</div>
                 <div className={styles['login-form-sub-title']}>{t['settings.system.check.status']}</div>
+            </div>
+        );
+    }
+
+    // 如果是首次使用，显示选择界面
+    if (pageStatus === 'first-use') {
+        return (
+            <div className={styles['login-form-wrapper']}>
+                <div className={styles['login-form-title']}>{t['settings.welcomeTitle']}</div>
+                <div className={styles['login-form-sub-title']}>{t['settings.welcomeSubtitle']}</div>
+                
+                <Alert
+                    message={t['settings.firstUsePrompt']}
+                    description={t['settings.firstUseDescription']}
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 24 }}
+                />
+                
+                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                    <Button 
+                        type="primary" 
+                        size="large" 
+                        onClick={handleSetupNow}
+                        loading={loading}
+                        style={{ width: '100%' }}
+                    >
+                        {t['settings.setupNow']}
+                    </Button>
+                    
+                    <Button 
+                        size="large" 
+                        onClick={handleSetupLater}
+                        loading={loading}
+                        style={{ width: '100%' }}
+                    >
+                        {t['settings.setupLater']}
+                    </Button>
+                </Space>
             </div>
         );
     }

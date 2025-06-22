@@ -17,7 +17,9 @@ import { GlobalContext } from '@/context'
 
 type Post = {
     isDraft: boolean
-    source: string
+    source: string | null
+    permalink: string | null
+    title: string | null
 }
 
 function Post() {
@@ -383,7 +385,7 @@ function Post() {
                     <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
                     <EditorHeader
                         isPage={false}
-                        permalink={post.permalink}
+                        permalink={post.permalink} // 桌面端使用需要替换域名为localhost:4000
                         isDraft={post.isDraft}
                         handlePublish={publish}
                         handleUnpublish={unpublish}

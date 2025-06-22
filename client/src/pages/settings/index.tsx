@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Card, Form, Input, Button, Upload, message, Spin, Typography, Alert, Modal, Avatar, Space, Pagination } from 'antd'
-import { UploadOutlined, UserOutlined, LockOutlined, SaveOutlined, PictureOutlined } from '@ant-design/icons'
+import { Card, Form, Input, Button, Upload, message, Spin, Typography, Alert, Modal, Avatar, Space, Pagination, Switch, Divider, Select } from 'antd'
+import { UploadOutlined, UserOutlined, LockOutlined, SaveOutlined, PictureOutlined, LinkOutlined, GlobalOutlined, EditOutlined, RocketOutlined } from '@ant-design/icons'
 import styles from './style/index.module.less'
 import useLocale from '../../hooks/useLocale'
 import service from '@/utils/api'
 import { GlobalContext } from '@/context'
 import { useDispatch } from 'react-redux'
+import { updateLinkRedirectSettings, getLinkRedirectSettings } from '@/utils/desktopUtils'
 import defaultAvatar from '../../assets/defaultAvatar2.png'
-const { Title } = Typography
+const { Title, Text } = Typography
+const { Option } = Select
 
 const SettingsPage: React.FC = () => {
   const t = useLocale()
@@ -19,6 +21,20 @@ const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useContext(GlobalContext)
   const dispatch = useDispatch()
   const [isFirstUse, setIsFirstUse] = useState(false)
+  
+  // 链接跳转设置相关状态
+  const [linkRedirectEnabled, setLinkRedirectEnabled] = useState(false)
+  const [customDomain, setCustomDomain] = useState('http://localhost:4000')
+  
+  // 编辑器模式设置相关状态
+  const [editorMode, setEditorMode] = useState('ir')
+  
+  // 封面显示设置相关状态
+  const [showCoverEnabled, setShowCoverEnabled] = useState(true)
+  
+  // 部署设置相关状态
+  const [skipGenerateEnabled, setSkipGenerateEnabled] = useState(false)
+  
   // 新增状态
   const [imagePickerVisible, setImagePickerVisible] = useState(false)
   const [imageList, setImageList] = useState([])
@@ -58,6 +74,37 @@ const SettingsPage: React.FC = () => {
     checkFirstUse()
   }, [])
 
+  // 初始化时从localStorage读取链接跳转设置
+  useEffect(() => {
+    const settings = getLinkRedirectSettings()
+    setLinkRedirectEnabled(settings.enabled)
+    setCustomDomain(settings.domain)
+  }, [])
+
+  // 初始化时从localStorage读取编辑器模式设置
+  useEffect(() => {
+    const savedMode = localStorage.getItem('hexoProEditorMode')
+    if (savedMode) {
+      setEditorMode(savedMode)
+    }
+  }, [])
+
+  // 初始化时从localStorage读取封面显示设置
+  useEffect(() => {
+    const savedShowCover = localStorage.getItem('hexoProShowCover')
+    if (savedShowCover !== null) {
+      setShowCoverEnabled(savedShowCover === 'true')
+    }
+  }, [])
+
+  // 初始化时从localStorage读取部署设置
+  useEffect(() => {
+    const savedSkipGenerate = localStorage.getItem('hexoProSkipGenerate')
+    if (savedSkipGenerate !== null) {
+      setSkipGenerateEnabled(savedSkipGenerate === 'true')
+    }
+  }, [])
+
   // 获取当前设置
   const fetchSettings = async () => {
     try {
@@ -77,6 +124,53 @@ const SettingsPage: React.FC = () => {
     } finally {
       setFetchLoading(false)
     }
+  }
+
+  // 处理链接重定向开关变化
+  const handleLinkRedirectChange = (checked: boolean) => {
+    setLinkRedirectEnabled(checked)
+    updateLinkRedirectSettings(checked, customDomain)
+    message.success(checked ? t['settings.linkRedirectEnabled'] : t['settings.linkRedirectDisabled'])
+  }
+
+  // 处理自定义域名变化
+  const handleCustomDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setCustomDomain(value)
+  }
+
+  // 处理自定义域名失去焦点时保存
+  const handleCustomDomainBlur = () => {
+    // 验证域名格式
+    try {
+      new URL(customDomain)
+      updateLinkRedirectSettings(linkRedirectEnabled, customDomain)
+      message.success(t['settings.customDomainSaved'])
+    } catch (error) {
+      message.error(t['settings.customDomainFormatError'])
+      setCustomDomain('http://localhost:4000') // 重置为默认值
+    }
+  }
+
+  // 处理编辑器模式变化
+  const handleEditorModeChange = (mode: string) => {
+    setEditorMode(mode)
+    localStorage.setItem('hexoProEditorMode', mode)
+    message.success(t['settings.editorModeSaved'])
+  }
+
+  // 处理封面显示变化
+  const handleShowCoverChange = (checked: boolean) => {
+    setShowCoverEnabled(checked)
+    localStorage.setItem('hexoProShowCover', checked.toString())
+    message.success(checked ? t['settings.showCoverEnabled'] : t['settings.showCoverDisabled'])
+  }
+
+  // 处理跳过生成变化
+  const handleSkipGenerateChange = (checked: boolean) => {
+    setSkipGenerateEnabled(checked)
+    localStorage.setItem('hexoProSkipGenerate', checked.toString())
+    message.success(checked ? t['settings.skipGenerateEnabled'] : t['settings.skipGenerateDisabled'])
   }
 
   // 注册新用户（首次使用）
@@ -139,18 +233,25 @@ const SettingsPage: React.FC = () => {
       if (res.data.code === 0) {
         message.success(t['settings.saveSuccess'])
         
+        // 如果服务器返回了新的 token（用户名更新时），需要更新本地存储
+        if (res.data.data && res.data.data.token) {
+          localStorage.setItem('hexoProToken', res.data.data.token)
+          console.log('[Settings]: 用户名已更新，保存新的token')
+        }
+        
         // 更新全局状态中的菜单折叠状态和头像
         dispatch({
           type: 'update-menu-collapsed',
           payload: { menuCollapsed }
         })
         
-        // 更新用户信息（包括头像）
+        // 更新用户信息（包括头像和可能的新用户名）
+        const finalUsername = (res.data.data && res.data.data.username) ? res.data.data.username : username
         dispatch({
           type: 'update-userInfo',
           payload: { 
             userInfo: { 
-              username: username,
+              username: finalUsername,
               avatar: avatarUrl
             } 
           }
@@ -170,6 +271,12 @@ const SettingsPage: React.FC = () => {
             localStorage.removeItem('hexoProToken')
             window.location.href = '/pro/login'
           }, 2000)
+        } else if (res.data.data && res.data.data.token) {
+          // 如果只是更新了用户名（返回了新token但没有密码更新），刷新页面以确保状态同步
+          message.info(t['settings.usernameUpdated'])
+          setTimeout(() => {
+            window.location.reload()
+          }, 1000)
         }
       } else {
         message.error(res.data.msg || t['settings.saveError'])
@@ -328,7 +435,7 @@ const SettingsPage: React.FC = () => {
               name="username"
               rules={[{ required: true, message: t['settings.usernameRequired'] }]}
             >
-              <Input prefix={<UserOutlined />} placeholder="请输入用户名" />
+              <Input prefix={<UserOutlined />} placeholder={t['settings.usernamePlaceholder']} />
             </Form.Item>
             
             <Form.Item
@@ -348,7 +455,7 @@ const SettingsPage: React.FC = () => {
                 }
               ]}
             >
-              <Input.Password prefix={<LockOutlined />} placeholder="请输入密码" />
+              <Input.Password prefix={<LockOutlined />} placeholder={t['settings.passwordPlaceholder']} />
             </Form.Item>
             
             <Form.Item
@@ -372,8 +479,9 @@ const SettingsPage: React.FC = () => {
                 }),
               ]}
             >
-              <Input.Password prefix={<LockOutlined />} placeholder="请确认密码" />
+              <Input.Password prefix={<LockOutlined />} placeholder={t['settings.confirmPasswordPlaceholder']} />
             </Form.Item>
+            
             <Form.Item>
               <Button 
                 type="primary" 
@@ -382,10 +490,164 @@ const SettingsPage: React.FC = () => {
                 icon={<SaveOutlined />}
                 style={{ width: '100%' }}
               >
-                {isFirstUse ? t['settings.createAccount'] : t['settings.saveSettingsButton']}
+                {isFirstUse ? t['settings.createAccount'] : t['settings.saveAccountSettings']}
               </Button>
             </Form.Item>
           </Form>
+
+          {/* 链接跳转设置区域 - 独立于表单，实时保存 */}
+          {!isFirstUse && (
+            <Card style={{ marginTop: 24 }}>
+              <Divider orientation="left">
+                <LinkOutlined /> {t['settings.linkRedirectTitle']}
+              </Divider>
+              
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div>
+                    <Text strong>{t['settings.enableLinkRedirect']}</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {t['settings.linkRedirectDescription']}
+                    </Text>
+                  </div>
+                  <Switch
+                    checked={linkRedirectEnabled}
+                    onChange={handleLinkRedirectChange}
+                    checkedChildren={t['settings.enabled']}
+                    unCheckedChildren={t['settings.disabled']}
+                  />
+                </div>
+              </div>
+              
+              {linkRedirectEnabled && (
+                <div style={{ marginLeft: 16, marginTop: 16 }}>
+                  <div style={{ marginBottom: 8 }}>
+                    <Text strong>{t['settings.customDomain']}</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {t['settings.customDomainDescription']}
+                    </Text>
+                  </div>
+                  <Input
+                    prefix={<GlobalOutlined />}
+                    value={customDomain}
+                    onChange={handleCustomDomainChange}
+                    onBlur={handleCustomDomainBlur}
+                    placeholder="http://localhost:4000"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              )}
+              
+              <div style={{ marginTop: 16, padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  {t['settings.linkRedirectAutoSave']}
+                </Text>
+              </div>
+            </Card>
+          )}
+
+          {/* 编辑器设置区域 */}
+          {!isFirstUse && (
+            <Card style={{ marginTop: 24 }}>
+              <Divider orientation="left">
+                <EditOutlined /> {t['settings.editorTitle']}
+              </Divider>
+              
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ marginBottom: 8 }}>
+                  <Text strong>{t['settings.editorMode']}</Text>
+                  <br />
+                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                    {t['settings.editorModeDescription']}
+                  </Text>
+                </div>
+                <Select
+                  style={{ width: '100%' }}
+                  value={editorMode}
+                  onChange={handleEditorModeChange}
+                  placeholder={t['settings.editorModeSelect']}
+                >
+                  <Option value="ir">{t['settings.editorModeIR']}</Option>
+                  <Option value="wysiwyg">{t['settings.editorModeWYSIWYG']}</Option>
+                  <Option value="sv">{t['settings.editorModeSV']}</Option>
+                </Select>
+              </div>
+              
+              <div style={{ padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <span dangerouslySetInnerHTML={{ __html: t['settings.editorModeHelp'] }} />
+                </Text>
+              </div>
+            </Card>
+          )}
+
+          {/* 显示设置区域 */}
+          {!isFirstUse && (
+            <Card style={{ marginTop: 24 }}>
+              <Divider orientation="left">
+                <PictureOutlined /> {t['settings.displayTitle']}
+              </Divider>
+              
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div>
+                    <Text strong>{t['settings.showCover']}</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {t['settings.showCoverDescription']}
+                    </Text>
+                  </div>
+                  <Switch
+                    checked={showCoverEnabled}
+                    onChange={handleShowCoverChange}
+                    checkedChildren={t['settings.show']}
+                    unCheckedChildren={t['settings.hide']}
+                  />
+                </div>
+              </div>
+              
+              <div style={{ padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  {t['settings.showCoverHelp']}
+                </Text>
+              </div>
+            </Card>
+          )}
+
+          {/* 部署设置区域 */}
+          {!isFirstUse && (
+            <Card style={{ marginTop: 24 }}>
+              <Divider orientation="left">
+                <RocketOutlined /> {t['settings.deployTitle']}
+              </Divider>
+              
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div>
+                    <Text strong>{t['settings.skipGenerate']}</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {t['settings.skipGenerateDescription']}
+                    </Text>
+                  </div>
+                  <Switch
+                    checked={skipGenerateEnabled}
+                    onChange={handleSkipGenerateChange}
+                    checkedChildren={t['settings.enabled']}
+                    unCheckedChildren={t['settings.disabled']}
+                  />
+                </div>
+              </div>
+              
+              <div style={{ padding: '12px 16px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  {t['settings.skipGenerateHelp']}
+                </Text>
+              </div>
+            </Card>
+          )}
         </Card>
       </Spin>
 

@@ -69,7 +69,13 @@ const DeployPage: React.FC = () => {
   const executeDeploy = async () => {
     try {
       setDeployLoading(true)
-      const res = await service.post('/hexopro/api/deploy/execute')
+      
+      // 从localStorage获取跳过生成的设置
+      const skipGenerate = localStorage.getItem('hexoProSkipGenerate') === 'true'
+      
+      const res = await service.post('/hexopro/api/deploy/execute', {
+        skipGenerate
+      })
       if (res.data.isDeploying) {
         message.success(t['deploy.status.deploySuccess'])
         startPolling()

@@ -261,7 +261,7 @@ const i18n = {
         'deploy.help.step1': '1. Fill out the form above and save it (the system will automatically update _config.yml).',
         'deploy.help.step2': '2. Configure the GitHub repository and access token (if necessary).',
         'deploy.help.step3': '3. Click the "Execute Deployment" button.',
-        'deploy.help.note': 'Note: The system uses the built-in Git deployment function, so you don’t need to install any additional plugins.',
+        'deploy.help.note': "Note: The system uses the built-in Git deployment function, so you don't need to install any additional plugins.'",
         'deploy.config.saveSuccess': 'Config saved successfully, _config.yml updated',
         'deploy.config.saveFailed': 'Failed to save config',
         'deploy.config.fetchFailed': 'Failed to fetch deploy config',
@@ -383,7 +383,81 @@ const i18n = {
         'settings.selectAvatarTitle': 'Select Avatar',
         'settings.noImagesPrompt': 'No images yet, please upload images to the gallery first',
         'settings.setupLaterMessage': 'You can set up your account and password later',
+
+        // Link redirect settings
+        'settings.linkRedirectTitle': 'Link Redirect Settings',
+        'settings.enableLinkRedirect': 'Enable Link Redirect',
+        'settings.linkRedirectDescription': 'When enabled, preview links will redirect to custom domain instead of original link',
+        'settings.enabled': 'Enabled',
+        'settings.disabled': 'Disabled',
+        'settings.customDomain': 'Custom Domain',
+        'settings.customDomainDescription': 'Set the target domain for link redirect (e.g., http://localhost:4000)',
+        'settings.linkRedirectAutoSave': '💡 Link redirect settings are automatically saved, no need to click save button',
         
+        // Editor settings
+        'settings.editorTitle': 'Editor Settings',
+        'settings.editorMode': 'Editor Mode',
+        'settings.editorModeDescription': 'Choose your preferred editor mode, takes effect when re-entering the editor',
+        'settings.editorModeSelect': 'Select editor mode',
+        'settings.editorModeIR': 'Instant Rendering Mode (Recommended)',
+        'settings.editorModeWYSIWYG': 'WYSIWYG Mode',
+        'settings.editorModeSV': 'Split View Mode',
+        'settings.editorModeHelp': '💡 Editor mode description:<br />• Instant Rendering Mode: Edit and preview at the same time, balances editing experience and preview effect<br />• WYSIWYG Mode: Word-like editing experience, edit directly on rendered results<br />• Split View Mode: Edit Markdown source on the left, real-time preview on the right',
+        
+        // Display settings
+        'settings.displayTitle': 'Display Settings',
+        'settings.showCover': 'Show Article Cover',
+        'settings.showCoverDescription': 'When disabled, article list will not show cover images, allowing more articles to be displayed on the same page',
+        'settings.show': 'Show',
+        'settings.hide': 'Hide',
+        'settings.showCoverHelp': '💡 After hiding covers, the article list will be displayed in compact mode, allowing you to browse more articles in the same space',
+        
+        // Account settings
+        'settings.saveAccountSettings': 'Save Account Settings',
+        
+        // Success/Error messages
+        'settings.linkRedirectEnabled': 'Link redirect enabled',
+        'settings.linkRedirectDisabled': 'Link redirect disabled',
+        'settings.customDomainSaved': 'Custom domain saved',
+        'settings.customDomainFormatError': 'Invalid domain format, please enter a complete URL (e.g., http://localhost:4000)',
+        'settings.editorModeSaved': 'Editor mode saved, takes effect when re-entering the editor',
+        'settings.showCoverEnabled': 'Cover display enabled',
+        'settings.showCoverDisabled': 'Article covers hidden, list is more compact',
+        'settings.usernameUpdated': 'Username updated, refreshing page...',
+
+        // 设置页面相关  
+        'settings.deployTitle': 'Deploy Settings',
+        'settings.skipGenerate': 'Skip Static File Generation',
+        'settings.skipGenerateDescription': 'When enabled, deployment will skip hexo clean and hexo generate steps, directly pushing source code to repository. Suitable for scenarios using GitHub Actions or other CI/CD tools for automatic building.',
+        'settings.skipGenerateHelp': 'Note: When this option is enabled, the system will push Hexo source code (including source, themes, _config.yml, etc.) to the specified branch instead of generated static files. Make sure your repository is configured with proper GitHub Actions or other CI/CD tools for automatic building and deployment.',
+        'settings.skipGenerateEnabled': 'Skip generation enabled',
+        'settings.skipGenerateDisabled': 'Skip generation disabled',
+
+        // 部署日志相关
+        'deploy.skip.generate.mode': 'Skip generation mode enabled, pushing source code to repository...',
+
+        
+        'frontMatterAdder.input.string.placeholder': 'please input string value',
+        'frontMatterAdder.input.boolean.placeholder': 'please input boolean value',
+        'frontMatterAdder.input.number.placeholder': 'please input number value',
+
+        'frontMatterAdder.input.string.value': 'string',
+        'frontMatterAdder.input.boolean.value': 'boolean',
+        'frontMatterAdder.input.number.value': 'number',
+
+        'frontMatterAdder.field.key.name': 'key name',
+
+        'frontMatterAdder.title.addNewFrontMatter': 'Add new Front Matter',
+        'frontMatterAdder.title.selectExistingFrontMatter': 'Select existing Front Matter',
+        'frontMatterAdder.button.addFrontMatter': 'Add Front Matter',
+
+        'pageSettings.addCategory': '+ Add Category',
+        'pageSettings.addTag': '+ Add Tag',
+        'pageSettings.addFrontMatter': '+ Custom Front Matter',
+        'pageSettings.articleSettings': 'Article Settings',
+        'pageSettings.input.path.placeholder': 'Please input page path',
+        'pageSettings.input.path.error': 'The configured page path is illegal, please check!',
+        'frontMatterAdder.field.key.placeholder': 'Please input key name, like: title, author, draft',
     },
     'zh-CN': {
         'universal.create': '创建',
@@ -720,6 +794,8 @@ const i18n = {
         'deploy.cleanup.failed': '清理部署目录失败',
         'deploy.cleanup.success': '部署目录已清理成功',
 
+        'deploy.git.config.cleaned': 'Sensitive information cleaned from config file',
+
         'settings.fetchError': '获取设置失败',
         'settings.saveError': '保存设置失败',
         'settings.passwordChangedRelogin': '密码已修改，需要重新登录',
@@ -791,8 +867,83 @@ const i18n = {
         'settings.firstUsePasswordRequired': '首次使用必须设置密码',
         'settings.passwordLengthError': '密码长度不能少于6位',
         'settings.setupLaterMessage': '您可以稍后再设置账号密码',
-        // --- 结束新增 ---
 
+        // Link redirect settings
+        'settings.linkRedirectTitle': '链接跳转设置',
+        'settings.enableLinkRedirect': '启用链接重定向',
+        'settings.linkRedirectDescription': '开启后，预览链接将跳转到自定义域名而不是原始链接',
+        'settings.enabled': '开启',
+        'settings.disabled': '关闭',
+        'settings.customDomain': '自定义域名',
+        'settings.customDomainDescription': '设置链接重定向的目标域名（如：http://localhost:4000）',
+        'settings.linkRedirectAutoSave': '💡 链接跳转设置会自动保存，无需点击保存按钮',
+        
+        // Editor settings
+        'settings.editorTitle': '编辑器设置',
+        'settings.editorMode': '编辑器模式',
+        'settings.editorModeDescription': '选择你喜欢的编辑器模式，设置后重新进入编辑器生效',
+        'settings.editorModeSelect': '选择编辑器模式',
+        'settings.editorModeIR': '即时渲染模式（推荐）',
+        'settings.editorModeWYSIWYG': '所见即所得模式',
+        'settings.editorModeSV': '分屏预览模式',
+        'settings.editorModeHelp': '💡 编辑器模式说明：<br />• 即时渲染模式：边编辑边预览，平衡了编辑体验和预览效果<br />• 所见即所得模式：像Word一样的编辑体验，直接在渲染结果上编辑<br />• 分屏预览模式：左侧编辑Markdown源码，右侧实时预览渲染结果',
+        
+        // Display settings
+        'settings.displayTitle': '显示设置',
+        'settings.showCover': '显示文章封面',
+        'settings.showCoverDescription': '关闭后文章列表将不显示封面图片，能在同一页面显示更多文章',
+        'settings.show': '显示',
+        'settings.hide': '隐藏',
+        'settings.showCoverHelp': '💡 隐藏封面后，文章列表将以紧凑模式显示，可以在相同空间内浏览更多文章',
+        
+        // Account settings
+        'settings.saveAccountSettings': '保存账户设置',
+        
+        // Success/Error messages
+        'settings.linkRedirectEnabled': '链接重定向已启用',
+        'settings.linkRedirectDisabled': '链接重定向已禁用',
+        'settings.customDomainSaved': '自定义域名已保存',
+        'settings.customDomainFormatError': '域名格式不正确，请输入完整的URL（如：http://localhost:4000）',
+        'settings.editorModeSaved': '编辑器模式已保存，重新进入编辑器后生效',
+        'settings.showCoverEnabled': '已启用封面显示',
+        'settings.showCoverDisabled': '已隐藏文章封面，列表更紧凑',
+        'settings.usernameUpdated': '用户名已更新，正在刷新页面...',
+        
+
+        // 设置页面相关
+        'settings.deployTitle': '部署设置',
+        'settings.skipGenerate': '跳过静态文件生成',
+        'settings.skipGenerateDescription': '启用后，部署时将跳过 hexo clean 和 hexo generate 步骤，直接推送源代码到仓库。适用于使用 GitHub Actions 等 CI/CD 工具自动构建的场景。',
+        'settings.skipGenerateHelp': '注意：启用此选项后，系统将推送 Hexo 源代码（包括 source、themes、_config.yml 等）到指定分支，而不是生成的静态文件。确保你的仓库配置了正确的 GitHub Actions 或其他 CI/CD 工具来自动构建和部署。',
+        'settings.skipGenerateEnabled': '跳过生成已启用',
+        'settings.skipGenerateDisabled': '跳过生成已禁用',
+
+        // 部署日志相关
+        'deploy.skip.generate.mode': '跳过生成模式已启用，推送源代码到仓库...',
+
+        'deploy.git.config.cleaned': '已清理配置文件中的敏感信息',
+
+        'frontMatterAdder.input.string.placeholder': '请输入字符串值',
+        'frontMatterAdder.input.boolean.placeholder': '请输入布尔值',
+        'frontMatterAdder.input.number.placeholder': '请输入数字',
+
+        'frontMatterAdder.input.string.value': '字符串',
+        'frontMatterAdder.input.boolean.value': '布尔值',
+        'frontMatterAdder.input.number.value': '数字',
+
+        'frontMatterAdder.field.key.name': '键名',
+
+        'frontMatterAdder.title.addNewFrontMatter': '添加新的 Front Matter',
+        'frontMatterAdder.title.selectExistingFrontMatter': '选择现有的 Front Matter',
+        'frontMatterAdder.button.addFrontMatter': '添加 Front Matter',
+
+        'pageSettings.addCategory': '+添加分类',
+        'pageSettings.addTag': '+添加标签',
+        'pageSettings.addFrontMatter': '+ 自定义 Front Matter',
+        'pageSettings.articleSettings': '文章属性',
+        'pageSettings.input.path.placeholder': '请输入页面存放路径',
+        'pageSettings.input.path.error': '配置的页面路径非法请检查！',
+        'frontMatterAdder.field.key.placeholder': '请输入键名，如: title, author, draft',
     }
 }
 
