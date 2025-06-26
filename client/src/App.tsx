@@ -10,6 +10,7 @@ import { ConfigProvider, theme as antTheme, message } from "antd"
 
 import enUS from 'antd/locale/en_US'
 import zhCN from 'antd/locale/zh_CN'
+import frFR from 'antd/locale/fr_FR'
 import { GlobalContext } from "./context"
 import service from "./utils/api"
 import checkLogin from "./utils/checkLogin"
@@ -30,8 +31,10 @@ function App() {
                 return zhCN
             case 'en-US':
                 return enUS
+            case 'fr-FR':
+                return frFR
             default:
-                return zhCN
+                return frFR
         }
     }
 
