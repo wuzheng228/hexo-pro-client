@@ -256,9 +256,9 @@ export default function PageLayout() {
                 <Layout
                     className={styles['layout-content']}
                     style={{
-                        marginLeft: isMobile ? 0 : (collapsed ? 80 : 220),
+                        marginLeft: isMobile ? 0 : (collapsed ? 80 : 120),
                         paddingRight: isMobile ? 0 : (collapsed ? 30 : 15),
-                        paddingTop: isMobile ? 0 : 15,
+                        paddingTop: isMobile ? 0 : 30,
                         paddingBottom: isMobile ? 0 : 15
                     }}
                 >
