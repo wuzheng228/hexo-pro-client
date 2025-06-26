@@ -256,7 +256,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
 
     return (
         <div style={{
-            padding: '16px 8px',
+            padding: '30px 8px',
             // maxWidth: 1200,
             margin: '0 auto'
         }}>
