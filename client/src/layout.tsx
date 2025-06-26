@@ -258,7 +258,7 @@ export default function PageLayout() {
                     style={{
                         marginLeft: isMobile ? 0 : (collapsed ? 80 : 120),
                         paddingRight: isMobile ? 0 : (collapsed ? 30 : 15),
-                        paddingTop: isMobile ? 0 : 30,
+                        paddingTop: isMobile ? 0 : 70,
                         paddingBottom: isMobile ? 0 : 15
                     }}
                 >

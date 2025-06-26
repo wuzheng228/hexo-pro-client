@@ -18,7 +18,7 @@
 }
 
 .layout-sider {
-    position: fixed;
+    position: sticky;
     left: 0;
     top: 60px;
     height: calc(100vh - 100px);
@@ -32,9 +32,9 @@
 }
 
 .sub-layout-1 {
-    // padding-top: 60px;
+     padding-top: 60px;
     height: calc(100vh - 100px);
-    overflow: hidden;
+    overflow: scroll;
 }
 
 @media (max-width: 768px) {
@@ -50,7 +50,7 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding-top: 60px;
+    padding-top: 80px;
 }
 
 .layout-content-wrapper {
@@ -60,7 +60,7 @@
     display: flex;
     flex: 1;
     flex-direction: column;
-    overflow: auto;
+    overflow: scroll;
 }
 
 .collapse-btn {
@@ -76,12 +76,3 @@
 }
 
 /* 移动设备适配 */
-@media screen and (max-width: 768px) {
-    .layout-content {
-        padding-left: 0 !important;
-    }
-
-    .layout-content-wrapper {
-        padding: 10px;
-    }
-}
