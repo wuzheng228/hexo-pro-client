@@ -54,7 +54,7 @@
     "react-router-dom": "^6.24.0",
     "redux": "^4.1.2",
     "thememirror": "^2.0.1",
-    "vditor": "^3.10.5",
+    "vditor": "^3.11.1",
     "workerize-loader": "^2.0.2"
   },
   "devDependencies": {
