@@ -165,30 +165,30 @@ function Post() {
             return
         }
 
-         // 检查是否存在同名文章
+        // 检查是否存在同名文章
         const exists = await checkTitleExists(v)
 
-         if (exists) {
-             // 提示用户但不阻止输入
-             message.warning('已存在同名文章，保存时将自动添加区分字符')
-              // 如果重复，自动添加时间戳后缀
-              const uniqueTitle = `${v} (${Date.now()})`
-              setTitle(uniqueTitle)
-  
-              // 更新文件名
-              const parts = post.source.split('/')
-              parts[parts.length - 1] = uniqueTitle + '.md'
-              const newSource = parts.join('/')
-              postRef.current({ title: uniqueTitle, source: newSource })
-              setPost({...post, title: uniqueTitle })
-              return
-         }
+        if (exists) {
+            // 提示用户但不阻止输入
+            message.warning('已存在同名文章，保存时将自动添加区分字符')
+            // 如果重复，自动添加时间戳后缀
+            const uniqueTitle = `${v} (${Date.now()})`
+            setTitle(uniqueTitle)
 
-         // 无论是否重复，都更新文件名
-         const parts = post.source.split('/')
-         parts[parts.length - 1] = v + '.md'
-         const newSource = parts.join('/')
-         postRef.current({ title: v, source: newSource })
+            // 更新文件名
+            const parts = post.source.split('/')
+            parts[parts.length - 1] = uniqueTitle + '.md'
+            const newSource = parts.join('/')
+            postRef.current({ title: uniqueTitle, source: newSource })
+            setPost({ ...post, title: uniqueTitle })
+            return
+        }
+
+        // 无论是否重复，都更新文件名
+        const parts = post.source.split('/')
+        parts[parts.length - 1] = v + '.md'
+        const newSource = parts.join('/')
+        postRef.current({ title: v, source: newSource })
     }
 
     // 添加标题失去焦点时的处理函数
@@ -208,15 +208,15 @@ function Post() {
                 // 如果重复，自动添加时间戳后缀
                 const uniqueTitle = `${title} (${Date.now()})`
                 setTitle(uniqueTitle)
-    
+
                 // 更新文件名
                 const parts = post.source.split('/')
                 parts[parts.length - 1] = uniqueTitle + '.md'
                 const newSource = parts.join('/')
                 postRef.current({ title: uniqueTitle, source: newSource })
-    
+
                 message.info('已自动为重复标题添加区分字符')
-                setPost({...post, title: uniqueTitle })
+                setPost({ ...post, title: uniqueTitle })
             }
 
             // 无论是否重复，都更新文件名

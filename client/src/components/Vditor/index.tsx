@@ -323,6 +323,14 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     useEffect(() => {
         const vditor = new Vditor('vditor', {
             mode: editorMode as 'ir' | 'wysiwyg' | 'sv', // 设置编辑器模式
+            cache: {
+                enable: true
+            },
+            preview: {
+                markdown: {
+                    autoSpace: true
+                }
+            },
             keydown(event) {
                 if (event.shiftKey && event.key === 'Tab') {
                     // 阻止默认行为
