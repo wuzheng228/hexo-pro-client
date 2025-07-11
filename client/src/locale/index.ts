@@ -90,6 +90,8 @@ const i18n = {
         'login.form.subTitle': 'Login to access your blog management system',
         'login.form.validate.errMsg': 'Validation failed: ',
         'login.banner.subSlogan1': 'Your own blog editor backend',
+        'vditor.upload': 'Upload',
+        'vditor.selectImage': 'Select Image',
         'vditor.upload.error': 'Upload failed, please try again later',
         'vditor.upload.success': 'Upload success',
         'vditor.upload.invalidFileType': 'Only image upload is supported',
@@ -298,7 +300,7 @@ const i18n = {
         'settings.fetchError': 'Failed to fetch settings',
         'settings.saveError': 'Failed to save settings',
         'settings.passwordChangedRelogin': 'Password changed, you need to login again',
-        
+
         // Dashboard internationalization
         'dashboard.system.lastDeploy': 'Last Deploy',
         'dashboard.system.theme': 'theme',
@@ -393,7 +395,7 @@ const i18n = {
         'settings.customDomain': 'Custom Domain',
         'settings.customDomainDescription': 'Set the target domain for link redirect (e.g., http://localhost:4000)',
         'settings.linkRedirectAutoSave': '💡 Link redirect settings are automatically saved, no need to click save button',
-        
+
         // Editor settings
         'settings.editorTitle': 'Editor Settings',
         'settings.editorMode': 'Editor Mode',
@@ -403,7 +405,7 @@ const i18n = {
         'settings.editorModeWYSIWYG': 'WYSIWYG Mode',
         'settings.editorModeSV': 'Split View Mode',
         'settings.editorModeHelp': '💡 Editor mode description:<br />• Instant Rendering Mode: Edit and preview at the same time, balances editing experience and preview effect<br />• WYSIWYG Mode: Word-like editing experience, edit directly on rendered results<br />• Split View Mode: Edit Markdown source on the left, real-time preview on the right',
-        
+
         // Display settings
         'settings.displayTitle': 'Display Settings',
         'settings.showCover': 'Show Article Cover',
@@ -411,10 +413,10 @@ const i18n = {
         'settings.show': 'Show',
         'settings.hide': 'Hide',
         'settings.showCoverHelp': '💡 After hiding covers, the article list will be displayed in compact mode, allowing you to browse more articles in the same space',
-        
+
         // Account settings
         'settings.saveAccountSettings': 'Save Account Settings',
-        
+
         // Success/Error messages
         'settings.linkRedirectEnabled': 'Link redirect enabled',
         'settings.linkRedirectDisabled': 'Link redirect disabled',
@@ -436,7 +438,7 @@ const i18n = {
         // 部署日志相关
         'deploy.skip.generate.mode': 'Skip generation mode enabled, pushing source code to repository...',
 
-        
+
         'frontMatterAdder.input.string.placeholder': 'please input string value',
         'frontMatterAdder.input.boolean.placeholder': 'please input boolean value',
         'frontMatterAdder.input.number.placeholder': 'please input number value',
@@ -588,6 +590,8 @@ const i18n = {
         'login.form.autoLogin': '自动登录...',
         'login.form.subTitle': '登录以访问您的博客管理系统',
         'login.banner.subSlogan1': '属于你自己的博客编辑后台',
+        'vditor.upload': '上传',
+        'vditor.selectImage': '从图床选择',
         'vditor.upload.error': '上传失败，请稍后再试',
         'vditor.upload.success': '上传成功',
         'vditor.upload.invalidFileType': '只支持图片上传',
@@ -799,7 +803,7 @@ const i18n = {
         'settings.fetchError': '获取设置失败',
         'settings.saveError': '保存设置失败',
         'settings.passwordChangedRelogin': '密码已修改，需要重新登录',
-        
+
         // Dashboard 国际化
         'dashboard.system.lastDeploy': '上次部署',
         'dashboard.system.theme': '主题',
@@ -877,7 +881,7 @@ const i18n = {
         'settings.customDomain': '自定义域名',
         'settings.customDomainDescription': '设置链接重定向的目标域名（如：http://localhost:4000）',
         'settings.linkRedirectAutoSave': '💡 链接跳转设置会自动保存，无需点击保存按钮',
-        
+
         // Editor settings
         'settings.editorTitle': '编辑器设置',
         'settings.editorMode': '编辑器模式',
@@ -887,7 +891,7 @@ const i18n = {
         'settings.editorModeWYSIWYG': '所见即所得模式',
         'settings.editorModeSV': '分屏预览模式',
         'settings.editorModeHelp': '💡 编辑器模式说明：<br />• 即时渲染模式：边编辑边预览，平衡了编辑体验和预览效果<br />• 所见即所得模式：像Word一样的编辑体验，直接在渲染结果上编辑<br />• 分屏预览模式：左侧编辑Markdown源码，右侧实时预览渲染结果',
-        
+
         // Display settings
         'settings.displayTitle': '显示设置',
         'settings.showCover': '显示文章封面',
@@ -895,10 +899,10 @@ const i18n = {
         'settings.show': '显示',
         'settings.hide': '隐藏',
         'settings.showCoverHelp': '💡 隐藏封面后，文章列表将以紧凑模式显示，可以在相同空间内浏览更多文章',
-        
+
         // Account settings
         'settings.saveAccountSettings': '保存账户设置',
-        
+
         // Success/Error messages
         'settings.linkRedirectEnabled': '链接重定向已启用',
         'settings.linkRedirectDisabled': '链接重定向已禁用',
@@ -908,7 +912,7 @@ const i18n = {
         'settings.showCoverEnabled': '已启用封面显示',
         'settings.showCoverDisabled': '已隐藏文章封面，列表更紧凑',
         'settings.usernameUpdated': '用户名已更新，正在刷新页面...',
-        
+
 
         // 设置页面相关
         'settings.deployTitle': '部署设置',
@@ -920,8 +924,6 @@ const i18n = {
 
         // 部署日志相关
         'deploy.skip.generate.mode': '跳过生成模式已启用，推送源代码到仓库...',
-
-        'deploy.git.config.cleaned': '已清理配置文件中的敏感信息',
 
         'frontMatterAdder.input.string.placeholder': '请输入字符串值',
         'frontMatterAdder.input.boolean.placeholder': '请输入布尔值',
