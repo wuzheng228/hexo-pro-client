@@ -11769,10 +11769,10 @@ vary@~1.1.2:
   resolved "https://registry.npmjs.org/vary/-/vary-1.1.2.tgz"
   integrity sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==
 
-vditor@^3.10.5:
-  version "3.10.5"
-  resolved "https://registry.npmjs.org/vditor/-/vditor-3.10.5.tgz"
-  integrity sha512-TEhuErdRCdtpeNntbU+SA0/aGuUSEVBbPkNkH0oov2ZKyis20PqtG+az2EmIomCefKlCXcpcKMM/jglv3fKkig==
+vditor@^3.11.1:
+  version "3.11.1"
+  resolved "https://registry.yarnpkg.com/vditor/-/vditor-3.11.1.tgz#dca4f7b2798cf9333161c2a915be057dbb1d4699"
+  integrity sha512-7rjNSXYVyZG0mVZpUG2tfxwnoNtkcRCnwdSju+Zvpjf/r72iQa6kLpeThFMIKPuQ5CRnQQv6gnR3eNU6UGbC2Q==
   dependencies:
     diff-match-patch "^1.0.5"
 

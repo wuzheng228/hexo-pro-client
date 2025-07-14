@@ -13,7 +13,7 @@
 }
 
 pre.vditor-reset {
-    padding: 3px !important;
+    // padding: 3px !important;
     height: 100%;
 }
 
@@ -23,9 +23,11 @@ pre.vditor-reset code {
 
 .vditor-toolbar {
     position: sticky !important;
-    z-index: 89;
+    // z-index: 89;
     display: flex !important;
     align-items: center;
+    justify-content: center;
+    /* 工具栏项目水平居中 */
     flex-wrap: wrap;
     /* 允许工具栏换行 */
     // width: 100%;
@@ -103,7 +105,8 @@ pre.vditor-reset code {
     height: auto;
     max-height: 500px;
     /* 根据需要调整最大高度 */
-    display: inline-block !important; /* 确保图片正确显示 */
+    display: inline-block !important;
+    /* 确保图片正确显示 */
 }
 
 /* 添加图片加载失败时的样式 */
@@ -125,11 +128,11 @@ pre.vditor-reset code {
             display: flex;
             align-items: center;
             margin-bottom: 24px;
-            
+
             @media (max-width: 576px) {
                 flex-direction: column;
                 align-items: flex-start;
-                
+
                 .ant-select {
                     margin-left: 0 !important;
                     margin-top: 8px;
@@ -137,11 +140,11 @@ pre.vditor-reset code {
                 }
             }
         }
-        
+
         .image-grid {
             margin-bottom: 24px;
         }
-        
+
         .image-container {
             height: 120px;
             display: flex;
@@ -150,18 +153,18 @@ pre.vditor-reset code {
             overflow: hidden;
             background-color: #f5f5f5;
             cursor: pointer;
-            
+
             img {
                 max-width: 100%;
                 max-height: 100%;
                 object-fit: contain;
             }
         }
-        
+
         .empty-images {
             margin: 48px 0;
         }
-        
+
         .image-pagination {
             display: flex;
             justify-content: center;
@@ -175,19 +178,19 @@ pre.vditor-reset code {
     .upload-form {
         .form-item {
             margin-bottom: 16px;
-            
+
             @media (max-width: 576px) {
                 margin-bottom: 12px;
             }
         }
-        
+
         .ant-upload-drag {
             padding: 16px;
-            
+
             .ant-upload-drag-icon {
                 margin-bottom: 8px;
             }
-            
+
             .ant-upload-text {
                 margin-bottom: 0;
             }
@@ -200,4 +203,73 @@ pre.vditor-reset code {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* 当toolbar被pin住时，调整tooltip方向为向下展示 */
+.vditor-toolbar--pin {
+
+    /* 当工具栏被pin住时，所有tooltip都向下展示 */
+    .vditor-tooltipped {
+
+        &::before,
+        &::after {
+            /* 重置所有tooltip的位置 */
+            top: auto !important;
+            bottom: auto !important;
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%) !important;
+        }
+
+        /* 向下展示的tooltip */
+        &::before {
+            top: 100% !important;
+            margin-top: 8px !important;
+            border-top: 5px solid transparent !important;
+            border-bottom: 5px solid #333 !important;
+            border-left: 5px solid transparent !important;
+            border-right: 5px solid transparent !important;
+        }
+
+        &::after {
+            top: 100% !important;
+            margin-top: 13px !important;
+            background-color: #333 !important;
+            color: white !important;
+            white-space: nowrap !important;
+            z-index: 1000 !important;
+        }
+    }
+
+    /* 覆盖所有原有的tooltip方向类 */
+    .vditor-tooltipped__n,
+    .vditor-tooltipped__ne,
+    .vditor-tooltipped__nw,
+    .vditor-tooltipped__undefined {
+
+        &::before,
+        &::after {
+            top: 100% !important;
+            bottom: auto !important;
+        }
+
+        &::before {
+            margin-top: 8px !important;
+            margin-bottom: 0 !important;
+            border-top: 5px solid transparent !important;
+            border-bottom: 5px solid #333 !important;
+            border-left: 5px solid transparent !important;
+            border-right: 5px solid transparent !important;
+        }
+
+        &::after {
+            margin-top: 13px !important;
+            margin-bottom: 0 !important;
+        }
+    }
+}
+
+/* 为了确保在toolbar被pin住时tooltip能够正确显示，增加z-index */
+.vditor-toolbar--pin .vditor-tooltipped::after {
+    z-index: 1000 !important;
 }
