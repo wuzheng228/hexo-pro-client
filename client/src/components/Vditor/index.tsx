@@ -110,7 +110,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
         // 监听storage事件（其他窗口的localStorage变化）
         window.addEventListener('storage', handleStorageChange)
-        
+
         // 每秒检查一次当前窗口的localStorage变化
         const interval = setInterval(handleStorageChange, 1000)
 
@@ -270,6 +270,16 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             vd.updateToolbarConfig({
                 pin: isPinToolbar
             })
+
+            // 根据pin状态添加/移除相应的类名，用于CSS样式控制
+            const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement
+            if (toolbar) {
+                if (isPinToolbar) {
+                    toolbar.classList.add('vditor-toolbar--pin')
+                } else {
+                    toolbar.classList.remove('vditor-toolbar--pin')
+                }
+            }
         }
     }, [vd, isPinToolbar])
 
@@ -313,6 +323,14 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     useEffect(() => {
         const vditor = new Vditor('vditor', {
             mode: editorMode as 'ir' | 'wysiwyg' | 'sv', // 设置编辑器模式
+            cache: {
+                enable: true
+            },
+            preview: {
+                markdown: {
+                    autoSpace: true
+                }
+            },
             keydown(event) {
                 if (event.shiftKey && event.key === 'Tab') {
                     // 阻止默认行为
@@ -469,7 +487,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                 setTimeout(() => {
                                     const currentValue = vditor.getValue()
                                     // 对图片 URL 进行编码处理
-                                    const encodedSrc = encodeURI(res.path || res.src)   
+                                    const encodedSrc = encodeURI(res.path || res.src)
                                     if (isEditorFocus) {
                                         vditor.setValue(currentValue + `\n![${filename}](${encodedSrc})`)
                                     } else {
