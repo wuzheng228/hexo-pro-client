@@ -24,7 +24,6 @@
     "@codemirror/state": "^6.0.0",
     "@codemirror/view": "^6.0.0",
     "@loadable/component": "^5.16.4",
-    "ajv": "^8.17.1",
     "antd": "^5.18.3",
     "axios": "^1.7.3",
     "bcrypt-nodejs": "^0.0.3",
