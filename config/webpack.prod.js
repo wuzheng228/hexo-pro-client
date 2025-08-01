@@ -33,11 +33,11 @@ module.exports = {
     // 输出
     output: {
         publicPath: '/pro/',
-        path: path.resolve(__dirname, '../../dist/www'),
+        path: path.resolve(__dirname, '../hexo-pro/www'),
         filename: 'static/js/[name][contenthash:10].js',
         chunkFilename: 'static/js/[name][contenthash:10].chunk.js',
         assetModuleFilename: 'static/media/[hash:10][ext][query]',
-        clean: false
+        clean: true
     },
     // 加载器
     module: {
@@ -129,21 +129,19 @@ module.exports = {
     // 插件
     plugins: [
         new HtmlWebpackPlugin({
-            template: path.resolve(__dirname, "../client/public/pro.html"),
-            filename:"pro.html"
-
+            template: path.resolve(__dirname, "../client/public/index.html"),
         }),
         // 将public下面的资源复制到dist目录去（除了index.html）
         new CopyPlugin({
             patterns: [
                 {
                     from: path.resolve(__dirname, "../client/public"),
-                    to: path.resolve(__dirname, "../../dist/www"),
+                    to: path.resolve(__dirname, "../dist"),
                     toType: "dir",
                     noErrorOnMissing: true, // 不生成错误
                     globOptions: {
                         // 忽略文件
-                        ignore: ["**/pro.html"],
+                        ignore: ["**/index.html"],
                     },
                     info: {
                         // 跳过terser压缩js

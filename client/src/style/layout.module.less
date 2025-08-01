@@ -3,10 +3,11 @@
 
 .layout {
     width: 100%;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    height: 100%;
+    position: relative;
+    /* 添加相对定位 */
     overflow-x: hidden;
+    /* 防止水平滚动 */
 }
 
 .spin {
@@ -18,7 +19,7 @@
 }
 
 .layout-sider {
-    position: sticky;
+    position: fixed;
     left: 0;
     top: 60px;
     height: calc(100vh - 100px);
@@ -32,9 +33,9 @@
 }
 
 .sub-layout-1 {
-     padding-top: 60px;
+    // padding-top: 60px;
     height: calc(100vh - 100px);
-    overflow: scroll;
+    overflow: hidden;
 }
 
 @media (max-width: 768px) {
@@ -45,12 +46,16 @@
 }
 
 .layout-content {
-    flex: 1;
-    transition: margin-left 0.2s;
+    width: calc(100%);
+    height: calc(100vh - 100px);
+    /* Use viewport height instead of percentage */
+    transition: padding-left 0.2s;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding-top: 80px;
+    margin: 0 auto;
+    position: relative;
+    top: 60px;
 }
 
 .layout-content-wrapper {
@@ -60,7 +65,7 @@
     display: flex;
     flex: 1;
     flex-direction: column;
-    overflow: scroll;
+    overflow: auto;
 }
 
 .collapse-btn {
@@ -76,3 +81,12 @@
 }
 
 /* 移动设备适配 */
+@media screen and (max-width: 768px) {
+    .layout-content {
+        padding-left: 0 !important;
+    }
+
+    .layout-content-wrapper {
+        padding: 10px;
+    }
+}
