@@ -77,6 +77,14 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                     {locale['navbar.lang.english']}
                 </div>
             ),
+        },
+        {
+            key: '3',
+            label: (
+                <div>
+                    {locale['navbar.lang.french']}
+                </div>
+            ),
         }
     ]
 
@@ -106,6 +114,8 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             setLang('zh-CN')
         } else if (key === '2') {
             setLang('en-US')
+        } if (key === '3') {
+            setLang('fr-FR')
         }
     }
 
