@@ -59,6 +59,28 @@ const SettingsPage: React.FC = () => {
     secretKey: '',
     domain: ''
   })
+  // 校验各云厂商配置是否完整可用
+  const isAliyunConfigValid = (cfg: typeof storageAliyunConfig) => {
+    if (!cfg) return false
+    if (!cfg.bucket) return false
+    // 允许自定义域名或提供 region + ak/sk
+    if (cfg.domain) return true
+    return Boolean(cfg.region && cfg.accessKeyId && cfg.accessKeySecret)
+  }
+
+  const isQiniuConfigValid = (cfg: typeof storageQiniuConfig) => {
+    if (!cfg) return false
+    return Boolean(cfg.bucket && cfg.domain && cfg.accessKey && cfg.secretKey)
+  }
+
+  const isTencentConfigValid = (cfg: typeof storageTencentConfig) => {
+    if (!cfg) return false
+    if (!cfg.bucket) return false
+    // 允许自定义域名或提供 region + ak/sk
+    if (cfg.domain) return true
+    return Boolean(cfg.region && cfg.secretId && cfg.secretKey)
+  }
+
 
   // 新增状态
   const [imagePickerVisible, setImagePickerVisible] = useState(false)
@@ -130,46 +152,14 @@ const SettingsPage: React.FC = () => {
     }
   }, [])
 
-  // 初始化时从localStorage读取图床设置
+  // 图床设置统一从后端获取，不再从 localStorage 读取
   useEffect(() => {
-    const savedStorageType = localStorage.getItem('hexoProStorageType')
-    const savedStorageCustomPath = localStorage.getItem('hexoProStorageCustomPath')
-    const savedStorageAliyunConfig = localStorage.getItem('hexoProStorageAliyunConfig')
-    const savedStorageQiniuConfig = localStorage.getItem('hexoProStorageQiniuConfig')
-    const savedStorageTencentConfig = localStorage.getItem('hexoProStorageTencentConfig')
-
-    if (savedStorageType) {
-      setStorageType(savedStorageType)
+    // 非首次使用会在 fetchSettings 中调用 fetchStorageConfig
+    // 这里作为兜底：若首次使用时也希望看到默认图床配置
+    if (isFirstUse) {
+      fetchStorageConfig()
     }
-
-    if (savedStorageCustomPath) {
-      setStorageCustomPath(savedStorageCustomPath)
-    }
-
-    if (savedStorageAliyunConfig) {
-      try {
-        setStorageAliyunConfig(JSON.parse(savedStorageAliyunConfig))
-      } catch (error) {
-        console.error('解析阿里云配置失败:', error)
-      }
-    }
-
-    if (savedStorageQiniuConfig) {
-      try {
-        setStorageQiniuConfig(JSON.parse(savedStorageQiniuConfig))
-      } catch (error) {
-        console.error('解析七牛云配置失败:', error)
-      }
-    }
-
-    if (savedStorageTencentConfig) {
-      try {
-        setStorageTencentConfig(JSON.parse(savedStorageTencentConfig))
-      } catch (error) {
-        console.error('解析腾讯云配置失败:', error)
-      }
-    }
-  }, [])
+  }, [isFirstUse])
 
   // 获取当前设置
   const fetchSettings = async () => {
@@ -224,13 +214,6 @@ const SettingsPage: React.FC = () => {
           secretKey: '',
           domain: ''
         })
-
-        // 同步到localStorage
-        localStorage.setItem('hexoProStorageType', config.type || 'local')
-        localStorage.setItem('hexoProStorageCustomPath', config.customPath || 'images')
-        localStorage.setItem('hexoProStorageAliyunConfig', JSON.stringify(config.aliyun || {}))
-        localStorage.setItem('hexoProStorageQiniuConfig', JSON.stringify(config.qiniu || {}))
-        localStorage.setItem('hexoProStorageTencentConfig', JSON.stringify(config.tencent || {}))
       }
     } catch (error) {
       console.error('获取图床配置失败:', error)
@@ -288,9 +271,24 @@ const SettingsPage: React.FC = () => {
   // 处理图床类型变化
   const handleStorageTypeChange = async (type: string) => {
     setStorageType(type)
-    localStorage.setItem('hexoProStorageType', type)
-    await updateStorageConfig()
-    message.success(t['settings.storageSettingsSaved'])
+    // 仅当选择 local 或对应云厂商配置完整时，才保存到后端并持久化
+    let canSave = false
+    if (type === 'local') {
+      canSave = true
+    } else if (type === 'aliyun') {
+      canSave = isAliyunConfigValid(storageAliyunConfig)
+    } else if (type === 'qiniu') {
+      canSave = isQiniuConfigValid(storageQiniuConfig)
+    } else if (type === 'tencent') {
+      canSave = isTencentConfigValid(storageTencentConfig)
+    }
+
+    if (canSave) {
+      await updateStorageConfig({ storageType: type })
+      message.success(t['settings.storageSettingsSaved'])
+    } else {
+      message.warning(t['settings.storageConfigIncomplete'] || '配置不完整，未保存，请先填写完整配置再切换图床类型')
+    }
   }
 
   // 处理自定义路径变化
@@ -301,8 +299,7 @@ const SettingsPage: React.FC = () => {
 
   // 处理自定义路径失去焦点
   const handleStorageCustomPathBlur = async () => {
-    localStorage.setItem('hexoProStorageCustomPath', storageCustomPath)
-    await updateStorageConfig()
+    await updateStorageConfig({ storageCustomPath })
     message.success(t['settings.storageSettingsSaved'])
   }
 
@@ -310,38 +307,55 @@ const SettingsPage: React.FC = () => {
   const handleAliyunConfigChange = async (field: string, value: string) => {
     const newConfig = { ...storageAliyunConfig, [field]: value }
     setStorageAliyunConfig(newConfig)
-    localStorage.setItem('hexoProStorageAliyunConfig', JSON.stringify(newConfig))
-    await updateStorageConfig()
-    message.success(t['settings.storageSettingsSaved'])
+    // 保存厂商配置；若当前选择的类型正是该厂商且配置已完整，则同时更新后端图床类型
+    if (isAliyunConfigValid(newConfig)) {
+      await updateStorageConfig({ aliyunConfig: newConfig, storageType: storageType === 'aliyun' ? 'aliyun' : undefined as any })
+      if (storageType === 'aliyun') message.success(t['settings.storageSettingsSaved'])
+    } else {
+      // 仅保存配置草稿到后端，避免错误提示打扰
+      try { await updateStorageConfig({ aliyunConfig: newConfig }) } catch (_) { }
+    }
   }
 
   // 处理七牛云配置变化
   const handleQiniuConfigChange = async (field: string, value: string) => {
     const newConfig = { ...storageQiniuConfig, [field]: value }
     setStorageQiniuConfig(newConfig)
-    localStorage.setItem('hexoProStorageQiniuConfig', JSON.stringify(newConfig))
-    await updateStorageConfig()
-    message.success(t['settings.storageSettingsSaved'])
+    if (isQiniuConfigValid(newConfig)) {
+      await updateStorageConfig({ qiniuConfig: newConfig, storageType: storageType === 'qiniu' ? 'qiniu' : undefined as any })
+      if (storageType === 'qiniu') message.success(t['settings.storageSettingsSaved'])
+    } else {
+      try { await updateStorageConfig({ qiniuConfig: newConfig }) } catch (_) { }
+    }
   }
 
   // 处理腾讯云配置变化
   const handleTencentConfigChange = async (field: string, value: string) => {
     const newConfig = { ...storageTencentConfig, [field]: value }
     setStorageTencentConfig(newConfig)
-    localStorage.setItem('hexoProStorageTencentConfig', JSON.stringify(newConfig))
-    await updateStorageConfig()
-    message.success(t['settings.storageSettingsSaved'])
+    if (isTencentConfigValid(newConfig)) {
+      await updateStorageConfig({ tencentConfig: newConfig, storageType: storageType === 'tencent' ? 'tencent' : undefined as any })
+      if (storageType === 'tencent') message.success(t['settings.storageSettingsSaved'])
+    } else {
+      try { await updateStorageConfig({ tencentConfig: newConfig }) } catch (_) { }
+    }
   }
 
   // 更新图床配置到后端
-  const updateStorageConfig = async () => {
+  const updateStorageConfig = async (next?: {
+    storageType?: string,
+    storageCustomPath?: string,
+    aliyunConfig?: typeof storageAliyunConfig,
+    qiniuConfig?: typeof storageQiniuConfig,
+    tencentConfig?: typeof storageTencentConfig,
+  }) => {
     try {
       await service.post('/hexopro/api/images/config/set', {
-        storageType: storageType,
-        customPath: storageCustomPath,
-        aliyunConfig: storageAliyunConfig,
-        qiniuConfig: storageQiniuConfig,
-        tencentConfig: storageTencentConfig
+        storageType: next?.storageType ?? storageType,
+        customPath: next?.storageCustomPath ?? storageCustomPath,
+        aliyunConfig: next?.aliyunConfig ?? storageAliyunConfig,
+        qiniuConfig: next?.qiniuConfig ?? storageQiniuConfig,
+        tencentConfig: next?.tencentConfig ?? storageTencentConfig
       })
     } catch (error) {
       console.error('保存图床配置失败:', error)

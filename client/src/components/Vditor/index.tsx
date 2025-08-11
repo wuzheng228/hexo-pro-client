@@ -69,6 +69,9 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     const [uploadModalVisible, setUploadModalVisible] = useState(false)
     const [uploadFolder, setUploadFolder] = useState('')
     const [uploadFileName, setUploadFileName] = useState('')
+    const [storageType, setStorageType] = useState('local')
+    const [availableStorages, setAvailableStorages] = useState<string[]>(['local'])
+    const isLocal = storageType === 'local'
 
 
     const t = useLocale()
@@ -79,7 +82,8 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             service.post('/hexopro/api/images/upload', {
                 data: image,
                 filename: filename,
-                folder: folder
+                folder: folder,
+                storageType
             }).then(res => {
                 f(res.data)
             }).catch(err => {
@@ -139,7 +143,8 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 params: {
                     page: currentImagePage,
                     pageSize: imagePageSize,
-                    folder: currentImageFolder
+                    folder: currentImageFolder,
+                    storageType
                 }
             })
             setImageData(res.data)
@@ -152,10 +157,33 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     const fetchFolders = async () => {
         try {
+            // 同步获取当前图床类型
+            try {
+                const cfg = await service.get('/hexopro/api/images/config/get')
+                const data = cfg?.data?.data || {}
+                const storages: string[] = ['local']
+                if (data.aliyun && (data.aliyun.bucket && (data.aliyun.domain || (data.aliyun.region && data.aliyun.accessKeyId && data.aliyun.accessKeySecret)))) {
+                    storages.push('aliyun')
+                }
+                if (data.qiniu && (data.qiniu.bucket && data.qiniu.domain && data.qiniu.accessKey && data.qiniu.secretKey)) {
+                    storages.push('qiniu')
+                }
+                if (data.tencent && (data.tencent.bucket && (data.tencent.domain || (data.tencent.region && data.tencent.secretId && data.tencent.secretKey)))) {
+                    storages.push('tencent')
+                }
+                const unique = Array.from(new Set(storages))
+                setAvailableStorages(unique)
+                // 如果当前选择不在可用列表中，回退到后端默认或 local
+                if (!unique.includes(storageType)) {
+                    const backendDefault = data.type && unique.includes(data.type) ? data.type : 'local'
+                    setStorageType(backendDefault)
+                }
+            } catch (_) { }
             const res = await service.get('/hexopro/api/images/list', {
                 params: {
                     page: 1,
-                    pageSize: 1
+                    pageSize: 1,
+                    storageType
                 }
             })
             if (res.data && res.data.folders) {
@@ -252,12 +280,20 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     }, [uploadModalVisible])
 
 
-    // 当图片选择器打开时加载图片
+    // 当图片选择器打开或分页/文件夹/图床变化时，仅加载图片
     useEffect(() => {
         if (imagePickerVisible) {
             fetchImages()
         }
-    }, [imagePickerVisible, currentImagePage, imagePageSize, currentImageFolder])
+    }, [imagePickerVisible, currentImagePage, imagePageSize, currentImageFolder, storageType])
+
+    // 仅在首次/每次打开图片选择器时获取一次可用图床与文件夹
+    useEffect(() => {
+        if (imagePickerVisible) {
+            fetchFolders()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [imagePickerVisible])
 
     useEffect(() => {
         handleUploadingImage(isUploadingImage)
@@ -700,7 +736,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 className="image-picker-modal"
             >
                 <div className="image-picker-container">
-                    <div className="folder-selector">
+                    <div className="folder-selector" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Text strong>{t['content.images.currentFolder'] || '当前文件夹'}:</Text>
                         <Select
                             style={{ width: isMobile ? 200 : 300, marginLeft: 8 }}
@@ -711,6 +747,18 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                             <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
                             {imageData.folders.map(folder => (
                                 <Option key={folder} value={folder}>{folder}</Option>
+                            ))}
+                        </Select>
+
+                        <div style={{ flex: 1 }} />
+                        <Text strong>{t['content.images.storageType'] || '图床'}:</Text>
+                        <Select
+                            style={{ width: isMobile ? 140 : 180 }}
+                            value={storageType}
+                            onChange={(v) => { setStorageType(v); setCurrentImagePage(1) }}
+                        >
+                            {availableStorages.map(s => (
+                                <Option key={s} value={s}>{s}</Option>
                             ))}
                         </Select>
                     </div>
@@ -812,6 +860,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                     message.error(t['vditor.upload.invalidFileType'] || '只能上传图片文件')
                                     return false
                                 }
+                                // 非本地存储也允许上传（上传将走各自SDK）。直接走自定义上传
                                 handleCustomUpload(file)
                                 return false
                             }}

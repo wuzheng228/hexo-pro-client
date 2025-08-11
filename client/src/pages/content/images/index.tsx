@@ -81,6 +81,9 @@ const ImageManager: React.FC = () => {
   const [customFileName, setCustomFileName] = useState('')
   const [previewVisible, setPreviewVisible] = useState(false)
   const [previewImage, setPreviewImage] = useState('')
+  const [storageType, setStorageType] = useState('local')
+  const [availableStorages, setAvailableStorages] = useState<string[]>(['local'])
+  const isLocal = storageType === 'local'
 
   // 获取图片列表
   const fetchImages = async () => {
@@ -90,7 +93,8 @@ const ImageManager: React.FC = () => {
         params: {
           page: currentPage,
           pageSize: pageSize,
-          folder: currentFolder
+          folder: currentFolder,
+          storageType
         }
       })
 
@@ -110,6 +114,53 @@ const ImageManager: React.FC = () => {
       console.error(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 获取图床配置
+  const fetchStorageConfig = async () => {
+    try {
+      const res = await service.get('/hexopro/api/images/config/get')
+      console.log(res)
+      if (res?.data?.data?.type) {
+        // 若默认类型配置不完整，不采用，保持当前选择
+        const cfg = res?.data?.data || {}
+        const type = cfg.type
+        const isValid = (tp: string) => {
+          if (tp === 'aliyun') {
+            const c = cfg.aliyun || {}
+            return c.bucket && (c.domain || (c.region && c.accessKeyId && c.accessKeySecret))
+          }
+          if (tp === 'qiniu') {
+            const c = cfg.qiniu || {}
+            return c.bucket && c.domain && c.accessKey && c.secretKey
+          }
+          if (tp === 'tencent') {
+            const c = cfg.tencent || {}
+            return c.bucket && (c.domain || (c.region && c.secretId && c.secretKey))
+          }
+          return true
+        }
+        if (isValid(type)) setStorageType(type)
+      }
+      const storages: string[] = []
+      const cfg = res?.data?.data || {}
+      console.log(cfg)
+      // 判定已配置可用的图床
+      storages.push('local')
+      if (cfg.aliyun && (cfg.aliyun.bucket && (cfg.aliyun.domain || (cfg.aliyun.region && cfg.aliyun.accessKeyId && cfg.aliyun.accessKeySecret)))) {
+        storages.push('aliyun')
+      }
+      if (cfg.qiniu && (cfg.qiniu.bucket && cfg.qiniu.domain && cfg.qiniu.accessKey && cfg.qiniu.secretKey)) {
+        console.log('qiniu')
+        storages.push('qiniu')
+      }
+      if (cfg.tencent && (cfg.tencent.bucket && (cfg.tencent.domain || (cfg.tencent.region && cfg.tencent.secretId && cfg.tencent.secretKey)))) {
+        storages.push('tencent')
+      }
+      setAvailableStorages(Array.from(new Set(storages)))
+    } catch (e) {
+      // 忽略
     }
   }
 
@@ -232,7 +283,8 @@ const ImageManager: React.FC = () => {
         const res = await service.post('/hexopro/api/images/upload', {
           data: base64,
           filename: customFileName || file.name,
-          folder: currentFolder
+          folder: currentFolder,
+          storageType
         })
 
         message.success(t['content.images.uploadSuccess'] || '上传成功')
@@ -276,7 +328,11 @@ const ImageManager: React.FC = () => {
   // 初始加载和依赖变化时获取数据
   useEffect(() => {
     fetchImages()
-  }, [currentPage, pageSize, currentFolder])
+  }, [currentPage, pageSize, currentFolder, storageType])
+
+  useEffect(() => {
+    fetchStorageConfig()
+  }, [])
 
   // 响应式调整每页显示数量
   useEffect(() => {
@@ -295,17 +351,19 @@ const ImageManager: React.FC = () => {
           >
             {t['content.images.upload'] || '上传图片'}
           </Button>
-          <Button
-            icon={<FolderAddOutlined />}
-            onClick={() => setCreateFolderVisible(true)}
-          >
-            {t['content.images.createFolder'] || '新建文件夹'}
-          </Button>
+          {isLocal && (
+            <Button
+              icon={<FolderAddOutlined />}
+              onClick={() => setCreateFolderVisible(true)}
+            >
+              {t['content.images.createFolder'] || '新建文件夹'}
+            </Button>
+          )}
         </Space>
       </div>
 
       <div className={styles.folderSelector}>
-        <Text strong>{t['content.images.currentFolder'] || '当前文件夹'}:</Text>
+        <Text strong style={{ marginRight: 8 }}>{t['content.images.currentFolder'] || '当前文件夹'}:</Text>
         <Select
           style={{ width: isMobile ? 200 : 300, marginLeft: 8 }}
           value={currentFolder}
@@ -315,6 +373,17 @@ const ImageManager: React.FC = () => {
           <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
           {data.folders.map(folder => (
             <Option key={folder} value={folder}>{folder}</Option>
+          ))}
+        </Select>
+        <div style={{ flex: 1 }} />
+        <Text strong style={{ marginLeft: 16, marginRight: 8 }}>{t['content.images.storageType'] || '图床'}:</Text>
+        <Select
+          style={{ width: isMobile ? 140 : 180 }}
+          value={storageType}
+          onChange={(v) => { setStorageType(v); setCurrentPage(1) }}
+        >
+          {availableStorages.map(s => (
+            <Option key={s} value={s}>{s}</Option>
           ))}
         </Select>
       </div>
@@ -348,39 +417,41 @@ const ImageManager: React.FC = () => {
                       onClick={() => handleCopyLink(image.url)}
                       title={t['content.images.copy'] || '复制链接'}
                     />,
-                    <Button
-                      type="text"
-                      icon={<EditOutlined />}
-                      onClick={() => {
-                        setCurrentImage(image)
-                        setNewName(image.name)
-                        setRenameVisible(true)
-                      }}
-                      title={t['content.images.rename'] || '重命名'}
-                    />,
-                    <Button
-                      type="text"
-                      icon={<ScissorOutlined />}
-                      onClick={() => {
-                        setCurrentImage(image)
-                        setTargetFolder('')
-                        setMoveVisible(true)
-                      }}
-                      title={t['content.images.move'] || '移动'}
-                    />,
-                    <Popconfirm
-                      title={t['content.images.deleteConfirm'] || '确定要删除这张图片吗？'}
-                      onConfirm={() => handleDeleteImage(image)}
-                      okText={t['content.images.ok'] || '确定'}
-                      cancelText={t['content.images.cancel'] || '取消'}
-                    >
+                    ...(isLocal ? [
                       <Button
                         type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        title={t['content.images.delete'] || '删除'}
-                      />
-                    </Popconfirm>
+                        icon={<EditOutlined />}
+                        onClick={() => {
+                          setCurrentImage(image)
+                          setNewName(image.name)
+                          setRenameVisible(true)
+                        }}
+                        title={t['content.images.rename'] || '重命名'}
+                      />,
+                      <Button
+                        type="text"
+                        icon={<ScissorOutlined />}
+                        onClick={() => {
+                          setCurrentImage(image)
+                          setTargetFolder('')
+                          setMoveVisible(true)
+                        }}
+                        title={t['content.images.move'] || '移动'}
+                      />,
+                      <Popconfirm
+                        title={t['content.images.deleteConfirm'] || '确定要删除这张图片吗？'}
+                        onConfirm={() => handleDeleteImage(image)}
+                        okText={t['content.images.ok'] || '确定'}
+                        cancelText={t['content.images.cancel'] || '取消'}
+                      >
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          title={t['content.images.delete'] || '删除'}
+                        />
+                      </Popconfirm>
+                    ] : [])
                   ]}
                 >
                   <Card.Meta
