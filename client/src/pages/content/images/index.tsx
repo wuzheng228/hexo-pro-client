@@ -72,7 +72,9 @@ const ImageManager: React.FC = () => {
   const [currentFolder, setCurrentFolder] = useState('')
   const [uploadVisible, setUploadVisible] = useState(false)
   const [createFolderVisible, setCreateFolderVisible] = useState(false)
+  const [deleteFolderVisible, setDeleteFolderVisible] = useState(false)
   const [folderName, setFolderName] = useState('')
+  const [deleteFolderRecursive, setDeleteFolderRecursive] = useState(false)
   const [renameVisible, setRenameVisible] = useState(false)
   const [currentImage, setCurrentImage] = useState<ImageItem | null>(null)
   const [newName, setNewName] = useState('')
@@ -172,7 +174,7 @@ const ImageManager: React.FC = () => {
     }
 
     try {
-      await service.post('/hexopro/api/images/createFolder', { folderName })
+      await service.post('/hexopro/api/images/createFolder', { folderName, storageType })
       message.success(t['content.images.createFolderSuccess'] || '创建文件夹成功')
       setCreateFolderVisible(false)
       setFolderName('')
@@ -186,7 +188,7 @@ const ImageManager: React.FC = () => {
   // 删除图片
   const handleDeleteImage = async (image: ImageItem) => {
     try {
-      await service.post('/hexopro/api/images/delete', { path: image.path })
+      await service.post('/hexopro/api/images/delete', { path: image.path, storageType })
       message.success(t['content.images.deleteSuccess'] || '删除成功')
       fetchImages()
     } catch (error) {
@@ -205,7 +207,8 @@ const ImageManager: React.FC = () => {
     try {
       await service.post('/hexopro/api/images/rename', {
         oldPath: currentImage.path,
-        newName: newName
+        newName: newName,
+        storageType
       })
       message.success(t['content.images.renameSuccess'] || '重命名成功')
 
@@ -232,7 +235,8 @@ const ImageManager: React.FC = () => {
     try {
       await service.post('/hexopro/api/images/move', {
         path: currentImage.path,
-        targetFolder: targetFolder
+        targetFolder: targetFolder,
+        storageType
       })
       message.success(t['content.images.moveSuccess'] || '移动成功')
       setMoveVisible(false)
@@ -351,14 +355,12 @@ const ImageManager: React.FC = () => {
           >
             {t['content.images.upload'] || '上传图片'}
           </Button>
-          {isLocal && (
-            <Button
-              icon={<FolderAddOutlined />}
-              onClick={() => setCreateFolderVisible(true)}
-            >
-              {t['content.images.createFolder'] || '新建文件夹'}
-            </Button>
-          )}
+          <Button
+            icon={<FolderAddOutlined />}
+            onClick={() => setCreateFolderVisible(true)}
+          >
+            {t['content.images.createFolder'] || '新建文件夹'}
+          </Button>
         </Space>
       </div>
 
@@ -386,27 +388,34 @@ const ImageManager: React.FC = () => {
             <Option key={s} value={s}>{s}</Option>
           ))}
         </Select>
+        <Button
+          danger
+          style={{ marginLeft: 12 }}
+          onClick={() => setDeleteFolderVisible(true)}
+        >
+          {t['content.images.deleteFolder'] || '删除文件夹'}
+        </Button>
       </div>
 
       <Spin spinning={loading}>
         {data.images.length > 0 ? (
           <Row gutter={[16, 16]} className={styles.imageGrid}>
             {data.images.map(image => (
-              <Col xs={12} sm={8} md={6} lg={6} xl={4} key={image.path}>
+              <Col xs={12} sm={8} md={6} lg={6} xl={4} key={image.url}>
                 <Card
                   hoverable
                   cover={
                     <div className={styles.imageContainer}>
                       <Image
-                        key={image.path}
-                        src={image.path}
+                        key={image.url}
+                        src={image.url}
                         alt={image.name}
                         preview={false}
                         onClick={() => {
-                          setPreviewImage(image.path)
+                          setPreviewImage(image.url)
                           setPreviewVisible(true)
                         }}
-                        fallback="data:image/png;base64,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"
+                        fallback="data:image/png;base64,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"
                       />
                     </div>
                   }
@@ -416,6 +425,17 @@ const ImageManager: React.FC = () => {
                       icon={<CopyOutlined />}
                       onClick={() => handleCopyLink(image.url)}
                       title={t['content.images.copy'] || '复制链接'}
+                    />,
+                    // 远程与本地都支持移动
+                    <Button
+                      type="text"
+                      icon={<ScissorOutlined />}
+                      onClick={() => {
+                        setCurrentImage(image)
+                        setTargetFolder('')
+                        setMoveVisible(true)
+                      }}
+                      title={t['content.images.move'] || '移动'}
                     />,
                     ...(isLocal ? [
                       <Button
@@ -427,16 +447,6 @@ const ImageManager: React.FC = () => {
                           setRenameVisible(true)
                         }}
                         title={t['content.images.rename'] || '重命名'}
-                      />,
-                      <Button
-                        type="text"
-                        icon={<ScissorOutlined />}
-                        onClick={() => {
-                          setCurrentImage(image)
-                          setTargetFolder('')
-                          setMoveVisible(true)
-                        }}
-                        title={t['content.images.move'] || '移动'}
                       />,
                       <Popconfirm
                         title={t['content.images.deleteConfirm'] || '确定要删除这张图片吗？'}
@@ -451,7 +461,32 @@ const ImageManager: React.FC = () => {
                           title={t['content.images.delete'] || '删除'}
                         />
                       </Popconfirm>
-                    ] : [])
+                    ] : [
+                      // 远程图床：也允许重命名、删除
+                      <Button
+                        type="text"
+                        icon={<EditOutlined />}
+                        onClick={() => {
+                          setCurrentImage(image)
+                          setNewName(image.name)
+                          setRenameVisible(true)
+                        }}
+                        title={t['content.images.rename'] || '重命名'}
+                      />,
+                      <Popconfirm
+                        title={t['content.images.deleteConfirm'] || '确定要删除这张图片吗？'}
+                        onConfirm={() => handleDeleteImage(image)}
+                        okText={t['content.images.ok'] || '确定'}
+                        cancelText={t['content.images.cancel'] || '取消'}
+                      >
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          title={t['content.images.delete'] || '删除'}
+                        />
+                      </Popconfirm>
+                    ])
                   ]}
                 >
                   <Card.Meta
@@ -562,6 +597,56 @@ const ImageManager: React.FC = () => {
           onChange={e => setFolderName(e.target.value)}
           placeholder={t['content.images.folderName'] || '文件夹名称（支持中文、字母、数字、下划线和短横线）'}
         />
+      </Modal>
+
+      {/* 删除文件夹对话框 */}
+      <Modal
+        title={t['content.images.deleteFolder'] || '删除文件夹'}
+        open={deleteFolderVisible}
+        onOk={async () => {
+          try {
+            await service.post('/hexopro/api/images/folder/delete', {
+              folder: currentFolder,
+              storageType,
+              recursive: deleteFolderRecursive
+            })
+            message.success(t['content.images.deleteFolderSuccess'] || '删除成功')
+            setDeleteFolderVisible(false)
+            setDeleteFolderRecursive(false)
+            setCurrentFolder('')
+            setCurrentPage(1)
+            fetchImages()
+          } catch (e) {
+            message.error(t['content.images.deleteFolderFailed'] || '删除失败')
+          }
+        }}
+        onCancel={() => {
+          setDeleteFolderVisible(false)
+          setDeleteFolderRecursive(false)
+        }}
+        okButtonProps={{ danger: true }}
+        okText={t['content.images.ok'] || '确定'}
+        cancelText={t['content.images.cancel'] || '取消'}
+        width={isMobile ? '90%' : 520}
+        destroyOnClose
+      >
+        <div style={{ marginBottom: 12 }}>
+          <Text>
+            {t['content.images.deleteFolderConfirm'] || '确定删除当前文件夹？'}
+            {!!currentFolder && ` (${currentFolder})`}
+          </Text>
+        </div>
+        <div>
+          <label style={{ cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={deleteFolderRecursive}
+              onChange={(e) => setDeleteFolderRecursive(e.target.checked)}
+              style={{ marginRight: 8 }}
+            />
+            {t['content.images.deleteFolderRecursive'] || '同时删除文件夹内的所有文件'}
+          </label>
+        </div>
       </Modal>
 
       {/* 重命名图片对话框 */}

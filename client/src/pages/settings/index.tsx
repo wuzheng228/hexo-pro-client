@@ -1081,7 +1081,7 @@ const SettingsPage: React.FC = () => {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
                 {imageList.map(image => (
                   <div
-                    key={image.path}
+                    key={image.url}
                     style={{
                       cursor: 'pointer',
                       border: '1px solid #f0f0f0',
@@ -1094,10 +1094,10 @@ const SettingsPage: React.FC = () => {
                       justifyContent: 'center',
                       overflow: 'hidden'
                     }}
-                    onClick={() => selectImage(image.path)}
+                    onClick={() => selectImage(image.url)}
                   >
                     <img
-                      src={image.path}
+                      src={image.url}
                       alt={image.name}
                       style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                     />
