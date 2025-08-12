@@ -857,7 +857,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     <div className="form-item">
                         <Upload.Dragger
                             name="file"
-                            multiple={false}
+                            multiple
                             beforeUpload={(file) => {
                                 const isImage = file.type.startsWith('image/')
                                 if (!isImage) {

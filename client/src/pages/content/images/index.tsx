@@ -28,6 +28,7 @@ import {
   UploadOutlined
 } from '@ant-design/icons'
 import { RcFile } from 'antd/lib/upload'
+import type { UploadFile } from 'antd/es/upload/interface'
 import service from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
 import { GlobalContext } from '@/context'
@@ -71,6 +72,7 @@ const ImageManager: React.FC = () => {
   const [pageSize, setPageSize] = useState(isMobile ? 8 : 12)
   const [currentFolder, setCurrentFolder] = useState('')
   const [uploadVisible, setUploadVisible] = useState(false)
+  const [uploadFileList, setUploadFileList] = useState<UploadFile<any>[]>([])
   const [createFolderVisible, setCreateFolderVisible] = useState(false)
   const [deleteFolderVisible, setDeleteFolderVisible] = useState(false)
   const [folderName, setFolderName] = useState('')
@@ -530,7 +532,7 @@ const ImageManager: React.FC = () => {
       <Modal
         title={t['content.images.uploadTitle'] || '上传图片'}
         open={uploadVisible}
-        onCancel={() => setUploadVisible(false)}
+        onCancel={() => { setUploadVisible(false); setUploadFileList([]) }}
         footer={null}
         width={isMobile ? '90%' : 520}
       >
@@ -562,11 +564,44 @@ const ImageManager: React.FC = () => {
 
           <div className={styles.formItem}>
             <Upload.Dragger
-              name="file"
-              multiple={false}
+              name="data"
+              multiple
+              accept="image/*"
               beforeUpload={beforeUpload}
-              customRequest={handleCustomUpload}
-              showUploadList={false}
+              action="/hexopro/api/images/upload"
+              headers={{
+                Authorization: `Bearer ${localStorage.getItem('hexoProToken') || ''}`,
+                'X-Storage-Type': storageType
+              }}
+              data={() => ({ folder: currentFolder })}
+              fileList={uploadFileList}
+              showUploadList={{ showRemoveIcon: false, showPreviewIcon: false }}
+              progress={{ strokeWidth: 4, showInfo: false, status: 'active' as any }}
+              onChange={(info) => {
+                const { status, response } = info.file
+                // 控制显示数量，避免列表无限增长
+                const limitedList = (info.fileList || []).slice(-30)
+                setUploadFileList(limitedList)
+                if (status === 'uploading') {
+                  setLoading(true)
+                } else if (status === 'done') {
+                  if (response && response.code === 0) {
+                    message.success(t['content.images.uploadSuccess'] || '上传成功')
+                  } else {
+                    message.error(t['content.images.uploadFailed'] || '上传失败')
+                  }
+                } else if (status === 'error') {
+                  message.error(t['content.images.uploadFailed'] || '上传失败')
+                }
+                // 若全部完成/失败，则关闭弹窗并刷新
+                const allFinished = (info.fileList || []).every(f => f.status === 'done' || f.status === 'error')
+                if (allFinished) {
+                  setLoading(false)
+                  setUploadVisible(false)
+                  setUploadFileList([])
+                  setTimeout(() => fetchImages(), 400)
+                }
+              }}
             >
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
