@@ -91,6 +91,18 @@ const ImageManager: React.FC = () => {
   const isLocal = storageType === 'local'
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
   const [clearConfirmVisible, setClearConfirmVisible] = useState(false)
+  // 清理未引用图片
+  const [cleanupVisible, setCleanupVisible] = useState(false)
+  const [cleanupScanning, setCleanupScanning] = useState(false)
+  const [cleanupItems, setCleanupItems] = useState<Array<{ key: string; url: string; size: number; lastModified: string }>>([])
+  const [cleanupSelectedKeys, setCleanupSelectedKeys] = useState<string[]>([])
+  const [cleanupRecursive, setCleanupRecursive] = useState(true)
+  const [cleanupIncludeDrafts, setCleanupIncludeDrafts] = useState(true)
+  const [cleanupMinAgeDays, setCleanupMinAgeDays] = useState<number>(3)
+  const [cleanupIgnorePatterns, setCleanupIgnorePatterns] = useState<string>('')
+  const [cleanupTotal, setCleanupTotal] = useState(0)
+  const [cleanupPage, setCleanupPage] = useState(1)
+  const [cleanupPageSize, setCleanupPageSize] = useState(200)
 
   const toggleSelect = (key: string) => {
     setSelectedKeys(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
@@ -105,7 +117,8 @@ const ImageManager: React.FC = () => {
           page: currentPage,
           pageSize: pageSize,
           folder: currentFolder,
-          storageType
+          storageType,
+          includeSubfolders: currentFolder === 'trash'
         }
       })
 
@@ -364,6 +377,14 @@ const ImageManager: React.FC = () => {
           >
             {t['content.images.upload'] || '上传图片'}
           </Button>
+          {currentFolder !== 'trash' && (
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={() => setCleanupVisible(true)}
+            >
+              {t['content.images.cleanupUnused'] || '清理未引用图片'}
+            </Button>
+          )}
           <Button
             icon={<FolderAddOutlined />}
             onClick={() => setCreateFolderVisible(true)}
@@ -375,17 +396,21 @@ const ImageManager: React.FC = () => {
 
       <div className={styles.folderSelector}>
         <Text strong style={{ marginRight: 8 }}>{t['content.images.currentFolder'] || '当前文件夹'}:</Text>
-        <Select
-          style={{ width: isMobile ? 200 : 300, marginLeft: 8 }}
-          value={currentFolder}
-          onChange={handleFolderChange}
-          placeholder={t['content.images.selectFolder'] || '选择文件夹'}
-        >
-          <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
-          {data.folders.map(folder => (
-            <Option key={folder} value={folder}>{folder}</Option>
-          ))}
-        </Select>
+        {currentFolder !== 'trash' ? (
+          <Select
+            style={{ width: isMobile ? 200 : 300, marginLeft: 8 }}
+            value={currentFolder}
+            onChange={handleFolderChange}
+            placeholder={t['content.images.selectFolder'] || '选择文件夹'}
+          >
+            <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
+            {data.folders.filter(f => String(f).toLowerCase() !== 'trash').map(folder => (
+              <Option key={folder} value={folder}>{folder}</Option>
+            ))}
+          </Select>
+        ) : (
+          <Text type="secondary" style={{ marginLeft: 8 }}>trash</Text>
+        )}
         <div style={{ flex: 1 }} />
         <Text strong style={{ marginLeft: 16, marginRight: 8 }}>{t['content.images.storageType'] || '图床'}:</Text>
         <Select
@@ -398,8 +423,15 @@ const ImageManager: React.FC = () => {
           ))}
         </Select>
         <Button
+          style={{ marginLeft: 8 }}
+          onClick={() => { setCurrentFolder(currentFolder === 'trash' ? '' : 'trash'); setCurrentPage(1) }}
+        >
+          {currentFolder === 'trash' ? (t['content.images.back'] || '返回') : (t['content.images.trash'] || '回收站')}
+        </Button>
+        <Button
           danger
           style={{ marginLeft: 12 }}
+          disabled={currentFolder === 'trash'}
           onClick={() => setDeleteFolderVisible(true)}
         >
           {t['content.images.deleteFolder'] || '删除文件夹'}
@@ -584,7 +616,7 @@ const ImageManager: React.FC = () => {
               placeholder={t['content.images.selectFolder'] || '选择文件夹'}
             >
               <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
-              {data.folders.map(folder => (
+              {data.folders.filter(f => String(f).toLowerCase() !== 'trash').map(folder => (
                 <Option key={folder} value={folder}>{folder}</Option>
               ))}
             </Select>
@@ -785,7 +817,7 @@ const ImageManager: React.FC = () => {
           placeholder={t['content.images.selectFolder'] || '选择文件夹'}
         >
           <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
-          {data.folders.map(folder => (
+          {data.folders.filter(f => String(f).toLowerCase() !== 'trash').map(folder => (
             <Option key={folder} value={folder}>{folder}</Option>
           ))}
         </Select>
@@ -801,6 +833,243 @@ const ImageManager: React.FC = () => {
           onVisibleChange: (visible) => setPreviewVisible(visible),
         }}
       />
+
+      {/* 清理未引用图片 */}
+      <Modal
+        title={t['content.images.cleanupTitle'] || '清理未引用图片'}
+        open={cleanupVisible}
+        onCancel={() => {
+          setCleanupVisible(false)
+          setCleanupItems([])
+          setCleanupSelectedKeys([])
+          setCleanupPage(1)
+          setCleanupTotal(0)
+        }}
+        footer={null}
+        width={isMobile ? '95%' : 900}
+        destroyOnClose
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div>
+            <Text strong>{t['content.images.cleanup.folder'] || '目标文件夹'}</Text>
+            <Select
+              style={{ width: '100%', marginTop: 6 }}
+              value={currentFolder === 'trash' ? '' : currentFolder}
+              onChange={(v) => { setCurrentFolder(v); setCleanupItems([]); setCleanupSelectedKeys([]); }}
+            >
+              <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
+              {data.folders.filter(f => String(f).toLowerCase() !== 'trash').map(folder => (
+                <Option key={folder} value={folder}>{folder}</Option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Text strong>{t['content.images.cleanup.minAgeDays'] || '最小年龄（天）'}</Text>
+            <Input
+              type="number"
+              min={0}
+              value={cleanupMinAgeDays}
+              onChange={(e) => setCleanupMinAgeDays(Number(e.target.value || 0))}
+              style={{ marginTop: 6 }}
+            />
+          </div>
+          <div>
+            <Text strong>{t['content.images.storageType'] || '图床'}</Text>
+            <Select
+              style={{ width: '100%', marginTop: 6 }}
+              value={storageType}
+              onChange={(v) => { setStorageType(v); setCleanupItems([]); setCleanupSelectedKeys([]); }}
+            >
+              {availableStorages.map(s => (
+                <Option key={s} value={s}>{s}</Option>
+              ))}
+            </Select>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input type="checkbox" checked={cleanupRecursive} onChange={(e) => setCleanupRecursive(e.target.checked)} />
+            <Text>{t['content.images.cleanup.recursive'] || '包含子文件夹'}</Text>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input type="checkbox" checked={cleanupIncludeDrafts} onChange={(e) => setCleanupIncludeDrafts(e.target.checked)} />
+            <Text>{t['content.images.cleanup.includeDrafts'] || '包含草稿'}</Text>
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <Text strong>{t['content.images.cleanup.ignore'] || '忽略规则（逗号分隔或JSON数组）'}</Text>
+          <Input
+            placeholder={t['content.images.cleanup.ignore.placeholder'] || '如：sponsors/*, logo/*, .keep'}
+            value={cleanupIgnorePatterns}
+            onChange={(e) => setCleanupIgnorePatterns(e.target.value)}
+            style={{ marginTop: 6 }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+          <Button
+            type="primary"
+            loading={cleanupScanning}
+            onClick={async () => {
+              try {
+                setCleanupScanning(true)
+                setCleanupItems([])
+                setCleanupSelectedKeys([])
+                const res = await service.get('/hexopro/api/images/unused', {
+                  params: {
+                    storageType,
+                    folder: currentFolder,
+                    recursive: cleanupRecursive,
+                    includeDrafts: cleanupIncludeDrafts,
+                    minAgeDays: cleanupMinAgeDays,
+                    ignorePatterns: cleanupIgnorePatterns,
+                    page: cleanupPage,
+                    pageSize: cleanupPageSize
+                  }
+                })
+                if (currentFolder === 'trash') {
+                  // 回收站禁止扫描
+                  setCleanupItems([])
+                  setCleanupTotal(0)
+                  message.warning(t['content.images.cleanup.trashNotAllowed'] || '回收站目录不支持扫描清理')
+                  return
+                }
+                const items = (res?.data?.items || []).map(it => ({
+                  ...it,
+                  url: `${it.url}${String(it.url).includes('?') ? '&' : '?'}_t=${Date.now()}`
+                }))
+                setCleanupItems(items)
+                setCleanupTotal(res?.data?.total || items.length)
+                message.success(t['content.images.cleanup.scanSuccess'] || '扫描完成')
+              } catch (e) {
+                message.error(t['content.images.cleanup.scanFailed'] || '扫描失败')
+              } finally {
+                setCleanupScanning(false)
+              }
+            }}
+          >
+            {t['content.images.cleanup.scan'] || '扫描'}
+          </Button>
+          {cleanupItems.length > 0 && (
+            <>
+              <Button
+                onClick={() => setCleanupSelectedKeys(cleanupItems.map(it => it.key))}
+              >
+                {t['content.images.selectAll'] || '全选'}
+              </Button>
+              <Button onClick={() => setCleanupSelectedKeys([])}>
+                {t['content.images.clearSelection'] || '清空选择'}
+              </Button>
+            </>
+          )}
+          <div style={{ flex: 1 }} />
+          {cleanupItems.length > 0 && (
+            <Text type="secondary">
+              {(t['content.images.cleanup.found'] || '发现未引用图片') + `: ${cleanupTotal}`}
+            </Text>
+          )}
+        </div>
+
+        <Spin spinning={cleanupScanning}>
+          {cleanupItems.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 12 }}>
+              {cleanupItems.map(item => (
+                <div key={item.key} style={{ border: '1px solid #f0f0f0', borderRadius: 6, padding: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input
+                        type="checkbox"
+                        checked={cleanupSelectedKeys.includes(item.key)}
+                        onChange={(e) => {
+                          const checked = e.target.checked
+                          setCleanupSelectedKeys(prev => checked ? [...prev, item.key] : prev.filter(k => k !== item.key))
+                        }}
+                      />
+                      <Text ellipsis style={{ maxWidth: 120 }}>{item.key.split('/').slice(-1)[0]}</Text>
+                    </label>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{formatFileSize(item.size)}</Text>
+                  </div>
+                  <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 8, overflow: 'hidden' }}>
+                    <img src={item.url} alt={item.key} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                  </div>
+                  <div style={{ marginTop: 6 }}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{new Date(item.lastModified || '').toLocaleString()}</Text>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Empty description={t['content.images.cleanup.noResult'] || '暂无待清理图片'} />
+          )}
+        </Spin>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <Button onClick={() => setCleanupVisible(false)}>{t['content.images.cancel'] || '取消'}</Button>
+          <Button
+            danger
+            disabled={cleanupSelectedKeys.length === 0}
+            onClick={async () => {
+              try {
+                setCleanupScanning(true)
+                const res = await service.post('/hexopro/api/images/unused/cleanup', {
+                  storageType,
+                  keys: cleanupSelectedKeys,
+                  useRecycleBin: true
+                })
+                if (res?.data?.code === 0 || res?.data?.success) {
+                  message.success(t['content.images.cleanup.trashSuccess'] || '已移动到回收站')
+                  setCleanupVisible(false)
+                  setCleanupItems([])
+                  setCleanupSelectedKeys([])
+                  fetchImages()
+                } else {
+                  message.error(t['content.images.cleanup.failed'] || '清理失败')
+                }
+              } catch (e) {
+                message.error(t['content.images.cleanup.failed'] || '清理失败')
+              } finally {
+                setCleanupScanning(false)
+              }
+            }}
+          >
+            {t['content.images.cleanup.toTrash'] || '移到回收站'}
+          </Button>
+          <Popconfirm
+            title={t['content.images.cleanup.deleteConfirm'] || '确定要彻底删除所选图片吗？此操作不可恢复'}
+            okText={t['content.images.ok'] || '确定'}
+            cancelText={t['content.images.cancel'] || '取消'}
+            onConfirm={async () => {
+              try {
+                setCleanupScanning(true)
+                const res = await service.post('/hexopro/api/images/unused/cleanup', {
+                  storageType,
+                  keys: cleanupSelectedKeys,
+                  useRecycleBin: false
+                })
+                if (res?.data?.code === 0 || res?.data?.success) {
+                  message.success(t['content.images.cleanup.deleteSuccess'] || '已删除')
+                  setCleanupVisible(false)
+                  setCleanupItems([])
+                  setCleanupSelectedKeys([])
+                  fetchImages()
+                } else {
+                  message.error(t['content.images.cleanup.failed'] || '清理失败')
+                }
+              } catch (e) {
+                message.error(t['content.images.cleanup.failed'] || '清理失败')
+              } finally {
+                setCleanupScanning(false)
+              }
+            }}
+          >
+            <Button danger type="primary" disabled={cleanupSelectedKeys.length === 0}>
+              {t['content.images.cleanup.delete'] || '彻底删除'}
+            </Button>
+          </Popconfirm>
+        </div>
+      </Modal>
     </div>
   )
 }

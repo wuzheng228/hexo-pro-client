@@ -76,6 +76,18 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     const t = useLocale()
 
+    // 统一的 URL 处理：
+    // - 远程图床一般已返回完整且已编码的绝对 URL，直接使用
+    // - 本地仅返回相对路径，需要进行一次 encodeURI
+    // - 若字符串已包含 %（可能已编码），避免再次编码
+    function toMarkdownUrl(raw: string): string {
+        if (!raw) return raw
+        const isAbsolute = /^(?:https?:)?\/\//i.test(raw)
+        const hasPercent = raw.includes('%')
+        if (isAbsolute || hasPercent) return raw
+        return encodeURI(raw)
+    }
+
     // 修改上传图片函数，添加文件夹参数
     function uploadImage(image, filename, folder = '') {
         const promise = new Promise((f, r) => {
@@ -220,9 +232,12 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 console.log('result', result)
 
                 if (vd && result) {
-                    // 对图片 URL 进行编码处理
-                    const encodedSrc = encodeURI(result.url)
-                    vd.insertValue(`\n![${filename}](${encodedSrc})\n`)
+                    // 统一处理 URL，避免重复编码
+                    const srcRaw = storageType === 'local'
+                        ? (result.path || result.src || result.url)
+                        : (result.url || result.src || result.path)
+                    const finalSrc = toMarkdownUrl(String(srcRaw))
+                    vd.insertValue(`\n![${filename}](${finalSrc})\n`)
                     vd.tip(`${t['vditor.upload.success'] || '上传成功'}: ${filename}`, 3000)
                     // 强制编辑器重新渲染
                 }
@@ -245,8 +260,8 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         if (vd) {
             // 本地用 path，远程用 url
             const raw = storageType === 'local' ? (image.path || image.url) : (image.url || image.path)
-            const encoded = encodeURI(raw)
-            vd.insertValue(`\n![${image.name}](${encoded})\n`)
+            const finalSrc = toMarkdownUrl(String(raw))
+            vd.insertValue(`\n![${image.name}](${finalSrc})\n`)
             setImagePickerVisible(false)
         }
     }
@@ -523,11 +538,11 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
                                 setTimeout(() => {
                                     const currentValue = vditor.getValue()
-                                    // 对图片 URL 进行编码处理
+                                    // 统一处理 URL，避免重复编码
                                     const raw = storageType === 'local'
                                         ? (res.path || res.src || res.url)
                                         : (res.url || res.src || res.path)
-                                    const encodedSrc = encodeURI(raw as string)
+                                    const encodedSrc = toMarkdownUrl(String(raw))
                                     if (isEditorFocus) {
                                         vditor.setValue(currentValue + `\n![${filename}](${encodedSrc})`)
                                     } else {
