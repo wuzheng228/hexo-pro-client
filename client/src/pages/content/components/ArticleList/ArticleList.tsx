@@ -372,7 +372,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                                     {
                                                         key: 'edit',
                                                         label: (
-                                                            <Link to={isPage ? `/page/${base64Encode(item.permalink)}/edit` : `/post/${base64Encode(item.permalink)}`} onClick={(event) => event.stopPropagation()}>
+                                                            <Link to={isPage ? `/page/${base64Encode(item.permalink)}` : `/post/${base64Encode(item.permalink)}`} onClick={(event) => event.stopPropagation()}>
                                                                 {t['content.articleList.btn.edit']}
                                                             </Link>
                                                         )
