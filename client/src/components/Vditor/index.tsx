@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 
 import Vditor from 'vditor'
 import "vditor/src/assets/less/index.less"
@@ -95,7 +95,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 data: image,
                 filename: filename,
                 folder: folder,
-                storageType
+                storageType: storageTypeRef.current
             }).then(res => {
                 f(res.data)
             }).catch(err => {
@@ -146,6 +146,47 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             return 'en_US'
         }
     }
+
+    // 使用 ref 确保异步回调读取到最新的图床类型
+    const storageTypeRef = useRef(storageType)
+    useEffect(() => { storageTypeRef.current = storageType }, [storageType])
+
+    // 使用 ref 确保在粘贴上传（Vditor handler 闭包）中读取到最新的目录
+    const uploadFolderRef = useRef(uploadFolder)
+    const currentImageFolderRef = useRef(currentImageFolder)
+    useEffect(() => { uploadFolderRef.current = uploadFolder }, [uploadFolder])
+    useEffect(() => { currentImageFolderRef.current = currentImageFolder }, [currentImageFolder])
+
+    // 挂载时同步一次后端的图床配置，确保默认图床与设置一致
+    useEffect(() => {
+        (async () => {
+            try {
+                const cfg = await service.get('/hexopro/api/images/config/get')
+                const data = cfg?.data?.data || {}
+                const storages: string[] = ['local']
+                if (data.aliyun && (data.aliyun.bucket && (data.aliyun.domain || (data.aliyun.region && data.aliyun.accessKeyId && data.aliyun.accessKeySecret)))) {
+                    storages.push('aliyun')
+                }
+                if (data.qiniu && (data.qiniu.bucket && data.qiniu.domain && data.qiniu.accessKey && data.qiniu.secretKey)) {
+                    storages.push('qiniu')
+                }
+                if (data.tencent && (data.tencent.bucket && (data.tencent.domain || (data.tencent.region && data.tencent.secretId && data.tencent.secretKey)))) {
+                    storages.push('tencent')
+                }
+                const unique = Array.from(new Set(storages))
+                setAvailableStorages(unique)
+                const backendDefault = data.type && unique.includes(data.type) ? data.type : 'local'
+                setStorageType(backendDefault)
+            } catch (_) { }
+        })()
+    }, [])
+
+    // 切换图床类型时，清空已选择的上传/浏览目录，避免继续沿用旧图床目录
+    useEffect(() => {
+        setUploadFolder('')
+        setCurrentImageFolder('')
+        setCurrentImagePage(1)
+    }, [storageType])
 
     // 获取图片列表
     const fetchImages = async () => {
@@ -227,13 +268,17 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     filename = filename.replace(/\.[^/.]+$/, '') + '.svg'
                 }
 
-                const result = await uploadImage(event.target.result, filename, uploadFolder) as UploadResult
+                // 选择目标上传目录：优先使用上传弹窗选中的目录，否则使用图片选择器当前目录；避免上传到回收站
+                let targetFolder = uploadFolderRef.current || currentImageFolderRef.current || ''
+                if (String(targetFolder).toLowerCase().startsWith('trash')) targetFolder = ''
+
+                const result = await uploadImage(event.target.result, filename, targetFolder) as UploadResult
 
                 console.log('result', result)
 
                 if (vd && result) {
                     // 统一处理 URL，避免重复编码
-                    const srcRaw = storageType === 'local'
+                    const srcRaw = storageTypeRef.current === 'local'
                         ? (result.path || result.src || result.url)
                         : (result.url || result.src || result.path)
                     const finalSrc = toMarkdownUrl(String(srcRaw))
@@ -501,6 +546,54 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     }
                 })
                 setVd(vditor)
+
+                // 统一处理编辑区域内图片/链接点击：
+                // - 本地图床使用相对路径，点击时补齐为绝对 URL 再打开
+                // - 过滤异常的 'https:'、'http:' 这类不完整 URL
+                const root = document.getElementById('vditor') as HTMLElement
+                const clickHandler = (ev: MouseEvent) => {
+                    const target = ev.target as HTMLElement
+                    if (!target) return
+                    const openAbs = (raw: string) => {
+                        if (!raw) return
+                        // 跳过不完整 scheme
+                        if (/^https?:$/i.test(raw)) return
+                        // 完整绝对
+                        if (/^(?:https?:)?\/\//i.test(raw)) {
+                            window.open(raw, '_blank')
+                            return
+                        }
+                        // 相对路径 → 当前站点
+                        try {
+                            const abs = new URL(raw, window.location.origin).toString()
+                            window.open(abs, '_blank')
+                        } catch (_) { }
+                    }
+                    // 处理 <img>
+                    if (target.tagName === 'IMG') {
+                        const src = (target as HTMLImageElement).getAttribute('src') || ''
+                        if (src) {
+                            ev.preventDefault()
+                            ev.stopPropagation()
+                            openAbs(src)
+                        }
+                        return
+                    }
+                    // 处理 <a>
+                    if (target.tagName === 'A') {
+                        const href = (target as HTMLAnchorElement).getAttribute('href') || ''
+                        if (href && !/^(?:https?:)?\/\//i.test(href) && !/^#/.test(href)) {
+                            ev.preventDefault()
+                            ev.stopPropagation()
+                            openAbs(href)
+                        }
+                    }
+                }
+                if (root) root.addEventListener('click', clickHandler, true)
+                // 清理
+                return () => {
+                    if (root) root.removeEventListener('click', clickHandler, true)
+                }
             },
             focus: (v: string) => {
                 setIsEditorFocus(true)
@@ -532,24 +625,32 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                                 filename = filename.replace(/\.[^/.]+$/, '') + '.svg'
                             }
 
-                            // 粘贴图片默认上传到根目录（不指定文件夹）
-                            uploadImage(event.target.result, filename).then((res: UploadResult) => {
+                            // 避免文件名冲突：为粘贴上传的文件名追加时间戳后缀
+                            const lastDot = filename.lastIndexOf('.')
+                            const nameWithoutExt = lastDot > 0 ? filename.slice(0, lastDot) : filename
+                            const ext = lastDot > 0 ? filename.slice(lastDot) : ''
+                            const uniqueName = `${nameWithoutExt}_${Date.now()}${ext}`
+
+                            // 粘贴图片上传到当前选择的目录：优先上传弹窗选项，否则为图片选择器当前目录（默认为根目录）
+                            let targetFolder = uploadFolderRef.current || currentImageFolderRef.current || ''
+                            if (String(targetFolder).toLowerCase().startsWith('trash')) targetFolder = ''
+                            uploadImage(event.target.result, uniqueName, targetFolder).then((res: UploadResult) => {
                                 res['code'] = 0
 
                                 setTimeout(() => {
                                     const currentValue = vditor.getValue()
                                     // 统一处理 URL，避免重复编码
-                                    const raw = storageType === 'local'
+                                    const raw = storageTypeRef.current === 'local'
                                         ? (res.path || res.src || res.url)
                                         : (res.url || res.src || res.path)
                                     const encodedSrc = toMarkdownUrl(String(raw))
                                     if (isEditorFocus) {
-                                        vditor.setValue(currentValue + `\n![${filename}](${encodedSrc})`)
+                                        vditor.setValue(currentValue + `\n![${uniqueName}](${encodedSrc})`)
                                     } else {
-                                        vditor.insertValue(`\n![${filename}](${encodedSrc})`)
+                                        vditor.insertValue(`\n![${uniqueName}](${encodedSrc})`)
                                     }
                                     // 重新渲染编辑器内容（如果需要）
-                                    vditor.tip(`${t['vditor.upload.success']}: ${filename}`, 3000)
+                                    vditor.tip(`${t['vditor.upload.success']}: ${uniqueName}`, 3000)
                                 }, 600)
                                 return null
                             }).catch((err) => {
