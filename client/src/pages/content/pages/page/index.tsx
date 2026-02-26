@@ -128,10 +128,8 @@ function Page() {
     }
 
     const handleChangeContent = (text) => {
-        // if (text === rendered) {
-        //     return
-        // }
-        // setRendered(text)
+        // 同步本地状态，保证 AI 插入等场景拿到的是最新内容
+        setDoc(text)
         postRef.current({ _content: text })
     }
 
@@ -167,9 +165,12 @@ function Page() {
     }
 
     const handleInsertContent = (content: string) => {
-        setAiPanelVisible(false)
-        const newContent = doc + '\n\n' + content
-        handleChangeContent(newContent)
+        const base = doc || ''
+        const newContent = base + '\n\n' + content
+        // 更新本地状态
+        setDoc(newContent)
+        // 触发编辑器内容和后端更新
+        postRef.current({ _content: newContent })
     }
 
 

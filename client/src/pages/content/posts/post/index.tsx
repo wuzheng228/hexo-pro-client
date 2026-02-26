@@ -239,7 +239,9 @@ function Post() {
         if (text === rendered) {
             return
         }
+        // 同步本地内容（用于 AI 插入等场景）
         setRendered(text)
+        setDoc(text)
         postRef.current({ _content: text })
     }
 
@@ -323,10 +325,14 @@ function Post() {
     }
 
     const handleInsertContent = (content: string) => {
-        setAiPanelVisible(false)
-        // Insert content at the end of the editor
-        const newContent = doc + '\n\n' + content
-        handleChangeContent(newContent)
+        // 在当前文档末尾插入 AI 内容，但不关闭面板
+        const base = doc || ''
+        const newContent = base + '\n\n' + content
+        // 更新本地状态，驱动编辑器刷新
+        setDoc(newContent)
+        setRendered(newContent)
+        // 触发后端保存
+        postRef.current({ _content: newContent })
     }
 
     useEffect(() => {
