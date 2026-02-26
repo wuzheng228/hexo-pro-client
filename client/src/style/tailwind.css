@@ -1,0 +1,9 @@
+@layer theme, components, utilities;
+
+/* 只引入主题变量和工具类，不引入 preflight/reset，避免全局样式被改写 */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* 告诉 Tailwind 去哪些文件里扫描类名 */
+@source "../**/*.{ts,tsx,js,jsx}";
+

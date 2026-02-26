@@ -8,11 +8,13 @@ import { PostSettings } from './postSetting'
 import { useNavigate } from "react-router-dom"
 import HexoProVditor from '@/components/Vditor'
 import EditorHeader from '../../components/EditorHeader'
+import AIChatPanel from '@/components/AIChatPanel'
 import useLocale from '@/hooks/useLocale'
 import styles from '../../style/index.module.less'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { GlobalState } from '@/store'
 import { GlobalContext } from '@/context'
+import HexoProMilkdown from '@/components/MilkdownEditor'
 
 
 type Post = {
@@ -26,6 +28,7 @@ function Post() {
     const navigate = useNavigate()
     const postRef = useRef(null)
     const editorWapperRef = useRef(null)
+    const vditorRef = useRef(null)
     const { _id } = useParams()
     const [post, setPost] = useState({ isDraft: true, source: null, permalink: null, title: null })
     const [tagsCatMeta, setTagsCatMeta] = useState({})
@@ -36,6 +39,7 @@ function Post() {
     const [rendered, setRendered] = useState('')
     const [update, setUpdate] = useState({})
     const [visible, setVisible] = useState(false)
+    const [aiPanelVisible, setAiPanelVisible] = useState(false)
 
     const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
 
@@ -46,6 +50,7 @@ function Post() {
     })
 
     const { theme } = useContext(GlobalContext)
+    const dispatch = useDispatch()
 
     const skeletonStyle = theme === 'dark' ? {
         backgroundColor: '#333', // 暗黑主题背景色
@@ -313,6 +318,17 @@ function Post() {
         // console.log('handleUploadingImage', isUploading)
     }
 
+    const handleAIClick = () => {
+        setAiPanelVisible(!aiPanelVisible)
+    }
+
+    const handleInsertContent = (content: string) => {
+        setAiPanelVisible(false)
+        // Insert content at the end of the editor
+        const newContent = doc + '\n\n' + content
+        handleChangeContent(newContent)
+    }
+
     useEffect(() => {
         const handleResize = () => {
             if (editorWapperRef.current) {
@@ -372,47 +388,90 @@ function Post() {
     useEffect(() => {
         const p = _.debounce((update) => {
             handleUpdate(update)
-        }, 1000, { trailing: true, loading: true })
+        }, 1000, { trailing: true })
         postRef.current = p
     }, [])
 
     return (
-        <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: 'auto', overflowX: 'hidden' }}>
-            {error ? (
-                <ErrorDisplay error={error} onRetry={retryFetch} />
-            ) : (
-                <>
-                    <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
-                    <EditorHeader
-                        isPage={false}
-                        permalink={post.permalink} // 桌面端使用需要替换域名为localhost:4000
-                        isDraft={post.isDraft}
-                        handlePublish={publish}
-                        handleUnpublish={unpublish}
-                        className={styles['editor-header']}
-                        initTitle={title}
-                        popTitle={t['editor.header.pop.title']}
-                        popDes={t['page.editor.header.pop.des']}
-                        handleChangeTitle={handleChangeTitle}
-                        handleTitleBlur={handleTitleBlur}
-                        handleSettingClick={(_) => setVisible(true)}
-                        handleRemoveSource={removeBlog}
+        <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
+            {/* 编辑器区域 */}
+            <div
+                ref={editorWapperRef}
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flex: 1,
+                    flexDirection: 'column',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                }}
+            >
+                {error ? (
+                    <ErrorDisplay error={error} onRetry={retryFetch} />
+                ) : (
+                    <>
+                        <Skeleton
+                            paragraph={{ rows: 10 }}
+                            loading={skeletonLoading}
+                            active
+                            className={styles['skeleton']}
+                            style={{ ...skeletonSize, ...skeletonStyle }}
+                        />
+                        <EditorHeader
+                            isPage={false}
+                            permalink={post.permalink} // 桌面端使用需要替换域名为localhost:4000
+                            isDraft={post.isDraft}
+                            handlePublish={publish}
+                            handleUnpublish={unpublish}
+                            className={styles['editor-header']}
+                            initTitle={title}
+                            popTitle={t['editor.header.pop.title']}
+                            popDes={t['page.editor.header.pop.des']}
+                            handleChangeTitle={handleChangeTitle}
+                            handleTitleBlur={handleTitleBlur}
+                            handleSettingClick={(_) => setVisible(true)}
+                            handleRemoveSource={removeBlog}
+                            handleAIClick={handleAIClick}
+                        />
+                        <div style={{ width: '100%', flex: 1, padding: 0, border: 'none' }}>
+                            <HexoProVditor
+                                initValue={doc}
+                                isPinToolbar={toolbarPin}
+                                handleChangeContent={handleChangeContent}
+                                handleUploadingImage={handleUploadingImage}
+                            />
+                        </div>
+                        <PostSettings
+                            visible={visible}
+                            setVisible={setVisible}
+                            tagCatMeta={tagsCatMeta}
+                            setTagCatMeta={setTagsCatMeta}
+                            postMeta={postMetaData}
+                            setPostMeta={setPostMetadata}
+                            handleChange={handleChange}
+                        />
+                    </>
+                )}
+            </div>
+            {/* AI聊天面板 - 右侧侧栏 */}
+            {aiPanelVisible && (
+                <div
+                    style={{
+                        height: '100%',
+                        width: 400,
+                        borderLeft: '1px solid #e5e5e5',
+                        flexShrink: 0,
+                    }}
+                >
+                    <AIChatPanel
+                        visible={aiPanelVisible}
+                        onClose={() => setAiPanelVisible(false)}
+                        onInsertContent={handleInsertContent}
                     />
-                    <div style={{ width: "100%", flex: 1, padding: 0, border: 'none' }}>
-                        <HexoProVditor initValue={doc} isPinToolbar={toolbarPin} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
-                    </div>
-                    <PostSettings
-                        visible={visible}
-                        setVisible={setVisible}
-                        tagCatMeta={tagsCatMeta}
-                        setTagCatMeta={setTagsCatMeta}
-                        postMeta={postMetaData}
-                        setPostMeta={setPostMetadata}
-                        handleChange={handleChange}
-                    />
-                </>
+                </div>
             )}
-        </div >
+        </div>
     )
 }
 

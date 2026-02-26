@@ -12,8 +12,9 @@ import useDeviceDetect from "@/hooks/useDeviceDetect"
 import { openDesktopLink } from "@/utils/desktopUtils"
 import IconLink from "@/assets/link.svg"
 import IconLinkLight from "@/assets/linkLight.svg"
+import IconAI from "@/assets/ai.svg"
 
-export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleTitleBlur = undefined, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
+export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleTitleBlur = undefined, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish, handleAIClick = undefined }) {
 
     const [isPin, setIsPin] = useState(true)
     const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -93,7 +94,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
             message.error('标题不能为空')
             return
         }
-        
+
         handleChangeTitle(tempTitle) // 添加这行，确保父组件的标题状态更新
         setIsEditingTitle(false)
     }
@@ -177,23 +178,23 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     {/* 标题编辑按钮 */}
                     {isEditingTitle ? (
                         <>
-                            <Button 
+                            <Button
                                 type='primary'
                                 icon={<SaveOutlined />}
                                 onClick={saveTitle}
-                                style={{ 
-                                    backgroundColor: currentTheme.buttonBackgroundColor, 
+                                style={{
+                                    backgroundColor: currentTheme.buttonBackgroundColor,
                                     color: currentTheme.buttonColor,
                                     borderColor: theme === 'dark' ? '#555' : '#d9d9d9' // 添加适合主题的边框颜色
                                 }}
                             >
                                 {isMobile ? '' : locale["editor.header.edit.title.save"]}
                             </Button>
-                            <Button 
+                            <Button
                                 type='default'
                                 onClick={cancelEditTitle}
-                                style={{ 
-                                    backgroundColor: currentTheme.buttonBackgroundColor, 
+                                style={{
+                                    backgroundColor: currentTheme.buttonBackgroundColor,
                                     color: currentTheme.buttonColor,
                                     borderColor: theme === 'dark' ? '#555' : '#d9d9d9' // 添加适合主题的边框颜色
                                 }}
@@ -202,7 +203,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             </Button>
                         </>
                     ) : (
-                        <Button 
+                        <Button
                             type='default'
                             icon={<EditOutlined />}
                             onClick={startEditTitle}
@@ -211,7 +212,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             {isMobile ? '' : locale["editor.header.edit.title"]}
                         </Button>
                     )}
-                    
+
                     {/* 移动端优先显示主要操作 */}
                     {!isMobile && (
                         <>
@@ -220,7 +221,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     )}
                     {
                         (isPage || (!isPage && !isDraft)) && (
-                                                        <Button
+                            <Button
                                 type="default"
                                 style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}
                                 onClick={(event) => {
@@ -235,6 +236,15 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />}
                         onClick={handlePinClick}
                         style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                    {handleAIClick && (
+                        <Button
+                            type='default'
+                            icon={theme === 'dark' ? <IconAI /> : <IconAI />}
+                            onClick={handleAIClick}
+                            style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}
+                            title={locale['ai.title'] || 'AI 助手'}
+                        />
+                    )}
                     <Button type='default' icon={<SettingOutlined />}
                         onClick={(e) => handleSettingClick(e)}
                         style={{ borderRight: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />

@@ -7,6 +7,7 @@ import { PageSettings } from './pageSettings'
 import { useNavigate } from "react-router-dom"
 import HexoProVditor from '@/components/Vditor'
 import EditorHeader from '../../components/EditorHeader'
+import AIChatPanel from '@/components/AIChatPanel'
 import useLocale from '@/hooks/useLocale'
 import { Skeleton } from 'antd'
 import styles from '../../style/index.module.less'
@@ -35,6 +36,7 @@ function Page() {
     // const [rendered, setRendered] = useState('');
     const [update, setUpdate] = useState({})
     const [visible, setVisible] = useState(false)
+    const [aiPanelVisible, setAiPanelVisible] = useState(true)
     const t = useLocale()
     const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
     const [skeletonLoading, setSkeletonLoading] = useState(true)
@@ -160,6 +162,16 @@ function Page() {
         // console.log('handleUploadingImage', isUploading)
     }
 
+    const handleAIClick = () => {
+        setAiPanelVisible(!aiPanelVisible)
+    }
+
+    const handleInsertContent = (content: string) => {
+        setAiPanelVisible(false)
+        const newContent = doc + '\n\n' + content
+        handleChangeContent(newContent)
+    }
+
 
     useEffect(() => {
         const handleResize = () => {
@@ -203,38 +215,79 @@ function Page() {
     useEffect(() => {
         const p = _.debounce((update) => {
             handleUpdate(update)
-        }, 1000, { trailing: true, loading: true })
+        }, 1000, { trailing: true })
         postRef.current = p
     }, [])
 
     // const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
     return (
-        <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: 'auto', overflowX: 'hidden' }}>
-            <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
-            <EditorHeader
-                isPage={true}
-                permalink={page.permalink} // 桌面端使用需要替换域名为localhost:4000
-                isDraft={false}
-                handlePublish={() => { }}
-                handleUnpublish={() => { }}
-                initTitle={title}
-                popTitle={t['editor.header.pop.title']}
-                popDes={t['page.editor.header.pop.des']}
-                handleChangeTitle={handleChangeTitle}
-                handleSettingClick={(v) => setVisible(true)}
-                handleRemoveSource={removePage}
-            />
-            <div style={{ width: "100%", flex: 1, padding: 0, border: 'none' }}>
-                <HexoProVditor initValue={doc} isPinToolbar={toolbarPin} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
+        <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
+            {/* 编辑器区域 */}
+            <div
+                ref={editorWapperRef}
+                style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                }}
+            >
+                <Skeleton
+                    paragraph={{ rows: 10 }}
+                    loading={skeletonLoading}
+                    active
+                    className={styles['skeleton']}
+                    style={{ ...skeletonSize, ...skeletonStyle }}
+                />
+                <EditorHeader
+                    isPage={true}
+                    permalink={page.permalink} // 桌面端使用需要替换域名为localhost:4000
+                    isDraft={false}
+                    handlePublish={() => { }}
+                    handleUnpublish={() => { }}
+                    initTitle={title}
+                    popTitle={t['editor.header.pop.title']}
+                    popDes={t['page.editor.header.pop.des']}
+                    handleChangeTitle={handleChangeTitle}
+                    handleSettingClick={(v) => setVisible(true)}
+                    handleRemoveSource={removePage}
+                    handleAIClick={handleAIClick}
+                />
+                <div style={{ width: '100%', flex: 1, padding: 0, border: 'none' }}>
+                    <HexoProVditor
+                        initValue={doc}
+                        isPinToolbar={toolbarPin}
+                        handleChangeContent={handleChangeContent}
+                        handleUploadingImage={handleUploadingImage}
+                    />
+                </div>
+                <PageSettings
+                    visible={visible}
+                    setVisible={setVisible}
+                    pageMeta={pageMetaData}
+                    setPageMeta={setPageMetadata}
+                    handleChange={handleChange}
+                />
             </div>
-            <PageSettings
-                visible={visible}
-                setVisible={setVisible}
-                pageMeta={pageMetaData}
-                setPageMeta={setPageMetadata}
-                handleChange={handleChange}
-            />
-        </div >
+            {/* AI聊天面板 - 右侧侧栏 */}
+            {aiPanelVisible && (
+                <div
+                    style={{
+                        height: '100%',
+                        width: 400,
+                        borderLeft: '1px solid #e5e5e5',
+                        flexShrink: 0,
+                    }}
+                >
+                    <AIChatPanel
+                        visible={aiPanelVisible}
+                        onClose={() => setAiPanelVisible(false)}
+                        onInsertContent={handleInsertContent}
+                    />
+                </div>
+            )}
+        </div>
     )
 }
 

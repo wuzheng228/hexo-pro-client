@@ -4,6 +4,8 @@ const ESLintWebpackPlugin = require("eslint-webpack-plugin")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin")
 const CopyPlugin = require("copy-webpack-plugin")
+const tailwindPostcss = require("@tailwindcss/postcss")
+const postcssPresetEnv = require("postcss-preset-env")
 
 const getStyleLoaders = (preProcessor) => {
     console.log(path.resolve(__dirname, "../client/src"))
@@ -15,7 +17,8 @@ const getStyleLoaders = (preProcessor) => {
             options: {
                 postcssOptions: {
                     plugins: [
-                        "postcss-preset-env", // 能解决大多数样式兼容性问题
+                        tailwindPostcss,
+                        postcssPresetEnv(), // 能解决大多数样式兼容性问题
                     ],
                 },
             },
@@ -48,14 +51,11 @@ module.exports = {
                         include: /\.module\.css$/,
                     },
                     {
-                        // 用来匹配 .css 结尾的文件
+                        // 用来匹配 .css 结尾的文件（含 tailwind.css，需经 postcss 处理）
                         test: /\.css$/,
-                        // use 数组里面 Loader 执行顺序是从右到左
-                        use: [
-                            'style-loader',
-                            'css-loader'
-                        ],
-                        exclude: /(\.module\.css$)/
+                        use: getStyleLoaders(),
+                        exclude: /(\.module\.css$)/,
+                        sideEffects: true
                     },
                     {
                         test: /\.less$/,
@@ -186,20 +186,33 @@ module.exports = {
         proxy: [
             {
                 context: ['/hexopro/api'],
-                target: 'http://localhost.charlesproxy.com:8001',
-                timeout: 10000,
+                // 注意：这里不要再经过 Charles 代理，否则会导致 SSE 被缓冲，前端一次性收到所有数据
+                target: 'http://127.0.0.1:8001',
+                // 为了支持 AI SSE 流式响应，这里禁用代理超时，避免长连接被中断
+                timeout: 0,
+                proxyTimeout: 0,
                 pathRewrite: {
                     '/hexopro/api': '/hexopro/api'
                 },
                 changeOrigin: true,
-                secure: false
+                secure: false,
+                // 关键：设置正确的响应头，支持流式响应
+                onProxyRes: function(proxyRes, req, res) {
+                    // 清除可能导致缓冲的响应头
+                    delete proxyRes.headers['content-encoding'];
+                    delete proxyRes.headers['transfer-encoding'];
+                    // 确保不缓存
+                    proxyRes.headers['Cache-Control'] = 'no-cache';
+                    proxyRes.headers['X-Accel-Buffering'] = 'no';
+                },
 
             },
             {
                 context: ['/images/'],
-
-                target: 'http://localhost.charlesproxy.com:8001',
-                timeout: 10000,
+                // 同样直接指向本地服务，避免经过 Charles
+                target: 'http://127.0.0.1:8001',
+                timeout: 0,
+                proxyTimeout: 0,
                 pathRewrite: {
                     '/images/': '/images/'
                 },

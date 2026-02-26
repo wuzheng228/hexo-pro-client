@@ -6,6 +6,8 @@ const CopyPlugin = require("copy-webpack-plugin")
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const TerserWebpackPlugin = require("terser-webpack-plugin")
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin")
+const tailwindPostcss = require("@tailwindcss/postcss")
+const postcssPresetEnv = require("postcss-preset-env")
 // const ImageMinimizerPlugin = require("image-minimizer-webpack-plugin")
 
 const getStyleLoaders = (preProcessor) => {
@@ -18,7 +20,8 @@ const getStyleLoaders = (preProcessor) => {
             options: {
                 postcssOptions: {
                     plugins: [
-                        "postcss-preset-env", // 能解决大多数样式兼容性问题
+                        tailwindPostcss,
+                        postcssPresetEnv(), // 能解决大多数样式兼容性问题
                     ],
                 },
             },
@@ -52,14 +55,11 @@ module.exports = {
                         include: /\.module\.css$/,
                     },
                     {
-                        // 用来匹配 .css 结尾的文件
+                        // 用来匹配 .css 结尾的文件（含 tailwind.css，需经 postcss 处理）
                         test: /\.css$/,
-                        // use 数组里面 Loader 执行顺序是从右到左
-                        use: [
-                            'style-loader',
-                            'css-loader'
-                        ],
-                        exclude: /(\.module\.css$)/
+                        use: getStyleLoaders(),
+                        exclude: /(\.module\.css$)/,
+                        sideEffects: true
                     },
                     {
                         test: /\.less$/,

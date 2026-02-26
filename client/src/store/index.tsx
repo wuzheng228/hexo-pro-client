@@ -10,12 +10,14 @@ export interface GlobalState {
         userLoading?: boolean;
     },
     vditorToolbarPin: boolean,
+    aiPanelVisible: boolean,
 }
 
 const initialState: GlobalState = {
     userInfo: {
     },
     vditorToolbarPin: true,
+    aiPanelVisible: false,
 }
 
 
@@ -33,6 +35,19 @@ const rootReducer = function store(state = initialState, action) {
             return {
                 ...state,
                 vditorToolbarPin: !state.vditorToolbarPin,
+            }
+        }
+        case 'toggle-ai-panel': {
+            return {
+                ...state,
+                aiPanelVisible: !state.aiPanelVisible,
+            }
+        }
+        case 'set-ai-panel-visible': {
+            const { visible } = action.payload
+            return {
+                ...state,
+                aiPanelVisible: visible,
             }
         }
         default:
