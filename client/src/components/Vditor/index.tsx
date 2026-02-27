@@ -1,17 +1,17 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
-
+import { flushSync } from 'react-dom'
 import Vditor from 'vditor'
 import "vditor/src/assets/less/index.less"
 import "./style/index.less"
 import service from '@/utils/api'
 import { GlobalContext } from '@/context'
 import useLocale from '@/hooks/useLocale'
-// 移除未使用的导入
-// import { use } from 'marked'
-// import { useDeviceDetect } from 'use-device-detection'
 import useDeviceDetect from '@/hooks/useDeviceDetect'
 import { Modal, Pagination, Image, Spin, Empty, Select, Row, Col, Card, Typography, Upload, Input, message } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
+import SelectionToolbar, { type SelectionActionType } from './SelectionToolbar'
+import { aiChatStream } from '@/utils/aiService'
+import { isAISConfigured } from '@/utils/aiSettings'
 
 const { Text } = Typography
 const { Option } = Select
@@ -109,6 +109,31 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     const [isUploadingImage, setIsUPloadingImage] = useState(false)
 
     const [isEditorFocus, setIsEditorFocus] = useState(false)
+
+    // 选中文字浮动工具栏
+    const [selectionToolbarVisible, setSelectionToolbarVisible] = useState(false)
+    const [selectionToolbarPosition, setSelectionToolbarPosition] = useState({ top: 0, left: 0 })
+    const [selectionToolbarFlipped, setSelectionToolbarFlipped] = useState(false)
+    const [selectedText, setSelectedText] = useState('')
+    const [selectionToolbarLoading, setSelectionToolbarLoading] = useState(false)
+    const savedSelectionRangeRef = useRef<Range | null>(null)
+    const selectionAbortRef = useRef<AbortController | null>(null)
+
+    // AI 结果对话框
+    const [aiResultVisible, _setAiResultVisible] = useState(false)
+    const [aiResultContent, setAiResultContent] = useState('')
+    const [aiResultStreaming, _setAiResultStreaming] = useState(false)
+    const lastActionTypeRef = useRef<SelectionActionType>('explain')
+    const aiResultVisibleRef = useRef(false)
+    const aiResultStreamingRef = useRef(false)
+    const setAiResultVisible = (v: boolean) => {
+        aiResultVisibleRef.current = v
+        _setAiResultVisible(v)
+    }
+    const setAiResultStreaming = (v: boolean) => {
+        aiResultStreamingRef.current = v
+        _setAiResultStreaming(v)
+    }
 
     // 从localStorage读取编辑器模式设置
     const [editorMode, setEditorMode] = useState(() => {
@@ -416,6 +441,201 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             vd.setValue(initValue)
         }
     }, [vd, initValue])
+
+    // 选中文字时显示浮动工具栏
+    useEffect(() => {
+        if (!vd) return
+        const root = document.getElementById('vditor') as HTMLElement
+        if (!root) return
+
+        const closeToolbarAndResult = () => {
+            selectionAbortRef.current?.abort()
+            setAiResultVisible(false)
+            setAiResultContent('')
+            setAiResultStreaming(false)
+            setSelectionToolbarLoading(false)
+            setSelectionToolbarVisible(false)
+        }
+
+        const showToolbarForSelection = () => {
+            const sel = window.getSelection()
+            if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+                setSelectionToolbarVisible(false)
+                return
+            }
+            const range = sel.getRangeAt(0)
+            if (!root.contains(range.commonAncestorContainer)) {
+                setSelectionToolbarVisible(false)
+                return
+            }
+            const text = sel.toString().trim()
+            if (!text) {
+                setSelectionToolbarVisible(false)
+                return
+            }
+            const rect = range.getBoundingClientRect()
+            const spaceBelow = window.innerHeight - rect.bottom
+            const needFlip = spaceBelow < 320
+            setSelectionToolbarFlipped(needFlip)
+            setSelectionToolbarPosition({
+                top: needFlip ? rect.top : rect.bottom + 6,
+                left: Math.max(8, Math.min(rect.left, window.innerWidth - 420)),
+            })
+            setSelectedText(text)
+            savedSelectionRangeRef.current = range.cloneRange()
+            setSelectionToolbarVisible(true)
+        }
+
+        const handleMouseUp = () => {
+            if (!aiResultVisibleRef.current) {
+                showToolbarForSelection()
+                return
+            }
+            // AI 已生成完成，直接关闭并重新显示工具栏
+            if (!aiResultStreamingRef.current) {
+                closeToolbarAndResult()
+                showToolbarForSelection()
+                return
+            }
+            // AI 正在生成中，弹窗确认是否放弃
+            Modal.confirm({
+                title: t['selectionToolbar.confirmAbort.title'] || '放弃 AI 回复',
+                content: t['selectionToolbar.confirmAbort.content'] || 'AI 正在生成中，是否放弃当前回复？',
+                okText: t['universal.confirm'] || '确定',
+                cancelText: t['universal.cancel'] || '取消',
+                onOk: () => {
+                    closeToolbarAndResult()
+                    showToolbarForSelection()
+                },
+            })
+        }
+
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement
+            if (target?.closest?.('.vditor-selection-toolbar')) return
+            if (target?.closest?.('#vditor')) return
+            if (aiResultVisibleRef.current) return
+            setSelectionToolbarVisible(false)
+        }
+
+        root.addEventListener('mouseup', handleMouseUp)
+        document.addEventListener('mousedown', handleClickOutside, true)
+        return () => {
+            root.removeEventListener('mouseup', handleMouseUp)
+            document.removeEventListener('mousedown', handleClickOutside, true)
+        }
+    }, [vd])
+
+    // 用 AI 结果替换选区：优先 DOM 替换，失败时用全文替换
+    const replaceSelectionWithText = (result: string) => {
+        if (!vd) return
+        const range = savedSelectionRangeRef.current
+        const fullValue = vd.getValue()
+        if (range && range.startContainer && document.getElementById('vditor')?.contains(range.startContainer)) {
+            try {
+                range.deleteContents()
+                const textNode = document.createTextNode(result)
+                range.insertNode(textNode)
+                range.collapse(false)
+                range.setStartAfter(textNode)
+                range.setEndAfter(textNode)
+                const sel = window.getSelection()
+                if (sel) {
+                    sel.removeAllRanges()
+                    sel.addRange(range)
+                }
+                handleChangeContent(vd.getValue())
+                return
+            } catch (_) {
+                /* fallback */
+            }
+        }
+        const idx = fullValue.indexOf(selectedText)
+        if (idx !== -1) {
+            const newValue = fullValue.slice(0, idx) + result + fullValue.slice(idx + selectedText.length)
+            vd.setValue(newValue)
+            handleChangeContent(newValue)
+        } else {
+            vd.insertValue(result)
+            handleChangeContent(vd.getValue())
+        }
+    }
+
+    const getSelectionSystemPrompt = (type: SelectionActionType): string => {
+        const prompts: Record<SelectionActionType, string> = {
+            explain: '你是一个助手。用户会发送一段选中的文本，请用简洁清晰的语言解释其含义或背景。只输出解释内容，不要加前缀。',
+            polish: '你是一个写作助手。用户会发送一段文本，请在不改变原意的前提下润色表达，使语句更通顺、得体。只输出润色后的文本，不要加任何说明。',
+            expand: '你是一个写作助手。用户会发送一段文本，请在保持原意的前提下适度扩写，使内容更丰富。只输出扩写后的文本，不要加任何说明。',
+            translate: '你是一个翻译助手。用户会发送一段中文或英文文本，请翻译成另一种语言（中文↔英文）。只输出译文，不要加任何说明。',
+            suggest: '你是一个写作助手。用户会发送一段文本，请给出简短的改进建议或可扩展的方向（几条即可）。只输出建议内容。',
+        }
+        return prompts[type] ?? prompts.explain
+    }
+
+    const runAIAction = async (type: SelectionActionType, text: string) => {
+        if (!text?.trim() || !vd) return
+        if (!isAISConfigured()) {
+            message.warning(t['ai.notConfigured'] || '请先在设置中配置 AI')
+            return
+        }
+        selectionAbortRef.current?.abort()
+        selectionAbortRef.current = new AbortController()
+        lastActionTypeRef.current = type
+        setSelectionToolbarLoading(true)
+        setAiResultVisible(true)
+        setAiResultContent('')
+        setAiResultStreaming(true)
+        try {
+            for await (const chunk of aiChatStream(
+                [
+                    { role: 'system', content: getSelectionSystemPrompt(type) },
+                    { role: 'user', content: text },
+                ],
+                (c) => {
+                    if (c.content) {
+                        flushSync(() => {
+                            setAiResultContent(prev => prev + c.content)
+                        })
+                    }
+                },
+                selectionAbortRef.current.signal
+            )) {
+                if (chunk.done) break
+            }
+            setSelectionToolbarLoading(false)
+            setAiResultStreaming(false)
+        } catch (err: any) {
+            if (err?.name !== 'AbortError') {
+                message.error(t['ai.error'] || 'AI 响应错误')
+            }
+            setSelectionToolbarLoading(false)
+            setAiResultStreaming(false)
+        }
+    }
+
+    const handleSelectionToolbarAction = (type: SelectionActionType) => {
+        runAIAction(type, selectedText)
+    }
+
+    const handleAIResultInsert = () => {
+        const trimmed = aiResultContent.trim()
+        if (trimmed) replaceSelectionWithText(trimmed)
+        setAiResultVisible(false)
+        setAiResultContent('')
+        setSelectionToolbarVisible(false)
+    }
+
+    const handleAIResultRetry = () => {
+        runAIAction(lastActionTypeRef.current, selectedText)
+    }
+
+    const handleAIResultClose = () => {
+        selectionAbortRef.current?.abort()
+        setAiResultVisible(false)
+        setAiResultContent('')
+        setAiResultStreaming(false)
+        setSelectionToolbarLoading(false)
+    }
 
     useEffect(() => {
         const vditor = new Vditor('vditor', {
@@ -844,6 +1064,25 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 style={{ width: '100%', height: '100%' }}
                 id='vditor'
                 className='vditor'>
+            </div>
+
+            {/* 选中文字浮动工具栏 */}
+            <div className="vditor-selection-toolbar">
+                <SelectionToolbar
+                    visible={selectionToolbarVisible}
+                    position={selectionToolbarPosition}
+                    flipped={selectionToolbarFlipped}
+                    selectedText={selectedText}
+                    loading={selectionToolbarLoading}
+                    dark={theme === 'dark'}
+                    onAction={handleSelectionToolbarAction}
+                    aiResultVisible={aiResultVisible}
+                    aiResultContent={aiResultContent}
+                    aiResultStreaming={aiResultStreaming}
+                    onInsert={handleAIResultInsert}
+                    onRetry={handleAIResultRetry}
+                    onCloseResult={handleAIResultClose}
+                />
             </div>
 
             {/* 图片选择模态框 */}
