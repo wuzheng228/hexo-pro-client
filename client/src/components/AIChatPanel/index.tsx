@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Input, Button, message, Spin } from 'antd';
 import { SendOutlined, CloseOutlined, CopyOutlined, ReloadOutlined, InsertRowLeftOutlined } from '@ant-design/icons';
-import { marked } from 'marked';
 import { flushSync } from 'react-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { GlobalContext } from '@/context';
 import useLocale from '@/hooks/useLocale';
 import { getAISettings, isAISConfigured } from '@/utils/aiSettings';
@@ -193,11 +194,6 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
         }));
     };
 
-    const renderMarkdown = (content: string) => {
-        console.log(content);
-        return { __html: marked(content) as string };
-    };
-
     if (!visible) return null;
 
     return (
@@ -243,11 +239,12 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                                             )}
                                         </div>
                                     )}
-                                    <div
-                                        className={styles.markdown}
-                                        dangerouslySetInnerHTML={renderMarkdown(msg.content)}
-                                    />
-                                </>
+                                    <div className={styles.markdown}>
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {msg.content}
+                                        </ReactMarkdown>
+                                    </div>
+                               </>
                             ) : (
                                 <div className={styles.userContent}>{msg.content}</div>
                             )}
