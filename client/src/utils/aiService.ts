@@ -1,5 +1,4 @@
-import service from './api';
-import { getAISettings } from '@/utils/aiSettings';
+import service from './api'
 
 export interface AIMessage {
     role: 'system' | 'user' | 'assistant';
@@ -34,17 +33,14 @@ export async function* aiChatStream(
     onChunk: (chunk: AIStreamChunk) => void,
     signal?: AbortSignal
 ): AsyncGenerator<AIStreamChunk> {
-    const settings = getAISettings();
-    console.log('[AI Stream] 开始流式请求, settings:', { url: settings.url, model: settings.model, stream: true });
+    console.log('[AI Stream] 开始流式请求（配置由后端读取）')
 
-    // 在开发环境下直接请求后端 8001 端口，绕过 webpack devServer 代理，避免代理缓冲 SSE
     const apiBase =
         process.env.NODE_ENV === 'development'
             ? 'http://127.0.0.1:8001'
-            : '';
+            : ''
 
-    // 获取 token
-    const token = localStorage.getItem('hexoProToken');
+    const token = localStorage.getItem('hexoProToken')
 
     const response = await fetch(`${apiBase}/hexopro/api/ai/chat`, {
         method: 'POST',
@@ -54,17 +50,11 @@ export async function* aiChatStream(
             ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
         },
         body: JSON.stringify({
-            url: settings.url,
-            apiKey: settings.apiKey,
-            model: settings.model,
             messages,
             stream: true,
-            max_tokens: settings.maxTokens,
-            temperature: settings.temperature,
-            top_p: settings.topP,
         }),
         signal,
-    });
+    })
 
     console.log('[AI Stream] 收到响应, status:', response.status, 'content-type:', response.headers.get('content-type'));
 
@@ -277,45 +267,15 @@ export async function* aiChatStream(
 }
 
 /**
- * 非流式 AI 聊天
+ * 非流式 AI 聊天（配置由后端读取）
  */
 export async function aiChat(request: AIChatRequest): Promise<AIChatResponse> {
-    const settings = getAISettings();
-
     const response = await service.post('/hexopro/api/ai/chat', {
-        url: settings.url,
-        apiKey: settings.apiKey,
-        model: settings.model,
         messages: request.messages,
         stream: false,
-        max_tokens: request.max_tokens || settings.maxTokens,
-        temperature: request.temperature || settings.temperature,
-        top_p: request.top_p || settings.topP,
-    });
-
-    return response.data;
-}
-
-/**
- * 保存 AI 设置
- */
-export async function saveAISettings(settings: {
-    url: string;
-    apiKey: string;
-    model: string;
-    enableThinking: boolean;
-    maxTokens: number;
-    temperature: number;
-    topP: number;
-}): Promise<AIChatResponse> {
-    const response = await service.post('/hexopro/api/ai/settings/save', settings);
-    return response.data;
-}
-
-/**
- * 获取 AI 设置
- */
-export async function getAISettingsFromServer(): Promise<any> {
-    const response = await service.get('/hexopro/api/ai/settings');
-    return response.data;
+        max_tokens: request.max_tokens,
+        temperature: request.temperature,
+        top_p: request.top_p,
+    })
+    return response.data
 }

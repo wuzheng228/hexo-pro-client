@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { GlobalContext } from '@/context';
 import useLocale from '@/hooks/useLocale';
-import { getAISettings, isAISConfigured } from '@/utils/aiSettings';
+import { isAISConfigured } from '@/utils/aiSettings'
 import { aiChatStream } from '@/utils/aiService';
 import styles from './style.module.less';
 
@@ -71,14 +71,15 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
         setInputValue('');
         setIsLoading(true);
 
-        if (!isAISConfigured()) {
+        const configured = await isAISConfigured()
+        if (!configured) {
             setMessages(prev => prev.map(msg =>
                 msg.id === assistantMessage.id
                     ? { ...msg, content: t['ai.notConfigured'], isStreaming: false }
                     : msg
-            ));
-            setIsLoading(false);
-            return;
+            ))
+            setIsLoading(false)
+            return
         }
 
         try {

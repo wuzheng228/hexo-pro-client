@@ -20,8 +20,114 @@
   width: 120px;
 }
 
+/* ========== Arco-style Capsule Tabs ========== */
+
+.settingsTabs {
+  :global(.ant-tabs-nav) {
+    margin-bottom: 20px;
+
+    &::before {
+      border-bottom: none;
+    }
+  }
+
+  :global(.ant-tabs-nav-list) {
+    background: #f2f3f5;
+    border-radius: 20px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  :global(.ant-tabs-tab) {
+    margin: 0 !important;
+    padding: 6px 16px;
+    border-radius: 18px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    color: #86909c;
+    line-height: 22px;
+
+    &:hover {
+      color: #4e5969;
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  :global(.ant-tabs-tab.ant-tabs-tab-active) {
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    color: #1d2129;
+    font-weight: 500;
+  }
+
+  :global(.ant-tabs-ink-bar) {
+    display: none;
+  }
+
+  :global(.ant-tabs-content-holder) {
+    background: #fff;
+    border: 1px solid #e5e6eb;
+    border-radius: 12px;
+    padding: 20px;
+
+    :global(.ant-card) {
+      border: none;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    :global(.ant-divider) {
+      margin-top: 0;
+    }
+  }
+
+  .tabLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    .tabIcon {
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+}
+
 :global([data-theme='dark']) {
   .container {
     --background-color: #141414;
+  }
+
+  .settingsTabs {
+    :global(.ant-tabs-nav-list) {
+      background: #2a2a2a;
+    }
+
+    :global(.ant-tabs-tab) {
+      color: #86909c;
+
+      &:hover {
+        color: #c9cdd4;
+        background: rgba(255, 255, 255, 0.06);
+      }
+    }
+
+    :global(.ant-tabs-tab.ant-tabs-tab-active) {
+      background: #3a3a3a;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    :global(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+      color: #f6f6f6;
+    }
+
+    :global(.ant-tabs-content-holder) {
+      background: #1a1a1a;
+      border-color: #2a2a2a;
+    }
   }
 }

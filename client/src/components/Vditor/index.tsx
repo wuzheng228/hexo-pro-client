@@ -574,7 +574,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     const runAIAction = async (type: SelectionActionType, text: string) => {
         if (!text?.trim() || !vd) return
-        if (!isAISConfigured()) {
+        if (!(await isAISConfigured())) {
             message.warning(t['ai.notConfigured'] || '请先在设置中配置 AI')
             return
         }
