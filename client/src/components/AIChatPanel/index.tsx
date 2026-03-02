@@ -34,15 +34,23 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+
+    const SCROLL_THRESHOLD = 40;
 
     const formatDuration = (durationMs?: number) => {
         if (!durationMs || durationMs <= 0) return '';
         return `${(durationMs / 1000).toFixed(1)}s`;
     };
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToBottom = (force = false) => {
+        const el = contentRef.current;
+        if (!el) return;
+        const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
+        if (force || isNearBottom) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
     };
 
     useEffect(() => {
@@ -77,6 +85,7 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
         setMessages(prev => [...prev, userMessage, assistantMessage]);
         setInputValue('');
         setIsLoading(true);
+        requestAnimationFrame(() => scrollToBottom(true));
 
         const allMessagesForApi = [
             ...baseMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
@@ -239,7 +248,7 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                 />
             </div>
 
-            <div className={styles.content}>
+            <div ref={contentRef} className={styles.content}>
                 {messages.length === 0 && (
                     <div className={styles.empty}>
                         <div className={styles.emptyIcon}>🤖</div>
@@ -261,7 +270,7 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                                                 <span className={styles.reasoningLabel}>
                                                     {msg.isStreaming
                                                         ? '思考中...'
-                                                        : `已思考${msg.reasoningDurationMs ? ` (${formatDuration(msg.reasoningDurationMs)})` : ''}`}
+                                                        : `已思考${msg.reasoningDurationMs ? ` ${formatDuration(msg.reasoningDurationMs)}` : ''}`}
                                                 </span>
                                                 <span className={styles.reasoningToggle}>
                                                     {msg.reasoningExpanded ? '▼' : '▶'}

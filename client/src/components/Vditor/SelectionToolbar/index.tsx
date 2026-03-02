@@ -131,7 +131,7 @@ export default function SelectionToolbar({
                                     <span className={styles.reasoningLabel}>
                                         {aiResultStreaming
                                             ? (t['ai.thinking'] || '思考中...')
-                                            : `已思考${aiResultReasoningDurationMs ? ` (${formatDuration(aiResultReasoningDurationMs)})` : ''}`}
+                                            : `已思考${aiResultReasoningDurationMs ? ` ${formatDuration(aiResultReasoningDurationMs)}` : ''}`}
                                     </span>
                                     <span className={styles.reasoningToggle}>
                                         {aiResultReasoningExpanded ? '▼' : '▶'}
