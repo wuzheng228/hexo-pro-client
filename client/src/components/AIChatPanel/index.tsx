@@ -56,13 +56,13 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
         }
     }, [visible]);
 
-    const handleSend = async () => {
-        if (!inputValue.trim()) return;
+    const sendMessage = async (content: string, baseMessages: Message[]) => {
+        if (!content.trim()) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
-            content: inputValue.trim(),
+            content: content.trim(),
         };
 
         const assistantMessage: Message = {
@@ -78,6 +78,11 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
         setInputValue('');
         setIsLoading(true);
 
+        const allMessagesForApi = [
+            ...baseMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+            { role: 'user' as const, content: userMessage.content }
+        ];
+
         const configured = await isAISConfigured()
         if (!configured) {
             setMessages(prev => prev.map(msg =>
@@ -92,15 +97,10 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
         try {
             abortControllerRef.current = new AbortController();
 
-            const allMessages = [
-                ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-                { role: 'user' as const, content: userMessage.content }
-            ];
-
             // 使用 aiService 的流式接口
             let hasReceivedData = false;
             for await (const chunk of aiChatStream(
-                allMessages,
+                allMessagesForApi,
                 (chunk) => {
                     // 使用 flushSync 确保状态同步更新，实现打字机效果
                     flushSync(() => {
@@ -185,25 +185,30 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
         }
     };
 
+    const handleSend = () => {
+        sendMessage(inputValue.trim(), messages);
+    };
+
     const handleCopy = (content: string) => {
         navigator.clipboard.writeText(content).then(() => {
             message.success(t['ai.copySuccess']);
         });
     };
 
-    const handleRegenerate = async () => {
+    const handleRegenerate = () => {
         const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
-        if (lastUserMessage) {
-            const assistantMessages = messages.filter(m => m.role === 'assistant');
-            const lastAssistantIndex = messages.findIndex(m => m.id === assistantMessages[assistantMessages.length - 1]?.id);
+        if (!lastUserMessage) return;
 
-            if (lastAssistantIndex > 0) {
-                setMessages(messages.slice(0, lastAssistantIndex));
-            }
+        const assistantMessages = messages.filter(m => m.role === 'assistant');
+        const lastAssistantMsg = assistantMessages[assistantMessages.length - 1];
+        const lastAssistantIndex = lastAssistantMsg ? messages.findIndex(m => m.id === lastAssistantMsg.id) : -1;
 
-            setInputValue(lastUserMessage.content);
-            setTimeout(() => handleSend(), 100);
-        }
+        // 移除最后一对 user + assistant
+        const baseMessages = lastAssistantIndex > 0 ? messages.slice(0, lastAssistantIndex - 1) : [];
+        setMessages(baseMessages);
+        setInputValue('');
+
+        sendMessage(lastUserMessage.content, baseMessages);
     };
 
     const handleInsert = (content: string) => {
