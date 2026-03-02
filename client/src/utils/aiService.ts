@@ -180,28 +180,24 @@ export async function* aiChatStream(
                         const parsed = JSON.parse(data);
                         const delta = parsed.choices?.[0]?.delta;
 
-                        // 处理 reasoning_details (思考过程)
-                        const reasoningDetails = delta?.reasoning_details;
-                        if (reasoningDetails && Array.isArray(reasoningDetails)) {
-                            for (const detail of reasoningDetails) {
-                                if (detail.text) {
-                                    // 检查新内容是否以旧内容开头
-                                    let newReasoning: string;
-                                    if (reasoningBuffer && detail.text.startsWith(reasoningBuffer)) {
-                                        newReasoning = detail.text.slice(reasoningBuffer.length);
-                                    } else {
-                                        // 新内容是独立的增量，或者不匹配，直接取新内容
-                                        newReasoning = detail.text;
-                                    }
+                        // 处理 reasoning_content (思考过程)
+                        if (typeof delta?.reasoning_content === 'string' && delta.reasoning_content) {
+                            let newReasoning: string;
+                            if (reasoningBuffer && delta.reasoning_content.startsWith(reasoningBuffer)) {
+                                // 新内容是累积字符串，取增量
+                                newReasoning = delta.reasoning_content.slice(reasoningBuffer.length);
+                                reasoningBuffer = delta.reasoning_content;
+                            } else {
+                                // 新内容是独立增量，直接追加
+                                newReasoning = delta.reasoning_content;
+                                reasoningBuffer += delta.reasoning_content;
+                            }
 
-                                    if (newReasoning) {
-                                        reasoningBuffer = detail.text;
-                                        const chunkData: AIStreamChunk = { reasoning: newReasoning };
-                                        onChunk(chunkData);
-                                        yield chunkData;
-                                        await new Promise(r => setTimeout(r, 0));
-                                    }
-                                }
+                            if (newReasoning) {
+                                const chunkData: AIStreamChunk = { reasoning: newReasoning };
+                                onChunk(chunkData);
+                                yield chunkData;
+                                await new Promise(r => setTimeout(r, 0));
                             }
                         }
 
@@ -211,13 +207,14 @@ export async function* aiChatStream(
                             if (contentBuffer && delta.content.startsWith(contentBuffer)) {
                                 // 新内容是累积的，取新增部分
                                 newContent = delta.content.slice(contentBuffer.length);
+                                contentBuffer = delta.content;
                             } else {
                                 // 新内容是独立的增量，或者不匹配，直接取新内容
                                 newContent = delta.content;
+                                contentBuffer += delta.content;
                             }
 
                             if (newContent) {
-                                contentBuffer = delta.content;
                                 const chunkData: AIStreamChunk = { content: newContent };
                                 onChunk(chunkData);
                                 yield chunkData;
@@ -242,10 +239,29 @@ export async function* aiChatStream(
                         const parsed = JSON.parse(data);
                         const delta = parsed.choices?.[0]?.delta;
 
+                        if (typeof delta?.reasoning_content === 'string' && delta.reasoning_content) {
+                            let newReasoning = delta.reasoning_content;
+                            if (reasoningBuffer && delta.reasoning_content.startsWith(reasoningBuffer)) {
+                                newReasoning = delta.reasoning_content.slice(reasoningBuffer.length);
+                                reasoningBuffer = delta.reasoning_content;
+                            } else {
+                                reasoningBuffer += delta.reasoning_content;
+                            }
+                            if (newReasoning) {
+                                const chunkData: AIStreamChunk = { reasoning: newReasoning };
+                                onChunk(chunkData);
+                                yield chunkData;
+                                await new Promise(r => setTimeout(r, 0));
+                            }
+                        }
+
                         if (delta?.content) {
                             let newContent = delta.content;
                             if (contentBuffer && delta.content.startsWith(contentBuffer)) {
                                 newContent = delta.content.slice(contentBuffer.length);
+                                contentBuffer = delta.content;
+                            } else {
+                                contentBuffer += delta.content;
                             }
                             if (newContent) {
                                 const chunkData: AIStreamChunk = { content: newContent };

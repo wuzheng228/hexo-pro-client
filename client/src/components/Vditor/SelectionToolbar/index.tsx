@@ -27,7 +27,11 @@ export interface SelectionToolbarProps {
     onAction: (type: SelectionActionType) => void
     aiResultVisible?: boolean
     aiResultContent?: string
+    aiResultReasoning?: string
+    aiResultReasoningExpanded?: boolean
+    aiResultReasoningDurationMs?: number
     aiResultStreaming?: boolean
+    onToggleReasoning?: () => void
     onInsert?: () => void
     onRetry?: () => void
     onCloseResult?: () => void
@@ -51,12 +55,20 @@ export default function SelectionToolbar({
     onAction,
     aiResultVisible = false,
     aiResultContent = '',
+    aiResultReasoning = '',
+    aiResultReasoningExpanded = true,
+    aiResultReasoningDurationMs,
     aiResultStreaming = false,
+    onToggleReasoning,
     onInsert,
     onRetry,
     onCloseResult,
 }: SelectionToolbarProps) {
     const t = useLocale()
+    const formatDuration = (durationMs?: number) => {
+        if (!durationMs || durationMs <= 0) return ''
+        return `${(durationMs / 1000).toFixed(1)}s`
+    }
 
     useEffect(() => {
         if (!aiResultVisible) return
@@ -110,13 +122,33 @@ export default function SelectionToolbar({
             {aiResultVisible && (
                 <div className={styles.resultBox}>
                     <div className={styles.resultContent}>
+                        {!!aiResultReasoning && (
+                            <div className={styles.reasoning}>
+                                <div
+                                    className={styles.reasoningHeader}
+                                    onClick={onToggleReasoning}
+                                >
+                                    <span className={styles.reasoningLabel}>
+                                        {aiResultStreaming
+                                            ? (t['ai.thinking'] || '思考中...')
+                                            : `已思考${aiResultReasoningDurationMs ? ` (${formatDuration(aiResultReasoningDurationMs)})` : ''}`}
+                                    </span>
+                                    <span className={styles.reasoningToggle}>
+                                        {aiResultReasoningExpanded ? '▼' : '▶'}
+                                    </span>
+                                </div>
+                                {aiResultReasoningExpanded && (
+                                    <div className={styles.reasoningContent}>{aiResultReasoning}</div>
+                                )}
+                            </div>
+                        )}
                         {aiResultContent ? (
                             <div className={styles.markdown}>
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {aiResultContent}
                                 </ReactMarkdown>
                             </div>
-                        ) : aiResultStreaming ? (
+                        ) : aiResultStreaming && !aiResultReasoning ? (
                             <div className={styles.loadingWrap}>
                                 <Spin size="small" />
                             </div>

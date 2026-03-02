@@ -122,7 +122,12 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     // AI 结果对话框
     const [aiResultVisible, _setAiResultVisible] = useState(false)
     const [aiResultContent, setAiResultContent] = useState('')
+    const [aiResultReasoning, setAiResultReasoning] = useState('')
+    const [aiResultReasoningExpanded, setAiResultReasoningExpanded] = useState(true)
+    const [aiResultReasoningDurationMs, setAiResultReasoningDurationMs] = useState<number | undefined>(undefined)
     const [aiResultStreaming, _setAiResultStreaming] = useState(false)
+    const aiReasoningStartAtRef = useRef<number | null>(null)
+    const aiReasoningDurationSetRef = useRef(false)
     const lastActionTypeRef = useRef<SelectionActionType>('explain')
     const aiResultVisibleRef = useRef(false)
     const aiResultStreamingRef = useRef(false)
@@ -452,7 +457,12 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             selectionAbortRef.current?.abort()
             setAiResultVisible(false)
             setAiResultContent('')
+            setAiResultReasoning('')
+            setAiResultReasoningExpanded(true)
+            setAiResultReasoningDurationMs(undefined)
             setAiResultStreaming(false)
+            aiReasoningStartAtRef.current = null
+            aiReasoningDurationSetRef.current = false
             setSelectionToolbarLoading(false)
             setSelectionToolbarVisible(false)
         }
@@ -584,7 +594,12 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         setSelectionToolbarLoading(true)
         setAiResultVisible(true)
         setAiResultContent('')
+        setAiResultReasoning('')
+        setAiResultReasoningExpanded(true)
+        setAiResultReasoningDurationMs(undefined)
         setAiResultStreaming(true)
+        aiReasoningStartAtRef.current = null
+        aiReasoningDurationSetRef.current = false
         try {
             for await (const chunk of aiChatStream(
                 [
@@ -592,15 +607,38 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     { role: 'user', content: text },
                 ],
                 (c) => {
+                    if (c.reasoning) {
+                        flushSync(() => {
+                            if (!aiReasoningStartAtRef.current) {
+                                aiReasoningStartAtRef.current = Date.now()
+                            }
+                            setSelectionToolbarLoading(false)
+                            setAiResultReasoningExpanded(true)
+                            setAiResultReasoning(prev => prev + c.reasoning)
+                        })
+                    }
                     if (c.content) {
                         flushSync(() => {
+                            setSelectionToolbarLoading(false)
+                            if (aiReasoningStartAtRef.current && !aiReasoningDurationSetRef.current) {
+                                aiReasoningDurationSetRef.current = true
+                                setAiResultReasoningDurationMs(Date.now() - aiReasoningStartAtRef.current)
+                                setAiResultReasoningExpanded(false)
+                            }
                             setAiResultContent(prev => prev + c.content)
                         })
                     }
                 },
                 selectionAbortRef.current.signal
             )) {
-                if (chunk.done) break
+                if (chunk.done) {
+                    if (aiReasoningStartAtRef.current && !aiReasoningDurationSetRef.current) {
+                        aiReasoningDurationSetRef.current = true
+                        setAiResultReasoningDurationMs(Date.now() - aiReasoningStartAtRef.current)
+                        setAiResultReasoningExpanded(false)
+                    }
+                    break
+                }
             }
             setSelectionToolbarLoading(false)
             setAiResultStreaming(false)
@@ -622,7 +660,12 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         if (trimmed) replaceSelectionWithText(trimmed)
         setAiResultVisible(false)
         setAiResultContent('')
+        setAiResultReasoning('')
+        setAiResultReasoningExpanded(true)
+        setAiResultReasoningDurationMs(undefined)
         setSelectionToolbarVisible(false)
+        aiReasoningStartAtRef.current = null
+        aiReasoningDurationSetRef.current = false
     }
 
     const handleAIResultRetry = () => {
@@ -633,7 +676,12 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         selectionAbortRef.current?.abort()
         setAiResultVisible(false)
         setAiResultContent('')
+        setAiResultReasoning('')
+        setAiResultReasoningExpanded(true)
+        setAiResultReasoningDurationMs(undefined)
         setAiResultStreaming(false)
+        aiReasoningStartAtRef.current = null
+        aiReasoningDurationSetRef.current = false
         setSelectionToolbarLoading(false)
     }
 
@@ -1078,7 +1126,11 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     onAction={handleSelectionToolbarAction}
                     aiResultVisible={aiResultVisible}
                     aiResultContent={aiResultContent}
+                    aiResultReasoning={aiResultReasoning}
+                    aiResultReasoningExpanded={aiResultReasoningExpanded}
+                    aiResultReasoningDurationMs={aiResultReasoningDurationMs}
                     aiResultStreaming={aiResultStreaming}
+                    onToggleReasoning={() => setAiResultReasoningExpanded(v => !v)}
                     onInsert={handleAIResultInsert}
                     onRetry={handleAIResultRetry}
                     onCloseResult={handleAIResultClose}

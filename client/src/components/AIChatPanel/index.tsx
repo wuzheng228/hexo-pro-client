@@ -16,6 +16,8 @@ interface Message {
     content: string;
     reasoning?: string;
     reasoningExpanded?: boolean;
+    reasoningStartAt?: number;
+    reasoningDurationMs?: number;
     isStreaming?: boolean;
 }
 
@@ -33,6 +35,11 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+
+    const formatDuration = (durationMs?: number) => {
+        if (!durationMs || durationMs <= 0) return '';
+        return `${(durationMs / 1000).toFixed(1)}s`;
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -100,7 +107,14 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                         if (chunk.done) {
                             setMessages(prev => prev.map(msg =>
                                 msg.id === assistantMessage.id
-                                    ? { ...msg, isStreaming: false }
+                                    ? {
+                                        ...msg,
+                                        isStreaming: false,
+                                        reasoningExpanded: msg.reasoning ? false : msg.reasoningExpanded,
+                                        reasoningDurationMs: msg.reasoning && !msg.reasoningDurationMs && msg.reasoningStartAt
+                                            ? Date.now() - msg.reasoningStartAt
+                                            : msg.reasoningDurationMs,
+                                    }
                                     : msg
                             ));
                             return;
@@ -118,10 +132,21 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
 
                         setMessages(prev => prev.map(msg => {
                             if (msg.id === assistantMessage.id) {
+                                const now = Date.now();
+                                const hasNewReasoning = !!chunk.reasoning;
+                                const hasNewContent = !!chunk.content;
+                                const nextReasoning = hasNewReasoning ? (msg.reasoning || '') + chunk.reasoning : msg.reasoning;
+                                const nextContent = hasNewContent ? msg.content + chunk.content : msg.content;
+                                const shouldCloseReasoning = !!nextReasoning && hasNewContent;
                                 return {
                                     ...msg,
-                                    content: chunk.content ? msg.content + chunk.content : msg.content,
-                                    reasoning: chunk.reasoning ? msg.reasoning + chunk.reasoning : msg.reasoning,
+                                    content: nextContent,
+                                    reasoning: nextReasoning,
+                                    reasoningStartAt: hasNewReasoning && !msg.reasoningStartAt ? now : msg.reasoningStartAt,
+                                    reasoningExpanded: shouldCloseReasoning ? false : (hasNewReasoning ? true : msg.reasoningExpanded),
+                                    reasoningDurationMs: shouldCloseReasoning && msg.reasoningStartAt && !msg.reasoningDurationMs
+                                        ? now - msg.reasoningStartAt
+                                        : msg.reasoningDurationMs,
                                 };
                             }
                             return msg;
@@ -229,7 +254,9 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                                                 onClick={() => toggleReasoning(msg.id)}
                                             >
                                                 <span className={styles.reasoningLabel}>
-                                                    {msg.isStreaming ? '思考中...' : '已思考'}
+                                                    {msg.isStreaming
+                                                        ? '思考中...'
+                                                        : `已思考${msg.reasoningDurationMs ? ` (${formatDuration(msg.reasoningDurationMs)})` : ''}`}
                                                 </span>
                                                 <span className={styles.reasoningToggle}>
                                                     {msg.reasoningExpanded ? '▼' : '▶'}
