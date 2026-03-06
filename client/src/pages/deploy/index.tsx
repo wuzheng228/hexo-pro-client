@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Card, Form, Input, Button, message, Divider, Alert, Spin, Typography, Space, Row, Col, Progress, Timeline } from 'antd'
-import { GithubOutlined, SaveOutlined, RocketOutlined, InfoCircleOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Card, Form, Input, Button, message, Divider, Alert, Spin, Typography, Space, Row, Col, Progress, Timeline, Radio } from 'antd'
+import { GithubOutlined, SaveOutlined, RocketOutlined, InfoCircleOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined, CloudOutlined } from '@ant-design/icons'
 import { service } from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
 import styles from './style.module.less'
@@ -12,6 +12,7 @@ const DeployPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [deployLoading, setDeployLoading] = useState(false)
   const t = useLocale()
+  const [deployType, setDeployType] = useState<string>('github')
   const [deployStatus, setDeployStatus] = useState({
     isDeploying: false,
     progress: 0,
@@ -28,6 +29,7 @@ const DeployPage: React.FC = () => {
       setLoading(true)
       const res = await service.get('/hexopro/api/deploy/config')
       form.setFieldsValue(res.data)
+      setDeployType(res.data.deployType || 'github')
       await fetchDeployStatus()
     } catch (error) {
       message.error(t['deploy.config.fetchFailed'])
@@ -41,8 +43,7 @@ const DeployPage: React.FC = () => {
     try {
       const statusRes = await service.get('/hexopro/api/deploy/status')
       
-      statusRes.data.logs = statusRes.data.logs.map((item)=>t[item] || item)
-      // console.log(statusRes.data)
+      statusRes.data.logs = statusRes.data.logs.map((item) => t[item] || item)
       setDeployStatus(statusRes.data)
       return statusRes.data
     } catch (error) {
@@ -70,7 +71,6 @@ const DeployPage: React.FC = () => {
     try {
       setDeployLoading(true)
       
-      // 从localStorage获取跳过生成的设置
       const skipGenerate = localStorage.getItem('hexoProSkipGenerate') === 'true'
       
       const res = await service.post('/hexopro/api/deploy/execute', {
@@ -91,16 +91,13 @@ const DeployPage: React.FC = () => {
   }
 
   const startPolling = () => {
-    // 清除现有的轮询
     if (pollingRef.current) {
       clearInterval(pollingRef.current)
     }
     
-    // 设置新的轮询
     pollingRef.current = setInterval(async () => {
       const status = await fetchDeployStatus()
       
-      // 如果部署完成或失败，停止轮询
       if (status && !status.isDeploying) {
         if (status.error) {
           message.error(t['deploy.status.deployFailed'] + status.error)
@@ -110,7 +107,7 @@ const DeployPage: React.FC = () => {
         
         stopPolling()
       }
-    }, 3000) // 每3秒轮询一次
+    }, 3000)
   }
 
   const stopPolling = () => {
@@ -152,14 +149,12 @@ const DeployPage: React.FC = () => {
   useEffect(() => {
     fetchDeployConfig()
     
-    // 检查是否正在部署，如果是则开始轮询
     fetchDeployStatus().then(status => {
       if (status && status.isDeploying) {
         startPolling()
       }
     })
     
-    // 组件卸载时清除轮询
     return () => {
       stopPolling()
     }
@@ -193,6 +188,126 @@ const DeployPage: React.FC = () => {
     }
   }
 
+  const isGithub = deployType === 'github'
+  const isCloudflare = deployType === 'cloudflare-pages'
+
+  const configCardTitle = isCloudflare
+    ? t['deploy.config.title.cloudflare']
+    : t['deploy.config.title.github']
+
+  const configCardIcon = isCloudflare ? <CloudOutlined /> : <GithubOutlined />
+
+  const renderGithubForm = () => (
+    <>
+      <Form.Item
+        label={t['deploy.config.repository']}
+        name="repository"
+        rules={[{ required: true, message: t['deploy.config.repository'] + t['settings.usernameRequired'] }]}
+        tooltip={t['deploy.config.repositoryTooltip']}
+      >
+        <Input placeholder={t['deploy.config.repositoryPlaceholder']} prefix={<GithubOutlined />} />
+      </Form.Item>
+
+      <Form.Item
+        label={t['deploy.config.branch']}
+        name="branch"
+        rules={[{ required: true, message: t['deploy.config.branch'] + t['settings.usernameRequired'] }]}
+      >
+        <Input placeholder={t['deploy.config.branchPlaceholder']} />
+      </Form.Item>
+
+      <Form.Item
+        label={t['deploy.config.message']}
+        name="message"
+        rules={[{ required: true, message: t['deploy.config.message'] + t['settings.usernameRequired'] }]}
+      >
+        <Input placeholder={t['deploy.config.messagePlaceholder']} />
+      </Form.Item>
+
+      <Form.Item
+        label={t['deploy.config.token']}
+        name="token"
+        tooltip={t['deploy.config.tokenTooltip']}
+      >
+        <Input.Password placeholder={t['deploy.config.tokenPlaceholder']} />
+      </Form.Item>
+
+      <Alert
+        message={t['deploy.config.alertTitle']}
+        description={t['deploy.config.alertDesc']}
+        type="info"
+        showIcon
+        style={{ marginBottom: 16 }}
+      />
+    </>
+  )
+
+  const renderCloudflareForm = () => (
+    <>
+      <Form.Item
+        label={t['deploy.config.cloudflare.accountId']}
+        name={['cloudflare', 'accountId']}
+        rules={[{ required: true, message: t['deploy.config.cloudflare.accountId'] + t['settings.usernameRequired'] }]}
+        tooltip={t['deploy.config.cloudflare.accountIdTooltip']}
+      >
+        <Input placeholder={t['deploy.config.cloudflare.accountIdPlaceholder']} />
+      </Form.Item>
+
+      <Form.Item
+        label={t['deploy.config.cloudflare.projectName']}
+        name={['cloudflare', 'projectName']}
+        rules={[{ required: true, message: t['deploy.config.cloudflare.projectName'] + t['settings.usernameRequired'] }]}
+        tooltip={t['deploy.config.cloudflare.projectNameTooltip']}
+      >
+        <Input placeholder={t['deploy.config.cloudflare.projectNamePlaceholder']} />
+      </Form.Item>
+
+      <Form.Item
+        label={t['deploy.config.cloudflare.apiToken']}
+        name={['cloudflare', 'apiToken']}
+        rules={[{ required: true, message: t['deploy.config.cloudflare.apiToken'] + t['settings.usernameRequired'] }]}
+        tooltip={t['deploy.config.cloudflare.apiTokenTooltip']}
+      >
+        <Input.Password placeholder={t['deploy.config.cloudflare.apiTokenPlaceholder']} />
+      </Form.Item>
+
+      <Alert
+        message={t['deploy.config.alertTitle']}
+        description={t['deploy.config.alertDesc.cloudflare']}
+        type="info"
+        showIcon
+        style={{ marginBottom: 16 }}
+      />
+    </>
+  )
+
+  const renderHelpContent = () => {
+    if (isCloudflare) {
+      return (
+        <Typography>
+          <Title level={5}>{t['deploy.help.how.cloudflare']}</Title>
+          <Paragraph>{t['deploy.help.step1.cloudflare']}</Paragraph>
+          <Paragraph>{t['deploy.help.step2.cloudflare']}</Paragraph>
+          <Paragraph>{t['deploy.help.step3.cloudflare']}</Paragraph>
+          <Paragraph>
+            <Text type="secondary">{t['deploy.help.note.cloudflare']}</Text>
+          </Paragraph>
+        </Typography>
+      )
+    }
+    return (
+      <Typography>
+        <Title level={5}>{t['deploy.help.how.github']}</Title>
+        <Paragraph>{t['deploy.help.step1']}</Paragraph>
+        <Paragraph>{t['deploy.help.step2']}</Paragraph>
+        <Paragraph>{t['deploy.help.step3']}</Paragraph>
+        <Paragraph>
+          <Text type="secondary">{t['deploy.help.note']}</Text>
+        </Paragraph>
+      </Typography>
+    )
+  }
+
   return (
     <div className={styles.deployContainer}>
       <Row gutter={[16, 16]}>
@@ -200,8 +315,8 @@ const DeployPage: React.FC = () => {
           <Card 
             title={
               <Space>
-                <GithubOutlined />
-                <span>{t['deploy.config.title']}</span>
+                {configCardIcon}
+                <span>{configCardTitle}</span>
               </Space>
             }
             extra={
@@ -221,52 +336,40 @@ const DeployPage: React.FC = () => {
                 layout="vertical"
                 onFinish={saveConfig}
                 initialValues={{
+                  deployType: 'github',
                   repository: '',
                   branch: 'main',
                   message: 'Site updated: {{ now("YYYY-MM-DD HH:mm:ss") }}',
-                  token: ''
+                  token: '',
+                  cloudflare: {
+                    accountId: '',
+                    projectName: '',
+                    apiToken: ''
+                  }
                 }}
               >
                 <Form.Item
-                  label={t['deploy.config.repository']}
-                  name="repository"
-                  rules={[{ required: true, message: t['deploy.config.repository'] + t['settings.usernameRequired'] }]}
-                  tooltip={t['deploy.config.repositoryTooltip']}
+                  label={t['deploy.config.deployType']}
+                  name="deployType"
                 >
-                  <Input placeholder={t['deploy.config.repositoryPlaceholder']} prefix={<GithubOutlined />} />
+                  <Radio.Group
+                    onChange={(e) => setDeployType(e.target.value)}
+                    optionType="button"
+                    buttonStyle="solid"
+                  >
+                    <Radio.Button value="github">
+                      <Space><GithubOutlined />{t['deploy.config.deployType.github']}</Space>
+                    </Radio.Button>
+                    <Radio.Button value="cloudflare-pages">
+                      <Space><CloudOutlined />{t['deploy.config.deployType.cloudflare']}</Space>
+                    </Radio.Button>
+                  </Radio.Group>
                 </Form.Item>
 
-                <Form.Item
-                  label={t['deploy.config.branch']}
-                  name="branch"
-                  rules={[{ required: true, message: t['deploy.config.branch'] + t['settings.usernameRequired'] }]}
-                >
-                  <Input placeholder={t['deploy.config.branchPlaceholder']} />
-                </Form.Item>
+                <Divider />
 
-                <Form.Item
-                  label={t['deploy.config.message']}
-                  name="message"
-                  rules={[{ required: true, message: t['deploy.config.message'] + t['settings.usernameRequired'] }]}
-                >
-                  <Input placeholder={t['deploy.config.messagePlaceholder']} />
-                </Form.Item>
-
-                <Form.Item
-                  label={t['deploy.config.token']}
-                  name="token"
-                  tooltip={t['deploy.config.tokenTooltip']}
-                >
-                  <Input.Password placeholder={t['deploy.config.tokenPlaceholder']} />
-                </Form.Item>
-
-                <Alert
-                  message={t['deploy.config.alertTitle']}
-                  description={t['deploy.config.alertDesc']}
-                  type="info"
-                  showIcon
-                  style={{ marginBottom: 16 }}
-                />
+                {isGithub && renderGithubForm()}
+                {isCloudflare && renderCloudflareForm()}
               </Form>
             </Spin>
           </Card>
@@ -298,14 +401,16 @@ const DeployPage: React.FC = () => {
                   <Text>{deployStatus.lastDeployTime}</Text>
                 </Paragraph>
                 
-                <Paragraph>
-                  <Text strong>{t['deploy.status.status'] + ': '}</Text>
-                  {deployStatus.hasDeployGit ? (
-                    <Text type="success">{t['deploy.status.inited']}</Text>
-                  ) : (
-                    <Text type="warning">{t['deploy.status.notInited']}</Text>
-                  )}
-                </Paragraph>
+                {isGithub && (
+                  <Paragraph>
+                    <Text strong>{t['deploy.status.status'] + ': '}</Text>
+                    {deployStatus.hasDeployGit ? (
+                      <Text type="success">{t['deploy.status.inited']}</Text>
+                    ) : (
+                      <Text type="warning">{t['deploy.status.notInited']}</Text>
+                    )}
+                  </Paragraph>
+                )}
 
                 {deployStatus.isDeploying && (
                   <>
@@ -337,7 +442,7 @@ const DeployPage: React.FC = () => {
                   {deployStatus.isDeploying ? t['deploy.status.inProgress'] : t['deploy.status.deploy']}
                 </Button>
 
-                {deployStatus.hasDeployGit && (
+                {isGithub && deployStatus.hasDeployGit && (
                   <Button 
                     type="default" 
                     danger
@@ -348,7 +453,7 @@ const DeployPage: React.FC = () => {
                     onClick={cleanupDeployDir}
                     disabled={deployStatus.isDeploying}
                   >
-                    {t['deploy.cleanup.button'] || '清理部署目录'}
+                    {t['deploy.cleanup.button']}
                   </Button>
                 )}
               </div>
@@ -389,21 +494,7 @@ const DeployPage: React.FC = () => {
             }
             style={{ marginTop: 16 }}
           >
-            <Typography>
-              <Title level={5}>{t['deploy.help.how']}</Title>
-              <Paragraph>
-                {t['deploy.help.step1']}
-              </Paragraph>
-              <Paragraph>
-                {t['deploy.help.step2']}
-              </Paragraph>
-              <Paragraph>
-                {t['deploy.help.step3']}
-              </Paragraph>
-              <Paragraph>
-                <Text type="secondary">{t['deploy.help.note']}</Text>
-              </Paragraph>
-            </Typography>
+            {renderHelpContent()}
           </Card>
         </Col>
       </Row>

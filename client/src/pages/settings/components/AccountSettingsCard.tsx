@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Alert, Avatar, Button, Card, Form, Input, Space, Spin, Typography, Upload, message } from 'antd'
+import { Alert, Avatar, Button, Card, Form, Input, Select, Space, Spin, Typography, Upload, message } from 'antd'
 import { LockOutlined, PictureOutlined, SaveOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons'
 import { useDispatch } from 'react-redux'
 import service from '@/utils/api'
@@ -105,11 +105,16 @@ const AccountSettingsCard: React.FC<Props> = ({ isFirstUse, showTitle = true, sh
         setLoading(true)
         const { username, password, confirmPassword } = values
 
+        const question = values.securityQuestion === 'custom'
+          ? values.securityQuestionCustom?.trim()
+          : values.securityQuestion
         const res = await service.post('/hexopro/api/settings/register', {
           username,
           password,
           confirmPassword,
           avatar: avatarUrl,
+          securityQuestion: question || undefined,
+          securityAnswer: values.securityAnswer?.trim() || undefined,
         })
 
         if (res.data.code === 0) {
@@ -147,12 +152,17 @@ const AccountSettingsCard: React.FC<Props> = ({ isFirstUse, showTitle = true, sh
         setLoading(true)
         const { username, password, confirmPassword } = values
 
+        const question = values.securityQuestion === 'custom'
+          ? values.securityQuestionCustom?.trim()
+          : values.securityQuestion
         const res = await service.post('/hexopro/api/settings/update', {
           username,
           password,
           confirmPassword,
           menuCollapsed,
           avatar: avatarUrl,
+          securityQuestion: question !== undefined ? question : undefined,
+          securityAnswer: values.securityAnswer?.trim() ? values.securityAnswer.trim() : undefined,
         })
 
         if (res.data.code === 0) {
@@ -296,6 +306,47 @@ const AccountSettingsCard: React.FC<Props> = ({ isFirstUse, showTitle = true, sh
             ]}
           >
             <Input.Password prefix={<LockOutlined />} placeholder={t['settings.confirmPasswordPlaceholder']} />
+          </Form.Item>
+
+          <Form.Item
+            label={t['settings.securityQuestion']}
+            name="securityQuestion"
+            tooltip={t['settings.securityQuestionTip']}
+          >
+            <Select
+              placeholder={t['settings.securityQuestionPlaceholder']}
+              allowClear
+              options={[
+                { value: 'mother_name', label: t['settings.securityQuestion.motherName'] },
+                { value: 'birth_city', label: t['settings.securityQuestion.birthCity'] },
+                { value: 'pet_name', label: t['settings.securityQuestion.petName'] },
+                { value: 'spouse_name', label: t['settings.securityQuestion.spouseName'] },
+                { value: 'first_school', label: t['settings.securityQuestion.firstSchool'] },
+                { value: 'custom', label: t['settings.securityQuestion.custom'] },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            noStyle
+            shouldUpdate={(prev, curr) => prev.securityQuestion !== curr.securityQuestion}
+          >
+            {({ getFieldValue }) =>
+              getFieldValue('securityQuestion') === 'custom' ? (
+                <Form.Item
+                  label={t['settings.securityQuestionCustom']}
+                  name="securityQuestionCustom"
+                >
+                  <Input placeholder={t['settings.securityQuestionCustomPlaceholder']} />
+                </Form.Item>
+              ) : null
+            }
+          </Form.Item>
+          <Form.Item
+            label={t['settings.securityAnswer']}
+            name="securityAnswer"
+            tooltip={t['settings.securityAnswerTip']}
+          >
+            <Input placeholder={t['settings.securityAnswerPlaceholder']} />
           </Form.Item>
 
           <Form.Item>

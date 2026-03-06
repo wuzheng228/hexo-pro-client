@@ -8,17 +8,32 @@ import useStorage from "@/utils/useStorage"
 import { useNavigate } from 'react-router-dom'
 
 // 定义页面状态枚举
-type PageStatus = 'checking' | 'first-use' | 'token-login' | 'login'
+type PageStatus = 'checking' | 'first-use' | 'token-login' | 'login' | 'forgot-password'
 
 export default function LoginForm() {
     const formRef = useRef(null)
+    const resetFormRef = useRef(null)
     const [errorMessage, setErrorMessage] = useState('')
     const [loading, setLoading] = useState(false)
+    const [fetchingSecurityQuestion, setFetchingSecurityQuestion] = useState(false)
+    const [securityQuestion, setSecurityQuestion] = useState('')
     const [pageStatus, setPageStatus] = useState<PageStatus>('checking') // 初始状态为 checking
     const [loginParams, setLoginParams, removeLoginParams] = useStorage('loginParams')
     const [rememberPassword,] = useState(!!loginParams)
     const t = useLocale()
     const navigate = useNavigate()
+
+    const formatSecurityQuestion = useCallback((question: string) => {
+        const questionMap = {
+            mother_name: t['settings.securityQuestion.motherName'],
+            birth_city: t['settings.securityQuestion.birthCity'],
+            pet_name: t['settings.securityQuestion.petName'],
+            spouse_name: t['settings.securityQuestion.spouseName'],
+            first_school: t['settings.securityQuestion.firstSchool'],
+        }
+
+        return questionMap[question] || question
+    }, [t])
 
     // 统一的Token验证和页面跳转逻辑
     const validateTokenAndProceed = useCallback((tokenOverride?: string) => {
@@ -233,6 +248,78 @@ export default function LoginForm() {
             });
     }
 
+    // 切换到忘记密码
+    const handleShowForgotPassword = () => {
+        setErrorMessage('');
+        setSecurityQuestion('');
+        setPageStatus('forgot-password');
+    };
+
+    // 返回登录
+    const handleBackToLogin = () => {
+        setErrorMessage('');
+        setSecurityQuestion('');
+        setPageStatus('login');
+    };
+
+    const handleForgotUsernameBlur = () => {
+        const username = resetFormRef.current?.getFieldValue?.('username')?.trim()
+        if (!username) {
+            setSecurityQuestion('')
+            return
+        }
+
+        setFetchingSecurityQuestion(true)
+        setErrorMessage('')
+        service.post('/hexopro/api/auth/security-question', { username })
+            .then((res) => {
+                if (res.data.code === 0 && res.data.data?.securityQuestion) {
+                    setSecurityQuestion(res.data.data.securityQuestion)
+                } else {
+                    setSecurityQuestion('')
+                    setErrorMessage(res.data.msg || t['login.form.securityQuestionFetchFailed'])
+                }
+            })
+            .catch((err) => {
+                setSecurityQuestion('')
+                setErrorMessage(err.response?.data?.msg || err.message || t['login.form.securityQuestionFetchFailed'])
+            })
+            .finally(() => {
+                setFetchingSecurityQuestion(false)
+            })
+    }
+
+    // 处理重置密码
+    const handleResetPassword = () => {
+        resetFormRef.current.validateFields()
+            .then((values) => {
+                setLoading(true);
+                service.post('/hexopro/api/auth/reset-password', {
+                    username: values.username,
+                    securityAnswer: values.securityAnswer,
+                    newPassword: values.newPassword,
+                    confirmPassword: values.confirmPassword,
+                })
+                    .then((res) => {
+                        if (res.data.code === 0) {
+                            message.success(t['login.form.resetSuccess']);
+                            handleBackToLogin();
+                        } else {
+                            setErrorMessage(res.data.msg || '重置失败');
+                        }
+                    })
+                    .catch((err) => {
+                        setErrorMessage(err.response?.data?.msg || err.message || '重置失败');
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            })
+            .catch(() => {
+                message.error(t['login.form.validate.errMsg']);
+            });
+    };
+
     // 如果还在检查状态，显示加载中
     if (pageStatus === 'checking') {
         return (
@@ -282,6 +369,89 @@ export default function LoginForm() {
         );
     }
 
+    // 显示忘记密码表单
+    if (pageStatus === 'forgot-password') {
+        return (
+            <div className={styles['login-form-wrapper']}>
+                <div className={styles['login-form-title']}>{t['login.form.resetPassword']}</div>
+                <div className={styles['login-form-sub-title']}>{t['login.form.securityAnswerHint']}</div>
+                {errorMessage &&
+                    <Alert
+                        message={errorMessage}
+                        type="error"
+                        showIcon
+                        style={{ marginBottom: 20 }}
+                        closable
+                        onClose={() => setErrorMessage('')}
+                    />
+                }
+                <Form
+                    ref={resetFormRef}
+                    layout="vertical"
+                >
+                    <Form.Item
+                        name="username"
+                        label={t['login.form.username']}
+                        rules={[{ required: true, message: t['settings.usernameRequired'] }]}
+                    >
+                        <Input prefix={<UserOutlined />} onBlur={handleForgotUsernameBlur} />
+                    </Form.Item>
+                    {(fetchingSecurityQuestion || securityQuestion) && (
+                        <Alert
+                            type="info"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                            message={fetchingSecurityQuestion
+                                ? t['login.form.securityQuestionLoading']
+                                : `${t['login.form.securityQuestionLabel']}${formatSecurityQuestion(securityQuestion)}`}
+                        />
+                    )}
+                    <Form.Item
+                        name="securityAnswer"
+                        label={t['login.form.securityAnswer']}
+                        rules={[{ required: true, message: t['login.form.securityAnswerRequired'] }]}
+                    >
+                        <Input prefix={<LockOutlined />} placeholder={t['login.form.securityAnswerPlaceholder']} />
+                    </Form.Item>
+                    <Form.Item
+                        name="newPassword"
+                        label={t['login.form.newPassword']}
+                        rules={[
+                            { required: true, message: t['settings.passwordRequired'] },
+                            { min: 6, message: t['settings.passwordLengthError'] },
+                        ]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} />
+                    </Form.Item>
+                    <Form.Item
+                        name="confirmPassword"
+                        label={t['settings.confirmPassword']}
+                        dependencies={['newPassword']}
+                        rules={[
+                            { required: true, message: t['settings.confirmPasswordRequired'] },
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (value === getFieldValue('newPassword')) return Promise.resolve();
+                                    return Promise.reject(t['settings.passwordNotMatch']);
+                                },
+                            }),
+                        ]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} />
+                    </Form.Item>
+                    <Space style={{ width: '100%' }}>
+                        <Button onClick={handleBackToLogin}>
+                            {t['login.form.backToLogin']}
+                        </Button>
+                        <Button type="primary" onClick={handleResetPassword} loading={loading}>
+                            {t['login.form.resetPassword']}
+                        </Button>
+                    </Space>
+                </Form>
+            </div>
+        );
+    }
+
     // 显示登录表单
     return (
         <div className={styles['login-form-wrapper']}>
@@ -316,9 +486,14 @@ export default function LoginForm() {
                 >
                     <Input.Password prefix={<LockOutlined />} />
                 </Form.Item>
-                <Button type="primary" onClick={onSubmitClick} loading={loading}>
+                <Button type="primary" onClick={onSubmitClick} loading={loading} style={{ width: '100%' }}>
                     {t['login.form.login']}
                 </Button>
+                <div style={{ marginTop: 16, textAlign: 'center' }}>
+                    <Button type="link" onClick={handleShowForgotPassword} style={{ padding: 0 }}>
+                        {t['login.form.forgotPassword']}
+                    </Button>
+                </div>
             </Form>
         </div>
     );
