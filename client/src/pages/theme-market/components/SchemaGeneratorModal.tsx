@@ -64,16 +64,12 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
         const res = await service.get('/hexopro/api/ai/settings')
         const valid = !!res.data?.url && !!res.data?.apiKey && !!res.data?.model
         setAiConfigValid(valid)
-        if (!valid) {
-          addLog('error', t['theme.schema.noAIConfig'] || 'AI 配置不完整')
-        }
       } catch (error) {
-        addLog('error', t['theme.schema.checkConfigFailed'] || '检查配置失败')
         setAiConfigValid(false)
       }
     }
     checkAIConfig()
-  }, [visible, t])
+  }, [visible])
 
   const addLog = useCallback((type: ProcessLog['type'], message: string) => {
     setLogs((prev) => [...prev, { type, message, timestamp: Date.now() }])
