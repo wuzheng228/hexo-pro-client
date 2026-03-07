@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Button, message, Segmented, Spin, Space } from 'antd'
-import { SaveOutlined, CloseOutlined } from '@ant-design/icons'
+import { SaveOutlined, CloseOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import service from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
 import YamlEditor from '@/pages/content/yaml/components/YamlEditor'
 import FormMode from './FormMode'
+import SchemaGeneratorModal from './SchemaGeneratorModal'
 import styles from '../style.module.less'
 
 interface ThemeConfigPanelProps {
@@ -15,13 +16,15 @@ interface ThemeConfigPanelProps {
 
 const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   themeId,
+  themeName,
   onClose,
 }) => {
   const t = useLocale()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editContent, setEditContent] = useState('')
-  const [activeTab, setActiveTab] = useState('raw')
+  const [activeTab, setActiveTab] = useState<'raw' | 'form'>('raw')
+  const [generatorVisible, setGeneratorVisible] = useState(false)
 
   const fetchConfig = useCallback(async () => {
     setLoading(true)
@@ -71,21 +74,31 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
     <div className={styles.drawerConfigPanel}>
       {/* 固定顶部操作栏 */}
       <div className={styles.drawerHeader}>
-        <Segmented
-          value={activeTab}
-          onChange={(val) => setActiveTab(String(val))}
-          options={[
-            {
-              label: t['theme.config.formMode'] || '表单模式',
-              value: 'form',
-            },
-            {
-              label: t['theme.config.rawMode'] || 'Raw 模式',
-              value: 'raw',
-            },
-          ]}
-          block
-        />
+        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Segmented
+            value={activeTab}
+            onChange={(val) => setActiveTab(String(val))}
+            options={[
+              {
+                label: t['theme.config.formMode'] || '表单模式',
+                value: 'form',
+              },
+              {
+                label: t['theme.config.rawMode'] || 'Raw 模式',
+                value: 'raw',
+              },
+            ]}
+            style={{ flex: 1 }}
+          />
+          <Button
+            type="default"
+            icon={<ThunderboltOutlined />}
+            onClick={() => setGeneratorVisible(true)}
+            size="middle"
+          >
+            {t['theme.schema.optimize'] || '优化'}
+          </Button>
+        </Space>
       </div>
 
       {/* 内容区域 */}
@@ -125,6 +138,19 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
           </Button>
         </Space>
       </div>
+
+      {/* Schema 生成器模态框 */}
+      <SchemaGeneratorModal
+        themeId={themeId}
+        themeName={themeName}
+        visible={generatorVisible}
+        onClose={() => setGeneratorVisible(false)}
+        onApply={(yamlContent) => {
+          setEditContent(yamlContent)
+          setActiveTab('form')
+          message.success(t['theme.schema.applySuccess'] || '配置已应用，已切换到表单模式')
+        }}
+      />
     </div>
   )
 }
