@@ -18,6 +18,7 @@ import {
   Tabs,
   Badge,
   Tag,
+  Select,
 } from 'antd'
 import {
   GithubOutlined,
@@ -29,6 +30,7 @@ import {
   ReloadOutlined,
   CloudOutlined,
   ThunderboltOutlined,
+  CloudServerOutlined,
 } from '@ant-design/icons'
 import { service } from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
@@ -37,7 +39,7 @@ import styles from './style.module.less'
 
 const { Paragraph, Text } = Typography
 
-type DeployTarget = 'github' | 'cloudflare-pages'
+type DeployTarget = 'github' | 'cloudflare-pages' | 'edgeone-pages'
 
 const DeployPage: React.FC = () => {
   const [form] = Form.useForm()
@@ -47,6 +49,7 @@ const DeployPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('github')
   const [githubEnabled, setGithubEnabled] = useState(true)
   const [cloudflareEnabled, setCloudflareEnabled] = useState(false)
+  const [edgeoneEnabled, setEdgeoneEnabled] = useState(false)
   const [skipGenerateEnabled, setSkipGenerateEnabled] = useLocalStorageState<boolean>(
     'hexoProSkipGenerate',
     false,
@@ -78,6 +81,7 @@ const DeployPage: React.FC = () => {
   const skipNextSaveRef = useRef(false)
   const githubEnabledRef = useRef(githubEnabled)
   const cloudflareEnabledRef = useRef(cloudflareEnabled)
+  const edgeoneEnabledRef = useRef(edgeoneEnabled)
 
   useEffect(() => {
     githubEnabledRef.current = githubEnabled
@@ -85,6 +89,9 @@ const DeployPage: React.FC = () => {
   useEffect(() => {
     cloudflareEnabledRef.current = cloudflareEnabled
   }, [cloudflareEnabled])
+  useEffect(() => {
+    edgeoneEnabledRef.current = edgeoneEnabled
+  }, [edgeoneEnabled])
 
   const saveConfig = useCallback(async () => {
     try {
@@ -92,6 +99,7 @@ const DeployPage: React.FC = () => {
       const enabledPlatforms: DeployTarget[] = []
       if (githubEnabledRef.current) enabledPlatforms.push('github')
       if (cloudflareEnabledRef.current) enabledPlatforms.push('cloudflare-pages')
+      if (edgeoneEnabledRef.current) enabledPlatforms.push('edgeone-pages')
       if (enabledPlatforms.length === 0) enabledPlatforms.push('github')
       const payload = { ...values, enabledPlatforms }
       await service.post('/hexopro/api/deploy/save-config', payload)
@@ -127,6 +135,7 @@ const DeployPage: React.FC = () => {
       const enabled = data.enabledPlatforms || ['github']
       setGithubEnabled(enabled.includes('github'))
       setCloudflareEnabled(enabled.includes('cloudflare-pages'))
+      setEdgeoneEnabled(enabled.includes('edgeone-pages'))
       await fetchDeployStatus()
     } catch {
       message.error(t['deploy.config.fetchFailed'])
@@ -162,6 +171,12 @@ const DeployPage: React.FC = () => {
           ['cloudflare', 'apiToken'],
         )
       }
+      if (targets.includes('edgeone-pages')) {
+        fieldsToValidate.push(
+          ['edgeone', 'projectName'],
+          ['edgeone', 'apiToken'],
+        )
+      }
       const values = await form.validateFields(fieldsToValidate).catch(() => null)
       if (!values) {
         setDeployLoading(null)
@@ -171,6 +186,7 @@ const DeployPage: React.FC = () => {
       const enabledPlatforms: DeployTarget[] = []
       if (githubEnabled) enabledPlatforms.push('github')
       if (cloudflareEnabled) enabledPlatforms.push('cloudflare-pages')
+      if (edgeoneEnabled) enabledPlatforms.push('edgeone-pages')
       if (enabledPlatforms.length === 0) enabledPlatforms.push('github')
 
       const config = {
@@ -280,6 +296,7 @@ const DeployPage: React.FC = () => {
   const enabledTargets: DeployTarget[] = []
   if (githubEnabled) enabledTargets.push('github')
   if (cloudflareEnabled) enabledTargets.push('cloudflare-pages')
+  if (edgeoneEnabled) enabledTargets.push('edgeone-pages')
   const canDeployAll = enabledTargets.length > 1
 
   const renderPlatformBadge = (enabled: boolean) => (
@@ -462,6 +479,81 @@ const DeployPage: React.FC = () => {
     </div>
   )
 
+  const renderEdgeoneTab = () => (
+    <div>
+      <div className={styles.tabEnableRow}>
+        <Space>
+          <Text strong>{t['deploy.platform.enablePlatform']}</Text>
+          <Switch
+            size="small"
+            checked={edgeoneEnabled}
+            onChange={(checked) => {
+              setEdgeoneEnabled(checked)
+              setTimeout(() => debouncedSave(), 0)
+            }}
+          />
+        </Space>
+      </div>
+      <Form.Item
+        label={t['deploy.config.edgeone.projectName']}
+        name={['edgeone', 'projectName']}
+        rules={[{ required: true, message: t['deploy.config.edgeone.projectName'] + t['settings.usernameRequired'] }]}
+        tooltip={t['deploy.config.edgeone.projectNameTooltip']}
+      >
+        <Input placeholder={t['deploy.config.edgeone.projectNamePlaceholder']} prefix={<CloudServerOutlined />} />
+      </Form.Item>
+      <Form.Item
+        label={t['deploy.config.edgeone.apiToken']}
+        name={['edgeone', 'apiToken']}
+        rules={[{ required: true, message: t['deploy.config.edgeone.apiToken'] + t['settings.usernameRequired'] }]}
+        tooltip={t['deploy.config.edgeone.apiTokenTooltip']}
+      >
+        <Input.Password placeholder={t['deploy.config.edgeone.apiTokenPlaceholder']} />
+      </Form.Item>
+      <Form.Item
+        label={t['deploy.config.edgeone.env']}
+        name={['edgeone', 'env']}
+        tooltip={t['deploy.config.edgeone.envTooltip']}
+      >
+        <Select
+          options={[
+            { value: 'production', label: t['deploy.config.edgeone.envProduction'] },
+            { value: 'preview', label: t['deploy.config.edgeone.envPreview'] },
+          ]}
+        />
+      </Form.Item>
+      <Alert
+        message={t['deploy.config.alertTitle']}
+        description={t['deploy.config.alertDesc.edgeone']}
+        type="info"
+        showIcon
+        style={{ marginBottom: 16 }}
+      />
+      <Divider />
+      <div className={styles.helpSection}>
+        <Text strong style={{ fontSize: 13 }}>{t['deploy.help.how.edgeone']}</Text>
+        <div style={{ margin: '4px 0 0', paddingLeft: 8 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step1.edgeone']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step2.edgeone']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step3.edgeone']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.note.edgeone']}</Text>
+        </div>
+      </div>
+      <Divider />
+      <Button
+        type="primary"
+        icon={<RocketOutlined />}
+        size="large"
+        block
+        loading={deployLoading === 'edgeone-pages'}
+        onClick={() => executeDeploy(['edgeone-pages'])}
+        disabled={deployStatus.isDeploying || !edgeoneEnabled}
+      >
+        {t['deploy.platform.deployTo']} {t['deploy.config.deployType.edgeone']}
+      </Button>
+    </div>
+  )
+
   const tabItems = [
     {
       key: 'github',
@@ -485,6 +577,17 @@ const DeployPage: React.FC = () => {
       ),
       children: renderCloudflareTab(),
     },
+    {
+      key: 'edgeone-pages',
+      label: (
+        <Space size={4}>
+          <CloudServerOutlined />
+          <span>{t['deploy.config.deployType.edgeone']}</span>
+          {renderPlatformBadge(edgeoneEnabled)}
+        </Space>
+      ),
+      children: renderEdgeoneTab(),
+    },
   ]
 
   return (
@@ -503,6 +606,7 @@ const DeployPage: React.FC = () => {
                   message: 'Site updated: {{ now("YYYY-MM-DD HH:mm:ss") }}',
                   token: '',
                   cloudflare: { accountId: '', projectName: '', apiToken: '' },
+                  edgeone: { projectName: '', apiToken: '', env: 'production' },
                 }}
               >
                 <Tabs
@@ -556,6 +660,7 @@ const DeployPage: React.FC = () => {
                     <Space size={4}>
                       {enabledTargets.includes('github') && <Tag icon={<GithubOutlined />} color="default">GitHub</Tag>}
                       {enabledTargets.includes('cloudflare-pages') && <Tag icon={<CloudOutlined />} color="processing">Cloudflare</Tag>}
+                      {enabledTargets.includes('edgeone-pages') && <Tag icon={<CloudServerOutlined />} color="cyan">EdgeOne</Tag>}
                     </Space>
                   )}
                 </Paragraph>
