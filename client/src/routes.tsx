@@ -102,6 +102,10 @@ export default function useRoute(): [IRoute[], string] {
           key: 'deploy',
         },
         {
+          name: 'menu.themeMarket',
+          key: 'theme-market',
+        },
+        {
           name: 'menu.settings',
           key: 'settings',
         }

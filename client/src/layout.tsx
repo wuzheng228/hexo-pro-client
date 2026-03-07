@@ -37,6 +37,8 @@ const getIconFromKey = (key: string) => {
             return <CodeOutlined />
         case 'deploy':
             return <CloudUploadOutlined />
+        case 'theme-market':
+            return <AppstoreOutlined />
         case 'settings':
             return <SettingOutlined />
         default:
