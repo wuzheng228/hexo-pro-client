@@ -1,39 +1,135 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { Card, Form, Input, Button, message, Divider, Alert, Spin, Typography, Space, Row, Col, Progress, Timeline, Radio } from 'antd'
-import { GithubOutlined, SaveOutlined, RocketOutlined, InfoCircleOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined, CloudOutlined } from '@ant-design/icons'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
+import {
+  Card,
+  Form,
+  Input,
+  Button,
+  message,
+  Divider,
+  Alert,
+  Spin,
+  Typography,
+  Space,
+  Row,
+  Col,
+  Progress,
+  Timeline,
+  Switch,
+  Tabs,
+  Badge,
+  Tag,
+} from 'antd'
+import {
+  GithubOutlined,
+  RocketOutlined,
+  InfoCircleOutlined,
+  LoadingOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ReloadOutlined,
+  CloudOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons'
 import { service } from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
+import { useLocalStorageState } from '@/pages/settings/hooks/useLocalStorageState'
 import styles from './style.module.less'
 
-const { Title, Paragraph, Text } = Typography
+const { Paragraph, Text } = Typography
+
+type DeployTarget = 'github' | 'cloudflare-pages'
 
 const DeployPage: React.FC = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const [deployLoading, setDeployLoading] = useState(false)
+  const [deployLoading, setDeployLoading] = useState<DeployTarget | 'all' | null>(null)
   const t = useLocale()
-  const [deployType, setDeployType] = useState<string>('github')
+  const [activeTab, setActiveTab] = useState('github')
+  const [githubEnabled, setGithubEnabled] = useState(true)
+  const [cloudflareEnabled, setCloudflareEnabled] = useState(false)
+  const [skipGenerateEnabled, setSkipGenerateEnabled] = useLocalStorageState<boolean>(
+    'hexoProSkipGenerate',
+    false,
+    {
+      serialize: (v) => v.toString(),
+      deserialize: (raw) => raw === 'true',
+    },
+  )
+
+  const onSkipGenerateChange = useCallback(
+    (checked: boolean) => {
+      setSkipGenerateEnabled(checked)
+      message.success(checked ? t['settings.skipGenerateEnabled'] : t['settings.skipGenerateDisabled'])
+    },
+    [setSkipGenerateEnabled, t],
+  )
+
   const [deployStatus, setDeployStatus] = useState({
     isDeploying: false,
     progress: 0,
     stage: 'idle',
     lastDeployTime: t['deploy.status.unknownTime'],
-    logs: [],
+    logs: [] as string[],
     hasDeployGit: false,
-    error: null
+    error: null as string | null,
   })
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const saveDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  const skipNextSaveRef = useRef(false)
+  const githubEnabledRef = useRef(githubEnabled)
+  const cloudflareEnabledRef = useRef(cloudflareEnabled)
+
+  useEffect(() => {
+    githubEnabledRef.current = githubEnabled
+  }, [githubEnabled])
+  useEffect(() => {
+    cloudflareEnabledRef.current = cloudflareEnabled
+  }, [cloudflareEnabled])
+
+  const saveConfig = useCallback(async () => {
+    try {
+      const values = form.getFieldsValue(true)
+      const enabledPlatforms: DeployTarget[] = []
+      if (githubEnabledRef.current) enabledPlatforms.push('github')
+      if (cloudflareEnabledRef.current) enabledPlatforms.push('cloudflare-pages')
+      if (enabledPlatforms.length === 0) enabledPlatforms.push('github')
+      const payload = { ...values, enabledPlatforms }
+      await service.post('/hexopro/api/deploy/save-config', payload)
+      message.success(t['deploy.config.saveSuccess'], 1.5)
+    } catch {
+      message.error(t['deploy.config.saveFailed'])
+    }
+  }, [form, t])
+
+  const debouncedSave = useCallback(() => {
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
+    saveDebounceRef.current = setTimeout(() => {
+      saveDebounceRef.current = null
+      saveConfig()
+    }, 1500)
+  }, [saveConfig])
+
+  const onFormValuesChange = useCallback(() => {
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false
+      return
+    }
+    debouncedSave()
+  }, [debouncedSave])
 
   const fetchDeployConfig = async () => {
     try {
       setLoading(true)
+      skipNextSaveRef.current = true
       const res = await service.get('/hexopro/api/deploy/config')
-      form.setFieldsValue(res.data)
-      setDeployType(res.data.deployType || 'github')
+      const data = res.data
+      form.setFieldsValue(data)
+      const enabled = data.enabledPlatforms || ['github']
+      setGithubEnabled(enabled.includes('github'))
+      setCloudflareEnabled(enabled.includes('cloudflare-pages'))
       await fetchDeployStatus()
-    } catch (error) {
+    } catch {
       message.error(t['deploy.config.fetchFailed'])
-      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -42,69 +138,75 @@ const DeployPage: React.FC = () => {
   const fetchDeployStatus = async () => {
     try {
       const statusRes = await service.get('/hexopro/api/deploy/status')
-      
-      statusRes.data.logs = statusRes.data.logs.map((item) => t[item] || item)
+      statusRes.data.logs = (statusRes.data.logs || []).map((item: string) => t[item] || item)
       setDeployStatus(statusRes.data)
       return statusRes.data
-    } catch (error) {
+    } catch {
       message.error(t['deploy.status.fetchFailed'])
-      console.error(error)
       return null
     }
   }
 
-  const saveConfig = async (values) => {
+  const executeDeploy = async (targets: DeployTarget[]) => {
     try {
-      setLoading(true)
-      const res = await service.post('/hexopro/api/deploy/save-config', values)
-      message.success(t['deploy.config.saveSuccess'])
-      form.setFieldsValue(res.data)
-    } catch (error) {
-      message.error(t['deploy.config.saveFailed'])
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
+      setDeployLoading(targets.length > 1 ? 'all' : targets[0])
 
-  const executeDeploy = async () => {
-    try {
-      setDeployLoading(true)
-      
-      const skipGenerate = localStorage.getItem('hexoProSkipGenerate') === 'true'
-      
+      const fieldsToValidate: (string | string[])[] = []
+      if (targets.includes('github')) {
+        fieldsToValidate.push('repository', 'branch', 'message')
+      }
+      if (targets.includes('cloudflare-pages')) {
+        fieldsToValidate.push(
+          ['cloudflare', 'accountId'],
+          ['cloudflare', 'projectName'],
+          ['cloudflare', 'apiToken'],
+        )
+      }
+      const values = await form.validateFields(fieldsToValidate).catch(() => null)
+      if (!values) {
+        setDeployLoading(null)
+        return
+      }
+
+      const enabledPlatforms: DeployTarget[] = []
+      if (githubEnabled) enabledPlatforms.push('github')
+      if (cloudflareEnabled) enabledPlatforms.push('cloudflare-pages')
+      if (enabledPlatforms.length === 0) enabledPlatforms.push('github')
+
+      const config = {
+        ...values,
+        enabledPlatforms,
+      }
+
       const res = await service.post('/hexopro/api/deploy/execute', {
-        skipGenerate
+        skipGenerate: skipGenerateEnabled,
+        deployTargets: targets,
+        config,
       })
+
       if (res.data.isDeploying) {
         message.success(t['deploy.status.deploySuccess'])
         startPolling()
       } else {
         message.success(t['deploy.status.deployCompleted'])
       }
-    } catch (error) {
-      message.error(t['deploy.status.deployFailed'] + (error.response?.data || error.message))
-      console.error(error)
+    } catch (error: any) {
+      message.error(t['deploy.status.deployFailed'] + (error?.response?.data || error?.message || ''))
     } finally {
-      setDeployLoading(false)
+      setDeployLoading(null)
     }
   }
 
   const startPolling = () => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current)
-    }
-    
+    if (pollingRef.current) clearInterval(pollingRef.current)
     pollingRef.current = setInterval(async () => {
       const status = await fetchDeployStatus()
-      
       if (status && !status.isDeploying) {
         if (status.error) {
           message.error(t['deploy.status.deployFailed'] + status.error)
         } else if (status.stage === 'completed') {
           message.success(t['deploy.status.completedMessage'])
         }
-        
         stopPolling()
       }
     }, 3000)
@@ -117,47 +219,36 @@ const DeployPage: React.FC = () => {
     }
   }
 
-  const getStageText = (stage) => {
-    const stageMap = {
-      'idle': t['deploy.status.idle'],
-      'started': t['deploy.status.started'],
-      'cleaning': t['deploy.status.cleaning'],
-      'generating': t['deploy.status.generating'],
-      'deploying': t['deploy.status.deployingStage'],
-      'completed': t['deploy.status.completed'],
-      'failed': t['deploy.status.failed']
+  const getStageText = (stage: string) => {
+    const stageMap: Record<string, string> = {
+      idle: t['deploy.status.idle'],
+      started: t['deploy.status.started'],
+      cleaning: t['deploy.status.cleaning'],
+      generating: t['deploy.status.generating'],
+      deploying: t['deploy.status.deployingStage'],
+      completed: t['deploy.status.completed'],
+      failed: t['deploy.status.failed'],
     }
     return stageMap[stage] || stage
   }
 
-  const getStageIcon = (stage) => {
-    if (deployStatus.isDeploying) {
-      return <LoadingOutlined style={{ color: '#1890ff' }} />
-    }
-    
-    if (stage === 'completed') {
-      return <CheckCircleOutlined style={{ color: '#52c41a' }} />
-    }
-    
-    if (stage === 'failed') {
-      return <CloseCircleOutlined style={{ color: '#f5222d' }} />
-    }
-    
+  const getStageIcon = (stage: string) => {
+    if (deployStatus.isDeploying) return <LoadingOutlined style={{ color: '#1890ff' }} />
+    if (stage === 'completed') return <CheckCircleOutlined style={{ color: '#52c41a' }} />
+    if (stage === 'failed') return <CloseCircleOutlined style={{ color: '#f5222d' }} />
     return <InfoCircleOutlined />
   }
 
   useEffect(() => {
     fetchDeployConfig()
-    
-    fetchDeployStatus().then(status => {
-      if (status && status.isDeploying) {
-        startPolling()
-      }
+    fetchDeployStatus().then((status) => {
+      if (status?.isDeploying) startPolling()
     })
-    
     return () => {
       stopPolling()
+      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const resetDeployStatus = async () => {
@@ -166,9 +257,8 @@ const DeployPage: React.FC = () => {
       await service.post('/hexopro/api/deploy/reset-status')
       message.success(t['deploy.status.resetSuccess'])
       await fetchDeployStatus()
-    } catch (error) {
+    } catch {
       message.error(t['deploy.status.resetFailed'])
-      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -180,25 +270,39 @@ const DeployPage: React.FC = () => {
       const res = await service.post('/hexopro/api/deploy/cleanup')
       message.success(res.data.message)
       await fetchDeployStatus()
-    } catch (error) {
+    } catch {
       message.error(t['deploy.cleanup.failed'] || '清理部署目录失败')
-      console.error(error)
     } finally {
       setLoading(false)
     }
   }
 
-  const isGithub = deployType === 'github'
-  const isCloudflare = deployType === 'cloudflare-pages'
+  const enabledTargets: DeployTarget[] = []
+  if (githubEnabled) enabledTargets.push('github')
+  if (cloudflareEnabled) enabledTargets.push('cloudflare-pages')
+  const canDeployAll = enabledTargets.length > 1
 
-  const configCardTitle = isCloudflare
-    ? t['deploy.config.title.cloudflare']
-    : t['deploy.config.title.github']
+  const renderPlatformBadge = (enabled: boolean) => (
+    <Tag color={enabled ? 'success' : 'default'} style={{ marginLeft: 6, fontSize: 11, lineHeight: '18px' }}>
+      {enabled ? t['settings.enabled'] : t['settings.disabled']}
+    </Tag>
+  )
 
-  const configCardIcon = isCloudflare ? <CloudOutlined /> : <GithubOutlined />
-
-  const renderGithubForm = () => (
-    <>
+  const renderGithubTab = () => (
+    <div>
+      <div className={styles.tabEnableRow}>
+        <Space>
+          <Text strong>{t['deploy.platform.enablePlatform']}</Text>
+          <Switch
+            size="small"
+            checked={githubEnabled}
+            onChange={(checked) => {
+              setGithubEnabled(checked)
+              setTimeout(() => debouncedSave(), 0)
+            }}
+          />
+        </Space>
+      </div>
       <Form.Item
         label={t['deploy.config.repository']}
         name="repository"
@@ -207,7 +311,6 @@ const DeployPage: React.FC = () => {
       >
         <Input placeholder={t['deploy.config.repositoryPlaceholder']} prefix={<GithubOutlined />} />
       </Form.Item>
-
       <Form.Item
         label={t['deploy.config.branch']}
         name="branch"
@@ -215,7 +318,6 @@ const DeployPage: React.FC = () => {
       >
         <Input placeholder={t['deploy.config.branchPlaceholder']} />
       </Form.Item>
-
       <Form.Item
         label={t['deploy.config.message']}
         name="message"
@@ -223,15 +325,9 @@ const DeployPage: React.FC = () => {
       >
         <Input placeholder={t['deploy.config.messagePlaceholder']} />
       </Form.Item>
-
-      <Form.Item
-        label={t['deploy.config.token']}
-        name="token"
-        tooltip={t['deploy.config.tokenTooltip']}
-      >
+      <Form.Item label={t['deploy.config.token']} name="token" tooltip={t['deploy.config.tokenTooltip']}>
         <Input.Password placeholder={t['deploy.config.tokenPlaceholder']} />
       </Form.Item>
-
       <Alert
         message={t['deploy.config.alertTitle']}
         description={t['deploy.config.alertDesc']}
@@ -239,11 +335,77 @@ const DeployPage: React.FC = () => {
         showIcon
         style={{ marginBottom: 16 }}
       />
-    </>
+      <div className={styles.settingItem}>
+        <div className={styles.settingHeader}>
+          <Text strong>{t['settings.skipGenerate']}</Text>
+          <Switch
+            checked={skipGenerateEnabled}
+            onChange={onSkipGenerateChange}
+            checkedChildren={t['settings.enabled']}
+            unCheckedChildren={t['settings.disabled']}
+          />
+        </div>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          {t['settings.skipGenerateDescription']}
+        </Text>
+        <div className={styles.settingHint}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {t['settings.skipGenerateHelp']}
+          </Text>
+        </div>
+      </div>
+      {githubEnabled && deployStatus.hasDeployGit && (
+        <Button
+          danger
+          block
+          style={{ marginBottom: 16 }}
+          loading={loading}
+          onClick={cleanupDeployDir}
+          disabled={deployStatus.isDeploying}
+        >
+          {t['deploy.cleanup.button']}
+        </Button>
+      )}
+      <Divider />
+      <div className={styles.helpSection}>
+        <Text strong style={{ fontSize: 13 }}>{t['deploy.help.how.github']}</Text>
+        <div style={{ margin: '4px 0 0', paddingLeft: 8 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step1']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step2']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step3']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.note']}</Text>
+        </div>
+      </div>
+      <Divider />
+      <Button
+        type="primary"
+        icon={<RocketOutlined />}
+        size="large"
+        block
+        loading={deployLoading === 'github'}
+        onClick={() => executeDeploy(['github'])}
+        disabled={deployStatus.isDeploying || !githubEnabled}
+      >
+        {t['deploy.platform.deployTo']} {t['deploy.config.deployType.github']}
+      </Button>
+    </div>
   )
 
-  const renderCloudflareForm = () => (
-    <>
+  const renderCloudflareTab = () => (
+    <div>
+      <div className={styles.tabEnableRow}>
+        <Space>
+          <Text strong>{t['deploy.platform.enablePlatform']}</Text>
+          <Switch
+            size="small"
+            checked={cloudflareEnabled}
+            onChange={(checked) => {
+              setCloudflareEnabled(checked)
+              setTimeout(() => debouncedSave(), 0)
+            }}
+          />
+        </Space>
+      </div>
       <Form.Item
         label={t['deploy.config.cloudflare.accountId']}
         name={['cloudflare', 'accountId']}
@@ -252,7 +414,6 @@ const DeployPage: React.FC = () => {
       >
         <Input placeholder={t['deploy.config.cloudflare.accountIdPlaceholder']} />
       </Form.Item>
-
       <Form.Item
         label={t['deploy.config.cloudflare.projectName']}
         name={['cloudflare', 'projectName']}
@@ -261,7 +422,6 @@ const DeployPage: React.FC = () => {
       >
         <Input placeholder={t['deploy.config.cloudflare.projectNamePlaceholder']} />
       </Form.Item>
-
       <Form.Item
         label={t['deploy.config.cloudflare.apiToken']}
         name={['cloudflare', 'apiToken']}
@@ -270,7 +430,6 @@ const DeployPage: React.FC = () => {
       >
         <Input.Password placeholder={t['deploy.config.cloudflare.apiTokenPlaceholder']} />
       </Form.Item>
-
       <Alert
         message={t['deploy.config.alertTitle']}
         description={t['deploy.config.alertDesc.cloudflare']}
@@ -278,105 +437,87 @@ const DeployPage: React.FC = () => {
         showIcon
         style={{ marginBottom: 16 }}
       />
-    </>
+      <Divider />
+      <div className={styles.helpSection}>
+        <Text strong style={{ fontSize: 13 }}>{t['deploy.help.how.cloudflare']}</Text>
+        <div style={{ margin: '4px 0 0', paddingLeft: 8 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step1.cloudflare']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step2.cloudflare']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.step3.cloudflare']}</Text><br />
+          <Text type="secondary" style={{ fontSize: 12 }}>{t['deploy.help.note.cloudflare']}</Text>
+        </div>
+      </div>
+      <Divider />
+      <Button
+        type="primary"
+        icon={<RocketOutlined />}
+        size="large"
+        block
+        loading={deployLoading === 'cloudflare-pages'}
+        onClick={() => executeDeploy(['cloudflare-pages'])}
+        disabled={deployStatus.isDeploying || !cloudflareEnabled}
+      >
+        {t['deploy.platform.deployTo']} {t['deploy.config.deployType.cloudflare']}
+      </Button>
+    </div>
   )
 
-  const renderHelpContent = () => {
-    if (isCloudflare) {
-      return (
-        <Typography>
-          <Title level={5}>{t['deploy.help.how.cloudflare']}</Title>
-          <Paragraph>{t['deploy.help.step1.cloudflare']}</Paragraph>
-          <Paragraph>{t['deploy.help.step2.cloudflare']}</Paragraph>
-          <Paragraph>{t['deploy.help.step3.cloudflare']}</Paragraph>
-          <Paragraph>
-            <Text type="secondary">{t['deploy.help.note.cloudflare']}</Text>
-          </Paragraph>
-        </Typography>
-      )
-    }
-    return (
-      <Typography>
-        <Title level={5}>{t['deploy.help.how.github']}</Title>
-        <Paragraph>{t['deploy.help.step1']}</Paragraph>
-        <Paragraph>{t['deploy.help.step2']}</Paragraph>
-        <Paragraph>{t['deploy.help.step3']}</Paragraph>
-        <Paragraph>
-          <Text type="secondary">{t['deploy.help.note']}</Text>
-        </Paragraph>
-      </Typography>
-    )
-  }
+  const tabItems = [
+    {
+      key: 'github',
+      label: (
+        <Space size={4}>
+          <GithubOutlined />
+          <span>{t['deploy.config.deployType.github']}</span>
+          {renderPlatformBadge(githubEnabled)}
+        </Space>
+      ),
+      children: renderGithubTab(),
+    },
+    {
+      key: 'cloudflare-pages',
+      label: (
+        <Space size={4}>
+          <CloudOutlined />
+          <span>{t['deploy.config.deployType.cloudflare']}</span>
+          {renderPlatformBadge(cloudflareEnabled)}
+        </Space>
+      ),
+      children: renderCloudflareTab(),
+    },
+  ]
 
   return (
     <div className={styles.deployContainer}>
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          <Card 
-            title={
-              <Space>
-                {configCardIcon}
-                <span>{configCardTitle}</span>
-              </Space>
-            }
-            extra={
-              <Button 
-                type="primary" 
-                icon={<SaveOutlined />} 
-                onClick={() => form.submit()}
-                loading={loading}
-              >
-                {t['deploy.config.save']}
-              </Button>
-            }
-          >
+          <Card bodyStyle={{ paddingTop: 0 }}>
             <Spin spinning={loading}>
               <Form
                 form={form}
                 layout="vertical"
-                onFinish={saveConfig}
+                onValuesChange={onFormValuesChange}
                 initialValues={{
-                  deployType: 'github',
                   repository: '',
                   branch: 'main',
                   message: 'Site updated: {{ now("YYYY-MM-DD HH:mm:ss") }}',
                   token: '',
-                  cloudflare: {
-                    accountId: '',
-                    projectName: '',
-                    apiToken: ''
-                  }
+                  cloudflare: { accountId: '', projectName: '', apiToken: '' },
                 }}
               >
-                <Form.Item
-                  label={t['deploy.config.deployType']}
-                  name="deployType"
-                >
-                  <Radio.Group
-                    onChange={(e) => setDeployType(e.target.value)}
-                    optionType="button"
-                    buttonStyle="solid"
-                  >
-                    <Radio.Button value="github">
-                      <Space><GithubOutlined />{t['deploy.config.deployType.github']}</Space>
-                    </Radio.Button>
-                    <Radio.Button value="cloudflare-pages">
-                      <Space><CloudOutlined />{t['deploy.config.deployType.cloudflare']}</Space>
-                    </Radio.Button>
-                  </Radio.Group>
-                </Form.Item>
-
-                <Divider />
-
-                {isGithub && renderGithubForm()}
-                {isCloudflare && renderCloudflareForm()}
+                <Tabs
+                  activeKey={activeTab}
+                  onChange={setActiveTab}
+                  items={tabItems}
+                  className={styles.deployTabs}
+                />
               </Form>
             </Spin>
           </Card>
         </Col>
 
         <Col xs={24} lg={8}>
-          <Card 
+          <Card
             title={
               <Space>
                 <RocketOutlined />
@@ -384,84 +525,78 @@ const DeployPage: React.FC = () => {
               </Space>
             }
             extra={
-              <Button 
-                type="link" 
-                icon={<ReloadOutlined />} 
-                onClick={resetDeployStatus}
-                loading={loading}
-              >
+              <Button type="link" size="small" icon={<ReloadOutlined />} onClick={resetDeployStatus} loading={loading}>
                 {t['deploy.action.reset']}
               </Button>
             }
           >
             <Spin spinning={loading}>
               <div className={styles.deployStatus}>
-                <Paragraph>
-                  <Text strong>{t['deploy.status.lastTime'] + ': '}</Text> 
+                <Paragraph style={{ marginBottom: 8 }}>
+                  <Text strong>{t['deploy.status.lastTime']}: </Text>
                   <Text>{deployStatus.lastDeployTime}</Text>
                 </Paragraph>
-                
-                {isGithub && (
-                  <Paragraph>
-                    <Text strong>{t['deploy.status.status'] + ': '}</Text>
+
+                {githubEnabled && (
+                  <Paragraph style={{ marginBottom: 8 }}>
+                    <Text strong>{t['deploy.status.status']}: </Text>
                     {deployStatus.hasDeployGit ? (
-                      <Text type="success">{t['deploy.status.inited']}</Text>
+                      <Badge status="success" text={t['deploy.status.inited']} />
                     ) : (
-                      <Text type="warning">{t['deploy.status.notInited']}</Text>
+                      <Badge status="warning" text={t['deploy.status.notInited']} />
                     )}
                   </Paragraph>
                 )}
 
+                <Paragraph style={{ marginBottom: 8 }}>
+                  <Text strong>{t['deploy.platform.enabledPlatforms']}: </Text>
+                  {enabledTargets.length === 0 ? (
+                    <Text type="secondary">-</Text>
+                  ) : (
+                    <Space size={4}>
+                      {enabledTargets.includes('github') && <Tag icon={<GithubOutlined />} color="default">GitHub</Tag>}
+                      {enabledTargets.includes('cloudflare-pages') && <Tag icon={<CloudOutlined />} color="processing">Cloudflare</Tag>}
+                    </Space>
+                  )}
+                </Paragraph>
+
+                {canDeployAll && (
+                  <Button
+                    type="primary"
+                    icon={<ThunderboltOutlined />}
+                    size="middle"
+                    block
+                    loading={deployLoading === 'all'}
+                    onClick={() => executeDeploy(enabledTargets)}
+                    disabled={deployStatus.isDeploying}
+                    style={{ marginBottom: 12 }}
+                  >
+                    {t['deploy.platform.deployAll']}
+                  </Button>
+                )}
+
                 {deployStatus.isDeploying && (
                   <>
-                    <Divider />
+                    <Divider style={{ margin: '12px 0' }} />
                     <div className={styles.deployProgress}>
-                      <Paragraph>
-                        <Text strong>{t['deploy.status.currentStage'] + ': '}</Text>
+                      <Paragraph style={{ marginBottom: 4 }}>
+                        <Text strong>{t['deploy.status.currentStage']}: </Text>
                         <Text>{getStageText(deployStatus.stage)}</Text>
                       </Paragraph>
-                      <Progress 
-                        percent={deployStatus.progress} 
-                        status={deployStatus.error ? "exception" : "active"} 
+                      <Progress
+                        percent={deployStatus.progress}
+                        status={deployStatus.error ? 'exception' : 'active'}
+                        size="small"
                       />
                     </div>
                   </>
-                )}
-
-                <Divider />
-
-                <Button 
-                  type="primary" 
-                  icon={<RocketOutlined />} 
-                  size="large" 
-                  block
-                  loading={deployLoading || deployStatus.isDeploying}
-                  onClick={executeDeploy}
-                  disabled={deployStatus.isDeploying}
-                >
-                  {deployStatus.isDeploying ? t['deploy.status.inProgress'] : t['deploy.status.deploy']}
-                </Button>
-
-                {isGithub && deployStatus.hasDeployGit && (
-                  <Button 
-                    type="default" 
-                    danger
-                    size="large" 
-                    block
-                    style={{ marginTop: 8 }}
-                    loading={loading}
-                    onClick={cleanupDeployDir}
-                    disabled={deployStatus.isDeploying}
-                  >
-                    {t['deploy.cleanup.button']}
-                  </Button>
                 )}
               </div>
             </Spin>
           </Card>
 
           {deployStatus.logs && deployStatus.logs.length > 0 && (
-            <Card 
+            <Card
               title={
                 <Space>
                   <InfoCircleOutlined />
@@ -469,33 +604,22 @@ const DeployPage: React.FC = () => {
                 </Space>
               }
               style={{ marginTop: 16 }}
+              bodyStyle={{ padding: '12px 16px' }}
             >
               <div className={styles.deployLogs}>
-                <Timeline style={{ padding: '10px 10px', maxHeight: '300px', overflowY: 'auto' }}>
+                <Timeline style={{ padding: '10px 0', maxHeight: '300px', overflowY: 'auto' }}>
                   {deployStatus.logs.map((log, index) => (
-                    <Timeline.Item 
+                    <Timeline.Item
                       key={index}
-                      dot={index === deployStatus.logs.length - 1 ? getStageIcon(deployStatus.stage) : null}
+                      dot={index === deployStatus.logs.length - 1 ? getStageIcon(deployStatus.stage) : undefined}
                     >
-                      <Text style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{log}</Text>
+                      <Text style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap', fontSize: 12 }}>{log}</Text>
                     </Timeline.Item>
                   ))}
                 </Timeline>
               </div>
             </Card>
           )}
-
-          <Card 
-            title={
-              <Space>
-                <InfoCircleOutlined />
-                <span>{t['deploy.help.title']}</span>
-              </Space>
-            }
-            style={{ marginTop: 16 }}
-          >
-            {renderHelpContent()}
-          </Card>
         </Col>
       </Row>
     </div>

@@ -22,24 +22,24 @@ const service = axios.create({
 function isDesktopEnvironment(): boolean {
     return typeof window !== 'undefined' && 
            typeof window.electronAPI === 'object' && 
-           window.electronAPI !== null;
+           window.electronAPI !== null
 }
 
 service.interceptors.request.use(config => {
     // 在这里可以为每个请求添加请求头
     // 如果请求配置中已经有 Authorization 头，则优先使用它
     if (config.headers && config.headers['Authorization']) {
-        console.log('[API Interceptor]: 使用请求中预设的 Authorization 头');
+        console.log('[API Interceptor]: 使用请求中预设的 Authorization 头')
     } else {
-        const token = localStorage.getItem('hexoProToken');
+        const token = localStorage.getItem('hexoProToken')
         if (token) {
-            console.log('[API Interceptor]: 从 localStorage 设置 Authorization 头');
-            config.headers['Authorization'] = 'Bearer ' + token;
+            console.log('[API Interceptor]: 从 localStorage 设置 Authorization 头')
+            config.headers['Authorization'] = 'Bearer ' + token
         } else {
-            console.log('[API Interceptor]: 发送请求，无预设或localStorage token', config.url);
+            console.log('[API Interceptor]: 发送请求，无预设或localStorage token', config.url)
         }
     }
-    return config;
+    return config
 })
 // 强化类型定义
 class ApiError extends Error {
@@ -75,7 +75,7 @@ service.interceptors.response.use((resp) => {
         // 添加路径检查防止重定向循环
         // 在桌面端，如果已经在登录页面，则不进行重定向
         if (isDesktopEnvironment() && window.location.pathname.includes('/pro/login')) {
-            console.log('[API Interceptor]: 桌面端且已在登录页，阻止重定向');
+            console.log('[API Interceptor]: 桌面端且已在登录页，阻止重定向')
         } else if (!window.location.pathname.includes('/pro/login')) {
             window.location.href = '/pro/login?reason=token_invalid_or_missing'
         }
@@ -107,7 +107,7 @@ service.interceptors.response.use((resp) => {
             // 这里也要修改
             // 在桌面端，如果已经在登录页面，则不进行重定向
             if (isDesktopEnvironment() && window.location.pathname.includes('/pro/login')) {
-                console.log('[API Interceptor Error]: 桌面端且已在登录页，阻止重定向');
+                console.log('[API Interceptor Error]: 桌面端且已在登录页，阻止重定向')
             } else if (!window.location.pathname.includes('/pro/login')) {
                 window.location.href = '/pro/login?reason=token_invalid_or_missing'
             }

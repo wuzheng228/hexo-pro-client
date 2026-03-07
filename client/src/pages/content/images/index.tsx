@@ -463,7 +463,7 @@ const ImageManager: React.FC = () => {
                       <Button
                         type="text"
                         icon={<EyeOutlined />}
-                        onClick={(e) => { e.stopPropagation(); setPreviewImage(image.url); setPreviewVisible(true); }}
+                        onClick={(e) => { e.stopPropagation(); setPreviewImage(image.url); setPreviewVisible(true) }}
                         title={t['content.images.preview'] || '预览'}
                       />,
                       <Button
@@ -477,7 +477,7 @@ const ImageManager: React.FC = () => {
                         type="text"
                         icon={<ScissorOutlined />}
                         onClick={(e) => {
-                          e.stopPropagation();
+                          e.stopPropagation()
                           setCurrentImage(image)
                           setTargetFolder('')
                           setMoveVisible(true)
@@ -489,7 +489,7 @@ const ImageManager: React.FC = () => {
                           type="text"
                           icon={<EditOutlined />}
                           onClick={(e) => {
-                            e.stopPropagation();
+                            e.stopPropagation()
                             setCurrentImage(image)
                             setNewName(image.name)
                             setRenameVisible(true)
@@ -516,7 +516,7 @@ const ImageManager: React.FC = () => {
                           type="text"
                           icon={<EditOutlined />}
                           onClick={(e) => {
-                            e.stopPropagation();
+                            e.stopPropagation()
                             setCurrentImage(image)
                             setNewName(image.name)
                             setRenameVisible(true)
@@ -855,7 +855,7 @@ const ImageManager: React.FC = () => {
             <Select
               style={{ width: '100%', marginTop: 6 }}
               value={currentFolder === 'trash' ? '' : currentFolder}
-              onChange={(v) => { setCurrentFolder(v); setCleanupItems([]); setCleanupSelectedKeys([]); }}
+              onChange={(v) => { setCurrentFolder(v); setCleanupItems([]); setCleanupSelectedKeys([]) }}
             >
               <Option value="">{t['content.images.rootFolder'] || '根目录'}</Option>
               {data.folders.filter(f => String(f).toLowerCase() !== 'trash').map(folder => (
@@ -878,7 +878,7 @@ const ImageManager: React.FC = () => {
             <Select
               style={{ width: '100%', marginTop: 6 }}
               value={storageType}
-              onChange={(v) => { setStorageType(v); setCleanupItems([]); setCleanupSelectedKeys([]); }}
+              onChange={(v) => { setStorageType(v); setCleanupItems([]); setCleanupSelectedKeys([]) }}
             >
               {availableStorages.map(s => (
                 <Option key={s} value={s}>{s}</Option>

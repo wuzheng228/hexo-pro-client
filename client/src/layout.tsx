@@ -22,25 +22,25 @@ type MenuItem = Required<MenuProps>['items'][number];
 const getIconFromKey = (key: string) => {
     switch (key) {
         case 'dashboard':
-            return <HomeOutlined />;
+            return <HomeOutlined />
         case 'content/posts/blogs':
-            return <EditOutlined />;
+            return <EditOutlined />
         case 'content/posts/drafts':
-            return <FileTextOutlined />;
+            return <FileTextOutlined />
         case 'content/pages':
-            return <AppstoreOutlined />;
+            return <AppstoreOutlined />
         case 'content/images':
-            return <PictureOutlined />;
+            return <PictureOutlined />
         case 'content/recycle':
-            return <DeleteOutlined />;
+            return <DeleteOutlined />
         case 'content/yaml':
-            return <CodeOutlined />;
+            return <CodeOutlined />
         case 'deploy':
-            return <CloudUploadOutlined />;
+            return <CloudUploadOutlined />
         case 'settings':
-            return <SettingOutlined />;
+            return <SettingOutlined />
         default:
-            return <HomeOutlined />;
+            return <HomeOutlined />
     }
 }
 

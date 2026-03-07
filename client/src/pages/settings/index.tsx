@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect } from 'react'
 import { Spin, Tabs, message } from 'antd'
-import { EditOutlined, LinkOutlined, PictureOutlined, RocketOutlined, ThunderboltOutlined, UserOutlined } from '@ant-design/icons'
+import { EditOutlined, LinkOutlined, PictureOutlined, ThunderboltOutlined, UserOutlined } from '@ant-design/icons'
 import styles from './style/index.module.less'
 import useLocale from '../../hooks/useLocale'
 import { GlobalContext } from '@/context'
@@ -9,7 +9,6 @@ import AccountSettingsCard from './components/AccountSettingsCard'
 import LinkRedirectSettingsCard from './components/LinkRedirectSettingsCard'
 import EditorSettingsCard from './components/EditorSettingsCard'
 import DisplaySettingsCard from './components/DisplaySettingsCard'
-import DeploySettingsCard from './components/DeploySettingsCard'
 import AISettingsCard from './components/AISettingsCard'
 
 const SettingsPage: React.FC = () => {
@@ -81,16 +80,6 @@ const SettingsPage: React.FC = () => {
                   </span>
                 ),
                 children: <DisplaySettingsCard />,
-              },
-              {
-                key: 'deploy',
-                label: (
-                  <span className={styles.tabLabel}>
-                    <RocketOutlined className={styles.tabIcon} />
-                    {t['settings.deployTitle']}
-                  </span>
-                ),
-                children: <DeploySettingsCard />,
               },
               {
                 key: 'ai',

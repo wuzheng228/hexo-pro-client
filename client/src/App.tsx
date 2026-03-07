@@ -150,11 +150,11 @@ function App() {
                     <GlobalContext.Provider value={contextValue}>
                         <Routes>
                             <Route path="/login" element={(() => {
-                                return <Login />;
+                                return <Login />
                             })()} />
                             {/* 确保登录页面优先匹配，其他页面使用PageLayout */}
                             <Route path="/*" element={(() => {
-                                return <PageLayout />;
+                                return <PageLayout />
                             })()} />
                         </Routes>
                     </GlobalContext.Provider>

@@ -310,6 +310,11 @@ const i18n = {
         'deploy.status.deploySuccess': 'Deploy success',
         'deploy.status.completedMessage': 'Deploy completed, please check the deploy log for details',
         'deploy.status.unknownTime': 'Unknown',
+        'deploy.platform.deployTo': 'Deploy to',
+        'deploy.platform.deployAll': 'Deploy to all enabled platforms',
+        'deploy.platform.enablePlatform': 'Enable this platform',
+        'deploy.platform.enabledPlatforms': 'Enabled platforms',
+        'deploy.platform.settings': 'Settings',
 
         // Git 部署相关翻译
         'deploy.git.preparing': 'Preparing Git deployment environment...',
@@ -944,6 +949,11 @@ const i18n = {
         'deploy.status.deployCompleted': '部署成功完成！',
         'deploy.status.completedMessage': '部署成功完成！',
         'deploy.status.unknownTime': '未知',
+        'deploy.platform.deployTo': '部署到',
+        'deploy.platform.deployAll': '一键部署到全部已启用平台',
+        'deploy.platform.enablePlatform': '启用此平台',
+        'deploy.platform.enabledPlatforms': '已启用平台',
+        'deploy.platform.settings': '通用设置',
 
         // Git 部署相关翻译
         'deploy.git.preparing': '准备 Git 部署环境...',
@@ -1475,6 +1485,11 @@ const i18n = {
         'deploy.status.deploySuccess': 'Déploiement réussi',
         'deploy.status.completedMessage': 'Déploiement terminé, veuillez consulter le journal de déploiement pour plus de détails',
         'deploy.status.unknownTime': 'Inconnu',
+        'deploy.platform.deployTo': 'Déployer vers',
+        'deploy.platform.deployAll': 'Déployer vers toutes les plateformes activées',
+        'deploy.platform.enablePlatform': 'Activer cette plateforme',
+        'deploy.platform.enabledPlatforms': 'Plateformes activées',
+        'deploy.platform.settings': 'Paramètres',
 
         // Traductions liées au déploiement Git
         'deploy.git.preparing': 'Préparation de l\'environnement de déploiement Git...',

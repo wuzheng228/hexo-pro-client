@@ -1,14 +1,14 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
-import { Input, Button, message, Spin } from 'antd';
-import { SendOutlined, CloseOutlined, CopyOutlined, ReloadOutlined, InsertRowLeftOutlined } from '@ant-design/icons';
-import { flushSync } from 'react-dom';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { GlobalContext } from '@/context';
-import useLocale from '@/hooks/useLocale';
+import React, { useState, useRef, useEffect, useContext } from 'react'
+import { Input, Button, message, Spin } from 'antd'
+import { SendOutlined, CloseOutlined, CopyOutlined, ReloadOutlined, InsertRowLeftOutlined } from '@ant-design/icons'
+import { flushSync } from 'react-dom'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { GlobalContext } from '@/context'
+import useLocale from '@/hooks/useLocale'
 import { isAISConfigured } from '@/utils/aiSettings'
-import { aiChatStream } from '@/utils/aiService';
-import styles from './style.module.less';
+import { aiChatStream } from '@/utils/aiService'
+import styles from './style.module.less'
 
 interface Message {
     id: string;
@@ -28,50 +28,50 @@ interface AIChatPanelProps {
 }
 
 export default function AIChatPanel({ visible, onClose, onInsertContent }: AIChatPanelProps) {
-    const t = useLocale();
-    const { theme } = useContext(GlobalContext);
-    const [inputValue, setInputValue] = useState('');
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
-    const abortControllerRef = useRef<AbortController | null>(null);
+    const t = useLocale()
+    const { theme } = useContext(GlobalContext)
+    const [inputValue, setInputValue] = useState('')
+    const [messages, setMessages] = useState<Message[]>([])
+    const [isLoading, setIsLoading] = useState(false)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+    const contentRef = useRef<HTMLDivElement>(null)
+    const abortControllerRef = useRef<AbortController | null>(null)
 
-    const SCROLL_THRESHOLD = 40;
+    const SCROLL_THRESHOLD = 40
 
     const formatDuration = (durationMs?: number) => {
-        if (!durationMs || durationMs <= 0) return '';
-        return `${(durationMs / 1000).toFixed(1)}s`;
-    };
+        if (!durationMs || durationMs <= 0) return ''
+        return `${(durationMs / 1000).toFixed(1)}s`
+    }
 
     const scrollToBottom = (force = false) => {
-        const el = contentRef.current;
-        if (!el) return;
-        const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD;
+        const el = contentRef.current
+        if (!el) return
+        const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_THRESHOLD
         if (force || isNearBottom) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
         }
-    };
+    }
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        scrollToBottom()
+    }, [messages])
 
     useEffect(() => {
         if (!visible) {
-            setInputValue('');
-            setMessages([]);
+            setInputValue('')
+            setMessages([])
         }
-    }, [visible]);
+    }, [visible])
 
     const sendMessage = async (content: string, baseMessages: Message[]) => {
-        if (!content.trim()) return;
+        if (!content.trim()) return
 
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
             content: content.trim(),
-        };
+        }
 
         const assistantMessage: Message = {
             id: (Date.now() + 1).toString(),
@@ -80,17 +80,17 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
             reasoning: '',
             reasoningExpanded: true,
             isStreaming: true,
-        };
+        }
 
-        setMessages(prev => [...prev, userMessage, assistantMessage]);
-        setInputValue('');
-        setIsLoading(true);
-        requestAnimationFrame(() => scrollToBottom(true));
+        setMessages(prev => [...prev, userMessage, assistantMessage])
+        setInputValue('')
+        setIsLoading(true)
+        requestAnimationFrame(() => scrollToBottom(true))
 
         const allMessagesForApi = [
             ...baseMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
             { role: 'user' as const, content: userMessage.content }
-        ];
+        ]
 
         const configured = await isAISConfigured()
         if (!configured) {
@@ -104,10 +104,10 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
         }
 
         try {
-            abortControllerRef.current = new AbortController();
+            abortControllerRef.current = new AbortController()
 
             // 使用 aiService 的流式接口
-            let hasReceivedData = false;
+            let hasReceivedData = false
             for await (const chunk of aiChatStream(
                 allMessagesForApi,
                 (chunk) => {
@@ -125,28 +125,28 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                                             : msg.reasoningDurationMs,
                                     }
                                     : msg
-                            ));
-                            return;
+                            ))
+                            return
                         }
 
                         // 收到第一个数据块时，关闭 Spin，开始显示内容
                         if (!hasReceivedData) {
-                            hasReceivedData = true;
+                            hasReceivedData = true
                             setMessages(prev => prev.map(msg =>
                                 msg.id === assistantMessage.id
                                     ? { ...msg, isStreaming: false }
                                     : msg
-                            ));
+                            ))
                         }
 
                         setMessages(prev => prev.map(msg => {
                             if (msg.id === assistantMessage.id) {
-                                const now = Date.now();
-                                const hasNewReasoning = !!chunk.reasoning;
-                                const hasNewContent = !!chunk.content;
-                                const nextReasoning = hasNewReasoning ? (msg.reasoning || '') + chunk.reasoning : msg.reasoning;
-                                const nextContent = hasNewContent ? msg.content + chunk.content : msg.content;
-                                const shouldCloseReasoning = !!nextReasoning && hasNewContent;
+                                const now = Date.now()
+                                const hasNewReasoning = !!chunk.reasoning
+                                const hasNewContent = !!chunk.content
+                                const nextReasoning = hasNewReasoning ? (msg.reasoning || '') + chunk.reasoning : msg.reasoning
+                                const nextContent = hasNewContent ? msg.content + chunk.content : msg.content
+                                const shouldCloseReasoning = !!nextReasoning && hasNewContent
                                 return {
                                     ...msg,
                                     content: nextContent,
@@ -156,11 +156,11 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                                     reasoningDurationMs: shouldCloseReasoning && msg.reasoningStartAt && !msg.reasoningDurationMs
                                         ? now - msg.reasoningStartAt
                                         : msg.reasoningDurationMs,
-                                };
+                                }
                             }
-                            return msg;
-                        }));
-                    });
+                            return msg
+                        }))
+                    })
                 },
                 abortControllerRef.current.signal
             )) {
@@ -172,69 +172,69 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                 msg.id === assistantMessage.id
                     ? { ...msg, isStreaming: false }
                     : msg
-            ));
+            ))
         } catch (error: any) {
             if (error.name === 'AbortError') {
                 setMessages(prev => prev.map(msg =>
                     msg.id === assistantMessage.id
                         ? { ...msg, isStreaming: false }
                         : msg
-                ));
+                ))
             } else {
-                console.error('AI API Error:', error);
+                console.error('AI API Error:', error)
                 setMessages(prev => prev.map(msg =>
                     msg.id === assistantMessage.id
                         ? { ...msg, content: `${t['ai.error']}: ${error.message}`, isStreaming: false }
                         : msg
-                ));
+                ))
             }
         } finally {
-            setIsLoading(false);
-            abortControllerRef.current = null;
+            setIsLoading(false)
+            abortControllerRef.current = null
         }
-    };
+    }
 
     const handleSend = () => {
-        sendMessage(inputValue.trim(), messages);
-    };
+        sendMessage(inputValue.trim(), messages)
+    }
 
     const handleCopy = (content: string) => {
         navigator.clipboard.writeText(content).then(() => {
-            message.success(t['ai.copySuccess']);
-        });
-    };
+            message.success(t['ai.copySuccess'])
+        })
+    }
 
     const handleRegenerate = () => {
-        const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
-        if (!lastUserMessage) return;
+        const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
+        if (!lastUserMessage) return
 
-        const assistantMessages = messages.filter(m => m.role === 'assistant');
-        const lastAssistantMsg = assistantMessages[assistantMessages.length - 1];
-        const lastAssistantIndex = lastAssistantMsg ? messages.findIndex(m => m.id === lastAssistantMsg.id) : -1;
+        const assistantMessages = messages.filter(m => m.role === 'assistant')
+        const lastAssistantMsg = assistantMessages[assistantMessages.length - 1]
+        const lastAssistantIndex = lastAssistantMsg ? messages.findIndex(m => m.id === lastAssistantMsg.id) : -1
 
         // 移除最后一对 user + assistant
-        const baseMessages = lastAssistantIndex > 0 ? messages.slice(0, lastAssistantIndex - 1) : [];
-        setMessages(baseMessages);
-        setInputValue('');
+        const baseMessages = lastAssistantIndex > 0 ? messages.slice(0, lastAssistantIndex - 1) : []
+        setMessages(baseMessages)
+        setInputValue('')
 
-        sendMessage(lastUserMessage.content, baseMessages);
-    };
+        sendMessage(lastUserMessage.content, baseMessages)
+    }
 
     const handleInsert = (content: string) => {
-        onInsertContent(content);
-        message.success(t['ai.insertSuccess']);
-    };
+        onInsertContent(content)
+        message.success(t['ai.insertSuccess'])
+    }
 
     const toggleReasoning = (msgId: string) => {
         setMessages(prev => prev.map(msg => {
             if (msg.id === msgId) {
-                return { ...msg, reasoningExpanded: !msg.reasoningExpanded };
+                return { ...msg, reasoningExpanded: !msg.reasoningExpanded }
             }
-            return msg;
-        }));
-    };
+            return msg
+        }))
+    }
 
-    if (!visible) return null;
+    if (!visible) return null
 
     return (
         <div className={`${styles.panel} ${theme === 'dark' ? styles.dark : ''}`}>
@@ -345,5 +345,5 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                 />
             </div>
         </div>
-    );
+    )
 }
