@@ -4,8 +4,8 @@ import {
   Card,
   Col,
   Divider,
+  Drawer,
   message,
-  Modal,
   Row,
   Spin,
   Typography,
@@ -185,13 +185,14 @@ const ThemeMarketPage: React.FC = () => {
         </div>
       </Spin>
 
-      <Modal
+      <Drawer
         title={`${t['theme.config'] || '配置'} - ${configModal.themeName}`}
+        placement="right"
+        onClose={closeConfig}
         open={configModal.visible}
-        onCancel={closeConfig}
-        footer={null}
-        width={900}
+        width={700}
         destroyOnClose
+        bodyStyle={{ padding: 0 }}
       >
         {configModal.visible && (
           <ThemeConfigPanel
@@ -200,7 +201,7 @@ const ThemeMarketPage: React.FC = () => {
             onClose={closeConfig}
           />
         )}
-      </Modal>
+      </Drawer>
     </div>
   )
 }

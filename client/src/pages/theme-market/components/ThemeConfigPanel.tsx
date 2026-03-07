@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Button, message, Spin, Tabs } from 'antd'
-import { SaveOutlined } from '@ant-design/icons'
+import { Button, message, Segmented, Spin, Space } from 'antd'
+import { SaveOutlined, CloseOutlined } from '@ant-design/icons'
 import service from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
 import YamlEditor from '@/pages/content/yaml/components/YamlEditor'
+import FormMode from './FormMode'
 import styles from '../style.module.less'
 
 interface ThemeConfigPanelProps {
@@ -41,20 +42,22 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
     void fetchConfig()
   }, [fetchConfig])
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async (content?: string) => {
     setSaving(true)
     try {
+      const toSave = content ?? editContent
       await service.post('/hexopro/api/theme/config/save', {
         themeId,
-        content: editContent,
+        content: toSave,
       })
       message.success(t['theme.config.saveSuccess'] || '配置已保存')
-    } catch (err) {
+      if (content) setEditContent(content)
+    } catch {
       message.error(t['theme.config.saveFailed'] || '保存配置失败')
     } finally {
       setSaving(false)
     }
-  }
+  }, [themeId, editContent, t])
 
   if (loading) {
     return (
@@ -65,56 +68,63 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   }
 
   return (
-    <div className={styles.configPanel}>
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        items={[
-          {
-            key: 'raw',
-            label: t['theme.config.rawMode'] || 'Raw 模式',
-            children: (
-              <div>
-                <div className={styles.rawEditor}>
-                  <YamlEditor
-                    id={`theme-config-${themeId}`}
-                    initialValue={editContent}
-                    height="500px"
-                    onChange={setEditContent}
-                  />
-                </div>
-                <div className={styles.rawActions}>
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    loading={saving}
-                    onClick={handleSave}
-                  >
-                    {t['universal.save'] || '保存'}
-                  </Button>
-                  {onClose && (
-                    <Button onClick={onClose}>
-                      {t['universal.close'] || '关闭'}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ),
-          },
-          {
-            key: 'form',
-            label: t['theme.config.formMode'] || '表单模式',
-            children: (
-              <div style={{ padding: '20px 0' }}>
-                <p style={{ color: 'rgba(0,0,0,0.45)' }}>
-                  {t['theme.config.formModeComing'] ||
-                    '表单模式正在开发中，请先使用 Raw 模式编辑配置。'}
-                </p>
-              </div>
-            ),
-          },
-        ]}
-      />
+    <div className={styles.drawerConfigPanel}>
+      {/* 固定顶部操作栏 */}
+      <div className={styles.drawerHeader}>
+        <Segmented
+          value={activeTab}
+          onChange={(val) => setActiveTab(String(val))}
+          options={[
+            {
+              label: t['theme.config.formMode'] || '表单模式',
+              value: 'form',
+            },
+            {
+              label: t['theme.config.rawMode'] || 'Raw 模式',
+              value: 'raw',
+            },
+          ]}
+          block
+        />
+      </div>
+
+      {/* 内容区域 */}
+      <div className={styles.drawerContent}>
+        {activeTab === 'raw' ? (
+          <div>
+            <YamlEditor
+              id={`theme-config-${themeId}`}
+              initialValue={editContent}
+              height="calc(100vh - 180px)"
+              onChange={setEditContent}
+            />
+          </div>
+        ) : (
+          <FormMode
+            initialYaml={editContent}
+            onSave={handleSave}
+            saving={saving}
+            onClose={onClose}
+          />
+        )}
+      </div>
+
+      {/* 固定底部操作栏 */}
+      <div className={styles.drawerFooter}>
+        <Space>
+          <Button onClick={onClose} icon={<CloseOutlined />}>
+            {t['universal.close'] || '关闭'}
+          </Button>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            loading={saving}
+            onClick={() => handleSave()}
+          >
+            {t['universal.save'] || '保存'}
+          </Button>
+        </Space>
+      </div>
     </div>
   )
 }
