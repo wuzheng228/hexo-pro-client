@@ -1,9 +1,9 @@
-import React, { useCallback, useMemo } from 'react'
-import { Collapse, Form, Input, Select, Switch, Typography, InputNumber, Empty } from 'antd'
+import React, { useCallback, useImperativeHandle, useMemo, forwardRef } from 'react'
+import { Collapse, Form, Input, Select, Switch, Typography, InputNumber, Empty, Alert } from 'antd'
 import yaml from 'js-yaml'
 import useLocale from '@/hooks/useLocale'
-import type { SchemaField } from '../themeSchema'
-import { generateSchemaFromYaml, getNestedValue, setNestedValue } from '../themeSchema'
+import type { SchemaField, SchemaJson } from '../themeSchema'
+import { generateSchemaFromYaml, getNestedValue, setNestedValue, updateYamlValues } from '../themeSchema'
 import styles from '../style.module.less'
 
 const { Text } = Typography
@@ -14,29 +14,45 @@ interface FormModeProps {
   onSave: (yamlContent: string) => Promise<void>
   saving: boolean
   onClose?: () => void
+  /** 独立的 schema JSON，优先于 YAML 注释 */
+  schemaJson?: SchemaJson | null
 }
 
-const FormMode: React.FC<FormModeProps> = ({
+export interface FormModeRef {
+  save: () => Promise<void>
+}
+
+const FormMode = forwardRef<FormModeRef, FormModeProps>(({
   initialYaml,
   onSave,
   saving,
   onClose,
-}) => {
+  schemaJson,
+}, ref) => {
   const t = useLocale()
   const [form] = Form.useForm()
 
-  // 生成 schema
-  const schema = useMemo(() => {
+  // 生成 schema，优先使用 schemaJson，其次 YAML 注释
+  const { schema, parseError } = useMemo(() => {
     try {
       const config = yaml.load(initialYaml) as Record<string, unknown>
       if (config && typeof config === 'object') {
-        return generateSchemaFromYaml(config, initialYaml)
+        return {
+          schema: generateSchemaFromYaml(config, initialYaml, { schemaJson }),
+          parseError: '',
+        }
       }
     } catch {
-      // ignore parse error
+      // handled below
     }
-    return []
-  }, [initialYaml])
+    try {
+      yaml.load(initialYaml)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      return { schema: [], parseError: message }
+    }
+    return { schema: [], parseError: '' }
+  }, [initialYaml, schemaJson])
 
   // 从配置转换为表单值
   const configToFormValues = useCallback((config: Record<string, unknown>, formSchema: typeof schema) => {
@@ -93,15 +109,38 @@ const FormMode: React.FC<FormModeProps> = ({
     try {
       const values = await form.validateFields()
       const baseConfig = yaml.load(initialYaml) as Record<string, unknown>
-      const config = formValuesToConfig(values, baseConfig || {}, schema)
-      const yamlContent = yaml.dump(config, { lineWidth: -1, noRefs: true })
+
+      // 收集变更的字段
+      const changes: Record<string, unknown> = {}
+      schema.forEach((group) => {
+        group.fields.forEach((field) => {
+          const newVal = values[field.key]
+          if (newVal === undefined) return
+          let finalVal = newVal
+          if (field.type === 'select' && typeof newVal === 'string') {
+            if (newVal === 'false') finalVal = false
+            else if (!Number.isNaN(Number(newVal))) finalVal = Number(newVal)
+          }
+          const oldVal = getNestedValue(baseConfig || {}, field.key)
+          if (String(finalVal) !== String(oldVal)) {
+            changes[field.key] = finalVal
+          }
+        })
+      })
+
+      // 原地替换保留注释，而非 yaml.dump
+      const yamlContent = updateYamlValues(initialYaml, changes)
       await onSave(yamlContent)
     } catch (err) {
       if (err && typeof err === 'object' && 'errorFields' in err) {
         // validation error, form will show
       }
     }
-  }, [form, initialYaml, schema, onSave, formValuesToConfig])
+  }, [form, initialYaml, schema, onSave])
+
+  useImperativeHandle(ref, () => ({
+    save: handleSave,
+  }), [handleSave])
 
   const renderField = (field: SchemaField) => {
     const label = t[field.label] || field.label
@@ -164,6 +203,15 @@ const FormMode: React.FC<FormModeProps> = ({
   if (schema.length === 0) {
     return (
       <div className={styles.formMode} style={{ padding: 40, textAlign: 'center' }}>
+        {parseError ? (
+          <Alert
+            type="error"
+            showIcon
+            style={{ marginBottom: 16, textAlign: 'left' }}
+            message={t['theme.config.parseError'] || 'YAML 解析失败'}
+            description={parseError}
+          />
+        ) : null}
         <Empty description={t['theme.config.noFields'] || '无可编辑字段'} />
       </div>
     )
@@ -187,6 +235,8 @@ const FormMode: React.FC<FormModeProps> = ({
       </Form>
     </div>
   )
-}
+})
+
+FormMode.displayName = 'FormMode'
 
 export default FormMode

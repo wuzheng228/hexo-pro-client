@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, message, Segmented, Spin, Space } from 'antd'
 import { SaveOutlined, CloseOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import service from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
+import type { SchemaJson } from '../themeSchema'
 import YamlEditor from '@/pages/content/yaml/components/YamlEditor'
-import FormMode from './FormMode'
+import FormMode, { type FormModeRef } from './FormMode'
 import SchemaGeneratorModal from './SchemaGeneratorModal'
 import styles from '../style.module.less'
 
@@ -23,17 +24,25 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editContent, setEditContent] = useState('')
+  const [schemaJson, setSchemaJson] = useState<SchemaJson | null>(null)
   const [activeTab, setActiveTab] = useState<'raw' | 'form'>('raw')
   const [generatorVisible, setGeneratorVisible] = useState(false)
+  const formModeRef = useRef<FormModeRef>(null)
 
   const fetchConfig = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await service.get('/hexopro/api/theme/config', {
-        params: { themeId },
-      })
-      const content = res.data?.content ?? ''
+      const [configRes, schemaRes] = await Promise.all([
+        service.get('/hexopro/api/theme/config', { params: { themeId } }),
+        service.get('/hexopro/api/theme/schema', { params: { themeId } }),
+      ])
+      const content = configRes.data?.content ?? ''
       setEditContent(content)
+      if (schemaRes.data?.hasSchema && schemaRes.data?.schema) {
+        setSchemaJson(schemaRes.data.schema)
+      } else {
+        setSchemaJson(null)
+      }
     } catch (err) {
       message.error(t['theme.config.fetchFailed'] || '获取配置失败')
     } finally {
@@ -77,7 +86,7 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <Segmented
             value={activeTab}
-            onChange={(val) => setActiveTab(String(val))}
+            onChange={(val) => setActiveTab((val as 'raw' | 'form') ?? 'raw')}
             options={[
               {
                 label: t['theme.config.formMode'] || '表单模式',
@@ -114,10 +123,12 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
           </div>
         ) : (
           <FormMode
+            ref={formModeRef}
             initialYaml={editContent}
             onSave={handleSave}
             saving={saving}
             onClose={onClose}
+            schemaJson={schemaJson}
           />
         )}
       </div>
@@ -132,7 +143,18 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
             type="primary"
             icon={<SaveOutlined />}
             loading={saving}
-            onClick={() => handleSave()}
+            onClick={async () => {
+              if (activeTab === 'form') {
+                setSaving(true)
+                try {
+                  await formModeRef.current?.save()
+                } finally {
+                  setSaving(false)
+                }
+              } else {
+                void handleSave()
+              }
+            }}
           >
             {t['universal.save'] || '保存'}
           </Button>
@@ -145,8 +167,16 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
         themeName={themeName}
         visible={generatorVisible}
         onClose={() => setGeneratorVisible(false)}
-        onApply={(yamlContent) => {
+        onApply={async (yamlContent, schema, language) => {
           setEditContent(yamlContent)
+          if (schema) {
+            setSchemaJson(schema)
+            try {
+              await service.post('/hexopro/api/theme/schema/save', { themeId, schema, language: language ?? 'zh' })
+            } catch {
+              message.warning(t['theme.schema.saveSchemaFailed'] || 'Schema 保存失败，表单模式可能受限')
+            }
+          }
           setActiveTab('form')
           message.success(t['theme.schema.applySuccess'] || '配置已应用，已切换到表单模式')
         }}

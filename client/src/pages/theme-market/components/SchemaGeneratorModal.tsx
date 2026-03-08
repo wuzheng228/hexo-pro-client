@@ -6,17 +6,15 @@ import {
   Progress,
   Space,
   Alert,
-  Spin,
-  Empty,
   Card,
   Divider,
   Tag,
   message,
-  Steps,
 } from 'antd'
 import { ThunderboltOutlined, CheckCircleOutlined, CloseCircleOutlined, DownloadOutlined } from '@ant-design/icons'
 import useLocale from '@/hooks/useLocale'
 import service from '@/utils/api'
+import type { SchemaJson } from '../themeSchema'
 import styles from '../style.module.less'
 
 interface SchemaGeneratorModalProps {
@@ -24,7 +22,7 @@ interface SchemaGeneratorModalProps {
   themeName?: string
   visible: boolean
   onClose: () => void
-  onApply: (yamlContent: string) => void
+  onApply: (yamlContent: string, schema?: SchemaJson, language?: 'zh' | 'en' | 'fr') => void
 }
 
 type Step = 'check' | 'language' | 'processing' | 'complete' | 'error'
@@ -50,6 +48,7 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
   const [totalChunks, setTotalChunks] = useState(0)
   const [logs, setLogs] = useState<ProcessLog[]>([])
   const [result, setResult] = useState('')
+  const [schemaResult, setSchemaResult] = useState<SchemaJson | null>(null)
   const [aiConfigValid, setAiConfigValid] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -62,20 +61,28 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
     const checkAIConfig = async () => {
       try {
         const res = await service.get('/hexopro/api/ai/settings')
-        const valid = !!res.data?.url && !!res.data?.apiKey && !!res.data?.model
+        const aiSettings = res.data?.data ?? res.data
+        const valid = !!aiSettings?.url && !!aiSettings?.apiKey && !!aiSettings?.model
         setAiConfigValid(valid)
+        if (!valid) {
+          addLog('error', t['theme.schema.noAIConfig'] || 'AI 配置不完整')
+        }
       } catch (error) {
+        addLog('error', t['theme.schema.checkConfigFailed'] || '检查配置失败')
         setAiConfigValid(false)
       }
     }
     checkAIConfig()
-  }, [visible])
+  }, [visible, t])
 
   const addLog = useCallback((type: ProcessLog['type'], message: string) => {
     setLogs((prev) => [...prev, { type, message, timestamp: Date.now() }])
   }, [])
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (forceRegenerate = false) => {
+    // 防止 React 事件对象被误传（onClick 会传入 event）
+    const skipCache = forceRegenerate === true
+
     if (!aiConfigValid) {
       message.error(t['theme.schema.noAIConfig'] || 'AI 配置不完整')
       return
@@ -88,6 +95,7 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
     setTotalChunks(0)
     setErrorMessage('')
     setResult('')
+    setSchemaResult(null)
 
     const controller = new AbortController()
     setAbortController(controller)
@@ -95,15 +103,32 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
     try {
       addLog('info', t['theme.schema.startProcessing'] || '开始处理配置文件...')
 
-      const response = await fetch('/hexopro/api/theme/schema/generate', {
+      const apiBase =
+        process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8001' : ''
+      const token = localStorage.getItem('hexoProToken')
+
+      const response = await fetch(`${apiBase}/hexopro/api/theme/schema/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ themeId, language }),
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+          ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        },
+        body: JSON.stringify({ themeId, language, forceRegenerate: skipCache }),
         signal: controller.signal,
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        let errMsg = `HTTP ${response.status}`
+        try {
+          const text = await response.text()
+          const data = JSON.parse(text)
+          if (data?.msg) errMsg = data.msg
+          else if (data?.message) errMsg = data.message
+        } catch {
+          // ignore
+        }
+        throw new Error(errMsg)
       }
 
       if (!response.body) {
@@ -138,7 +163,9 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
               } else if (data.type === 'chunk_result') {
                 addLog('success', `${t['theme.schema.chunkComplete'] || '第 '} ${data.chunk} ${t['theme.schema.chunkComplete2'] || '段处理完成'}`)
               } else if (data.type === 'complete') {
+                // fullResult 为原始 YAML（未修改），schema 为独立 JSON
                 setResult(data.fullResult)
+                setSchemaResult(data.schema || null)
                 setProgress(100)
                 addLog('success', data.summary || t['theme.schema.generateSuccess'] || '配置优化完成')
                 setStep('complete')
@@ -146,7 +173,11 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
                 throw new Error(data.message || t['theme.schema.unknownError'] || '未知错误')
               }
             } catch (parseError) {
-              // 忽略 JSON 解析错误
+              if (parseError instanceof SyntaxError) {
+                // 忽略 JSON 解析错误
+              } else {
+                throw parseError
+              }
             }
           }
         }
@@ -160,6 +191,7 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
         addLog('error', `${t['theme.schema.error'] || '错误'}: ${msg}`)
         setErrorMessage(msg)
         setStep('error')
+        message.error(msg)
       }
     } finally {
       setAbortController(null)
@@ -176,8 +208,7 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
   }
 
   const handleApply = () => {
-    onApply(result)
-    message.success(t['theme.schema.applySuccess'] || '已应用配置')
+    onApply(result, schemaResult ?? undefined, language)
     handleCancel()
   }
 
@@ -185,6 +216,20 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
     const element = document.createElement('a')
     element.setAttribute('href', 'data:text/yaml;charset=utf-8,' + encodeURIComponent(result))
     element.setAttribute('download', `${themeId}_config.yml`)
+    element.style.display = 'none'
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
+  const handleDownloadSchema = () => {
+    if (!schemaResult) return
+    const element = document.createElement('a')
+    element.setAttribute(
+      'href',
+      'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(schemaResult, null, 2))
+    )
+    element.setAttribute('download', `_config.${themeId}.schema.json`)
     element.style.display = 'none'
     document.body.appendChild(element)
     element.click()
@@ -246,8 +291,8 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
               </div>
               <ul style={{ marginLeft: 16, lineHeight: 1.8 }}>
                 <li>{t['theme.schema.step1'] || '1. 分析你的主题配置文件'}</li>
-                <li>{t['theme.schema.step2'] || '2. 调用 AI 为每个配置字段生成 schema 元数据'}</li>
-                <li>{t['theme.schema.step3'] || '3. 添加易懂的标签和说明'}</li>
+                <li>{t['theme.schema.step2'] || '2. 调用 AI 生成独立的 schema JSON 文件'}</li>
+                <li>{t['theme.schema.step3'] || '3. 不修改原 YAML，schema 单独存储'}</li>
                 <li>{t['theme.schema.step4'] || '4. 在表单模式中显示更友好的界面'}</li>
               </ul>
             </div>
@@ -278,7 +323,7 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
           <div style={{ marginBottom: 24 }}>
             <strong>{t['theme.schema.selectLanguage'] || '选择生成语言'}</strong>
             <p style={{ color: 'rgba(0, 0, 0, 0.45)', fontSize: 12, marginTop: 8 }}>
-              {t['theme.schema.languageDescription'] || 'Schema 注释将使用选定的语言'}
+              {t['theme.schema.languageDescription'] || 'Schema 标签将使用选定的语言'}
             </p>
           </div>
 
@@ -334,7 +379,7 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
 
           <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
             <Button onClick={() => setStep('check')}>{t['universal.back'] || '上一步'}</Button>
-            <Button type="primary" onClick={handleGenerate} loading={loading}>
+            <Button type="primary" onClick={() => handleGenerate()} loading={loading}>
               {t['theme.schema.startGenerate'] || '开始生成'}
             </Button>
           </Space>
@@ -424,7 +469,10 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
           <Card size="small" style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 14 }}>
               <div style={{ marginBottom: 12 }}>
-                <strong>{t['theme.schema.resultPreview'] || '预览（前 500 字符）'}</strong>
+                <strong>{t['theme.schema.resultPreview'] || '预览'}</strong>
+                <span style={{ marginLeft: 8, color: 'rgba(0,0,0,0.45)', fontSize: 12 }}>
+                  {schemaResult ? `Schema: ${Object.keys(schemaResult).length} 个字段` : ''}
+                </span>
               </div>
               <pre
                 style={{
@@ -437,16 +485,25 @@ const SchemaGeneratorModal: React.FC<SchemaGeneratorModalProps> = ({
                   margin: 0,
                 }}
               >
-                {result.substring(0, 500)}...
+                {schemaResult
+                  ? JSON.stringify(schemaResult, null, 2).substring(0, 500) + '...'
+                  : result.substring(0, 500) + '...'}
               </pre>
             </div>
           </Card>
 
           <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
             <Button icon={<DownloadOutlined />} onClick={handleDownloadFile}>
-              {t['theme.schema.download'] || '下载文件'}
+              {t['theme.schema.downloadConfig'] || '下载配置'}
             </Button>
-            <Button onClick={() => setStep('language')}>{t['theme.schema.regenerate'] || '重新生成'}</Button>
+            {schemaResult && (
+              <Button icon={<DownloadOutlined />} onClick={handleDownloadSchema}>
+                {t['theme.schema.downloadSchema'] || '下载 Schema'}
+              </Button>
+            )}
+            <Button onClick={() => handleGenerate(true)}>
+              {t['theme.schema.regenerate'] || '重新生成'}
+            </Button>
             <Button type="primary" onClick={handleApply}>
               {t['theme.schema.apply'] || '应用到编辑器'}
             </Button>
