@@ -1,4 +1,5 @@
 import { get, set } from 'lodash'
+import yaml from 'js-yaml'
 
 /**
  * 通用 YAML 配置 Schema 生成工具
@@ -52,6 +53,18 @@ export interface SchemaGroup {
   key: string
   label: string
   fields: SchemaField[]
+}
+
+export interface CommentedTemplateBlock {
+  path: string
+  key: string
+  label: string
+  description?: string
+  snippet: string
+  preview: string
+  indent: number
+  startLine: number
+  endLine: number
 }
 
 /**
@@ -117,8 +130,8 @@ export function extractSchemaMetadata(yamlContent: string, fullKey: string): Sch
       // 检查下一行是否是该字段的定义行
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1]
-        const keyMatch = nextLine.match(/^\s*([\w.-]+)\s*:/)
-        if (keyMatch && keyMatch[1] === leafKey) {
+        const parsedKeyLine = parseYamlKeyLine(nextLine)
+        if (parsedKeyLine && parsedKeyLine.key === leafKey) {
           const parsed = JSON.parse(jsonStr)
           if (parsed.type) {
             parsed.type = normalizeFieldType(parsed.type)
@@ -160,6 +173,117 @@ function normalizeOptions(opts: unknown): { value: string | number | boolean; la
   })
 }
 
+function parseYamlKeyLine(line: string): { indent: number; key: string; rawValue: string } | null {
+  const match = line.match(/^(\s*)([^#\s][^:]*?)\s*:\s*(.*?)\s*$/)
+  if (!match) return null
+  return {
+    indent: match[1].length,
+    key: match[2],
+    rawValue: match[3],
+  }
+}
+
+function getLineIndent(line: string): number {
+  return (line.match(/^\s*/) || [''])[0].length
+}
+
+function uncommentTemplatePreview(line: string): string {
+  return line.replace(/^(\s*)#\s?/, '$1')
+}
+
+function isCommentedYamlLine(line: string): boolean {
+  return /^\s*#\s*(?:-\s+|[^:#\s][^:]*:\s*.*)$/.test(line)
+}
+
+function isActiveYamlLine(line: string): boolean {
+  return /^\s*[^#\s][^:]*:\s*.*$/.test(line)
+}
+
+/**
+ * 提取仅存在于注释中的模板块，例如：
+ * menu:
+ *   # 文章:
+ *   #   归档: /archives/
+ */
+export function extractCommentedTemplateBlocks(
+  yamlContent: string,
+  schemaJson?: SchemaJson | null
+): CommentedTemplateBlock[] {
+  const lines = yamlContent.split('\n')
+  const blocks: CommentedTemplateBlock[] = []
+  const pathStack: Array<{ indent: number; path: string }> = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const parsedKeyLine = parseYamlKeyLine(line)
+    if (!parsedKeyLine) continue
+
+    const { indent, key, rawValue } = parsedKeyLine
+
+    while (pathStack.length > 0 && pathStack[pathStack.length - 1].indent >= indent) {
+      pathStack.pop()
+    }
+
+    const parentPath = pathStack[pathStack.length - 1]?.path
+    const fullPath = parentPath ? `${parentPath}.${key}` : key
+    const hasScalarValue = rawValue !== '' && !rawValue.startsWith('#')
+
+    if (!hasScalarValue) {
+      const childLines: string[] = []
+      let hasCommentedYamlChild = false
+      let hasActiveYamlChild = false
+      let endLine = i
+
+      for (let j = i + 1; j < lines.length; j++) {
+        const childLine = lines[j]
+        const trimmed = childLine.trim()
+        const childIndent = getLineIndent(childLine)
+
+        if (trimmed !== '' && childIndent <= indent) {
+          break
+        }
+
+        childLines.push(childLine)
+        endLine = j
+
+        if (isCommentedYamlLine(childLine)) {
+          hasCommentedYamlChild = true
+        }
+        if (isActiveYamlLine(childLine)) {
+          hasActiveYamlChild = true
+        }
+      }
+
+      if (hasCommentedYamlChild && !hasActiveYamlChild) {
+        const metadata =
+          getSchemaMetadataFromJson(schemaJson, fullPath) ??
+          extractSchemaMetadata(yamlContent, fullPath)
+        const uncommentedPreview = childLines
+          .filter((childLine) => childLine.trim() !== '')
+          .map((childLine) => uncommentTemplatePreview(childLine))
+          .join('\n')
+
+        blocks.push({
+          path: fullPath,
+          key,
+          label: metadata?.label ?? keyToLabel(key),
+          description: metadata?.description ? String(metadata.description) : undefined,
+          snippet: childLines.join('\n'),
+          preview: uncommentedPreview,
+          indent,
+          startLine: i + 1,
+          endLine,
+        })
+      }
+
+      pathStack.push({ indent, path: fullPath })
+      continue
+    }
+  }
+
+  return blocks
+}
+
 /**
  * 从 YAML 对象生成 schema
  * @param config - 解析后的 YAML 对象
@@ -178,6 +302,9 @@ export function generateSchemaFromYaml(
   const maxDepth = options?.maxDepth ?? 3
   const maxFieldsPerGroup = options?.maxFieldsPerGroup ?? 20
   const schemaJson = options?.schemaJson
+  const commentedTemplatePaths = new Set(
+    yamlContent ? extractCommentedTemplateBlocks(yamlContent, schemaJson).map((block) => block.path) : []
+  )
 
   const schema: SchemaGroup[] = []
   const visitedKeys = new Set<string>()
@@ -191,6 +318,13 @@ export function generateSchemaFromYaml(
     )
   }
 
+  function shouldPreserveObjectField(value: unknown): boolean {
+    if (!isComplexObject(value)) return false
+    const childValues = Object.values(value as Record<string, unknown>)
+    if (childValues.length === 0) return false
+    return childValues.every((childValue) => Array.isArray(childValue) || isComplexObject(childValue))
+  }
+
   function processObject(obj: Record<string, unknown>, prefix = '', depth = 0): SchemaField[] {
     if (depth > maxDepth) return []
 
@@ -202,10 +336,27 @@ export function generateSchemaFromYaml(
       if (visitedKeys.has(fullKey)) return
       visitedKeys.add(fullKey)
 
-      if (isComplexObject(value)) {
+      if (shouldPreserveObjectField(value)) {
+        const metadata =
+          getSchemaMetadataFromJson(schemaJson, fullKey) ??
+          (yamlContent ? extractSchemaMetadata(yamlContent, fullKey) : null)
+
+        fields.push({
+          key: fullKey,
+          type: normalizeFieldType(metadata?.type) ?? 'collapse',
+          label: metadata?.label ?? keyToLabel(key),
+          placeholder: metadata?.placeholder,
+          description: metadata?.description,
+          default: value,
+        })
+      } else if (isComplexObject(value)) {
         const nestedFields = processObject(value as Record<string, unknown>, fullKey, depth + 1)
         fields.push(...nestedFields)
       } else {
+        if ((value === null || value === undefined) && commentedTemplatePaths.has(fullKey)) {
+          return
+        }
+
         // 优先从 schemaJson 获取，其次从 YAML 注释
         const metadata =
           getSchemaMetadataFromJson(schemaJson, fullKey) ??
@@ -272,6 +423,15 @@ export function getNestedValue(obj: Record<string, unknown>, path: string): unkn
       .join('\n')
   }
 
+  if (typeof val === 'object') {
+    return yaml.dump(val, {
+      indent: 2,
+      lineWidth: -1,
+      noRefs: true,
+      quotingType: '"',
+    }).trimEnd()
+  }
+
   return val
 }
 
@@ -331,9 +491,15 @@ export function updateYamlValues(
       // 验证路径正确：检查父级缩进
       if (parts.length > 1 && !verifyYamlPath(lines, i, parts)) continue
 
-      // 格式化新值
-      const formattedValue = formatYamlValue(newValue)
-      lines[i] = match[1] + formattedValue
+      if (isBlockValue(newValue)) {
+        const indent = getLineIndent(line)
+        const blockEnd = findYamlBlockEnd(lines, i, indent)
+        const replacementLines = buildYamlBlockLines(match[1], newValue, indent)
+        lines.splice(i, blockEnd - i + 1, ...replacementLines)
+      } else {
+        const formattedValue = formatYamlValue(newValue)
+        lines[i] = match[1] + formattedValue
+      }
       break
     }
   }
@@ -341,8 +507,92 @@ export function updateYamlValues(
   return lines.join('\n')
 }
 
+function uncommentTemplateLine(line: string, parentIndent: number): string {
+  if (line.trim() === '') return line
+  if (getLineIndent(line) <= parentIndent) return line
+  if (!isCommentedYamlLine(line)) return line
+  return line.replace(/^(\s*)#\s?/, '$1')
+}
+
+/**
+ * 启用注释模板块：将指定块中的注释 YAML 行取消注释
+ */
+export function activateCommentedTemplateBlocks(
+  originalYaml: string,
+  blocks: CommentedTemplateBlock[],
+  activatedPaths: string[]
+): string {
+  if (activatedPaths.length === 0) return originalYaml
+
+  const lines = originalYaml.split('\n')
+  const blockMap = new Map(blocks.map((block) => [block.path, block]))
+
+  activatedPaths.forEach((path) => {
+    const block = blockMap.get(path)
+    if (!block) return
+
+    for (let i = block.startLine; i <= block.endLine && i < lines.length; i++) {
+      lines[i] = uncommentTemplateLine(lines[i], block.indent)
+    }
+  })
+
+  return lines.join('\n')
+}
+
+export function buildWorkingYaml(
+  originalYaml: string,
+  blocks: CommentedTemplateBlock[],
+  activatedPaths: string[]
+): string {
+  return activateCommentedTemplateBlocks(originalYaml, blocks, activatedPaths)
+}
+
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function isBlockValue(value: unknown): boolean {
+  return Array.isArray(value) || (typeof value === 'object' && value !== null)
+}
+
+function buildYamlBlockLines(prefix: string, value: unknown, indent: number): string[] {
+  if (!isBlockValue(value)) {
+    return [prefix + formatYamlValue(value)]
+  }
+
+  const dumped = yaml.dump(value, {
+    indent: 2,
+    lineWidth: -1,
+    noRefs: true,
+    quotingType: '"',
+  }).trimEnd()
+
+  return [
+    prefix.trimEnd(),
+    ...dumped.split('\n').map((line) => `${' '.repeat(indent + 2)}${line}`),
+  ]
+}
+
+function findYamlBlockEnd(lines: string[], startIdx: number, parentIndent: number): number {
+  let endIdx = startIdx
+
+  for (let i = startIdx + 1; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+    if (trimmed === '') {
+      endIdx = i
+      continue
+    }
+
+    const indent = getLineIndent(line)
+    if (indent <= parentIndent) {
+      break
+    }
+
+    endIdx = i
+  }
+
+  return endIdx
 }
 
 function formatYamlValue(value: unknown): string {
@@ -378,8 +628,8 @@ function verifyYamlPath(lines: string[], lineIdx: number, parts: string[]): bool
 
       // 找到缩进更小的行（父级）
       if (prevIndent < targetIndent) {
-        const parentMatch = prevLine.match(/^\s*([\w.-]+)\s*:/)
-        if (parentMatch && parentMatch[1] === parentKey) {
+        const parsedKeyLine = parseYamlKeyLine(prevLine)
+        if (parsedKeyLine && parsedKeyLine.key === parentKey) {
           found = true
           break
         }
