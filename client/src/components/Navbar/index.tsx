@@ -3,7 +3,7 @@ import _ from 'lodash'
 import styles from './style/index.module.less'
 import Logo from '@/assets/logo3.svg'
 import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Tag, message, notification } from "antd"
-import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled, UserOutlined } from "@ant-design/icons"
+import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled, UserOutlined, GlobalOutlined } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
 import IconLangLight from "@/assets/langLight.svg"
 import useLocale from "@/hooks/useLocale"
@@ -332,6 +332,9 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                     <Button type="default" shape="circle" icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} />
                 </li>
                 <li>
+                    <Button type="default" shape="circle" icon={<GlobalOutlined />} onClick={() => window.open('/', '_blank')} className={`${styles.customButtonHover} ${styles[theme]}`} title={locale['navbar.visit.blog'] || '访问博客前台'} />
+                </li>
+                <li>
                     <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
                         <Button type="default" shape="circle" icon={theme === 'dark' ? <IconLangLight /> : <IconLang />} className={`${styles.customButtonHover} ${styles[theme]}`} />
                     </Dropdown>
@@ -424,6 +427,9 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 <div className={styles.mobileMenuActions}>
                     <Button block icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
                         {locale['navbar.search']}
+                    </Button>
+                    <Button block icon={<GlobalOutlined />} onClick={() => window.open('/', '_blank')} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                        {locale['navbar.visit.blog'] || '访问博客前台'}
                     </Button>
                     <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
                         <Button block icon={theme === 'dark' ? <IconLangLight /> : <IconLang />} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
