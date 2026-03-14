@@ -53,6 +53,7 @@ const StructuredValueEditor: React.FC<StructuredValueEditorProps> = ({
   disabled,
 }) => {
   const [newKey, setNewKey] = useState('')
+  const [newValue, setNewValue] = useState('')
   const currentValue = value ?? sample
   const effectiveSample = currentValue ?? sample
 
@@ -114,15 +115,22 @@ const StructuredValueEditor: React.FC<StructuredValueEditorProps> = ({
   if (isPlainObject(currentValue) || isPlainObject(effectiveSample)) {
     const objectValue = isPlainObject(currentValue) ? currentValue : {}
     const objectSample = isPlainObject(effectiveSample) ? effectiveSample : {}
-    const objectKeys = Array.from(new Set([...Object.keys(objectSample), ...Object.keys(objectValue)]))
+    // 只显示当前值中的键，模板(sample)中的键不再自动显示为禁用项
+    const objectKeys = Object.keys(objectValue)
     const addObjectKey = () => {
       const trimmedKey = newKey.trim()
       if (!trimmedKey || objectKeys.includes(trimmedKey)) return
+      // 根据输入的值类型推断：如果是数字就用数字，布尔就用布尔，否则用字符串
+      let parsedValue: unknown = newValue.trim()
+      if (parsedValue === 'true') parsedValue = true
+      else if (parsedValue === 'false') parsedValue = false
+      else if (!Number.isNaN(Number(parsedValue)) && parsedValue !== '') parsedValue = Number(parsedValue)
       onChange?.({
         ...objectValue,
-        [trimmedKey]: buildEmptyValueFromSample(''),
+        [trimmedKey]: parsedValue,
       })
       setNewKey('')
+      setNewValue('')
     }
 
     return (
@@ -262,18 +270,32 @@ const StructuredValueEditor: React.FC<StructuredValueEditorProps> = ({
             </div>
           )
         })}
-        <Space.Compact style={{ width: '100%' }}>
-          <Input
-            value={newKey}
-            disabled={disabled}
-            placeholder="新增字段名"
-            onChange={(event) => setNewKey(event.target.value)}
-            onPressEnter={addObjectKey}
-          />
-          <Button type="dashed" disabled={disabled || !newKey.trim() || objectKeys.includes(newKey.trim())} onClick={addObjectKey}>
-            添加字段
-          </Button>
-        </Space.Compact>
+        <Card size="small" title="添加新项">
+          <Space direction="vertical" size={8} style={{ width: '100%' }}>
+            <Input
+              value={newKey}
+              disabled={disabled}
+              placeholder="键名（如：首页）"
+              onChange={(event) => setNewKey(event.target.value)}
+              onPressEnter={addObjectKey}
+            />
+            <Input
+              value={newValue}
+              disabled={disabled}
+              placeholder="值（如：/ || fas fa-home）"
+              onChange={(event) => setNewValue(event.target.value)}
+              onPressEnter={addObjectKey}
+            />
+            <Button
+              type="dashed"
+              block
+              disabled={disabled || !newKey.trim() || objectKeys.includes(newKey.trim())}
+              onClick={addObjectKey}
+            >
+              添加
+            </Button>
+          </Space>
+        </Card>
       </Space>
     )
   }

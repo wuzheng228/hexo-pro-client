@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect } from 'react'
 import { Spin, Tabs, message } from 'antd'
-import { EditOutlined, LinkOutlined, PictureOutlined, ThunderboltOutlined, UserOutlined } from '@ant-design/icons'
+import { CloudOutlined, EditOutlined, LinkOutlined, PictureOutlined, ThunderboltOutlined, UserOutlined } from '@ant-design/icons'
 import styles from './style/index.module.less'
 import useLocale from '../../hooks/useLocale'
 import { GlobalContext } from '@/context'
@@ -10,6 +10,7 @@ import LinkRedirectSettingsCard from './components/LinkRedirectSettingsCard'
 import EditorSettingsCard from './components/EditorSettingsCard'
 import DisplaySettingsCard from './components/DisplaySettingsCard'
 import AISettingsCard from './components/AISettingsCard'
+import StorageSettingsCard from './components/StorageSettingsCard'
 
 const SettingsPage: React.FC = () => {
   const t = useLocale()
@@ -26,7 +27,6 @@ const SettingsPage: React.FC = () => {
 
   useEffect(() => {
     if (!error) return
-    console.error('检查系统状态失败:', error)
     message.error(t['settings.checkSystemStatusFailed'])
   }, [error, t])
 
@@ -80,6 +80,16 @@ const SettingsPage: React.FC = () => {
                   </span>
                 ),
                 children: <DisplaySettingsCard />,
+              },
+              {
+                key: 'storage',
+                label: (
+                  <span className={styles.tabLabel}>
+                    <CloudOutlined className={styles.tabIcon} />
+                    {t['settings.storageTitle'] || '图床设置'}
+                  </span>
+                ),
+                children: <StorageSettingsCard />,
               },
               {
                 key: 'ai',

@@ -322,7 +322,18 @@ export function generateSchemaFromYaml(
     if (!isComplexObject(value)) return false
     const childValues = Object.values(value as Record<string, unknown>)
     if (childValues.length === 0) return false
-    return childValues.every((childValue) => Array.isArray(childValue) || isComplexObject(childValue))
+    // 如果所有子值都是数组或复杂对象，保留为结构化字段
+    const allNestedObjects = childValues.every((childValue) => Array.isArray(childValue) || isComplexObject(childValue))
+    if (allNestedObjects) return true
+    // 如果子值是字符串或简单值（如 menu 配置），也保留为结构化字段，让用户可以增删改
+    const hasSimpleValues = childValues.some((childValue) =>
+      typeof childValue === 'string' || typeof childValue === 'number' || typeof childValue === 'boolean'
+    )
+    // 当有简单值且没有深层嵌套对象时，作为结构化字段处理
+    if (hasSimpleValues && !childValues.some((childValue) => isComplexObject(childValue))) {
+      return true
+    }
+    return false
   }
 
   function processObject(obj: Record<string, unknown>, prefix = '', depth = 0): SchemaField[] {
