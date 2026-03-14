@@ -56,6 +56,11 @@ interface FolderData {
   pageSize: number;
 }
 
+function appendCacheBust(url: string, enabled: boolean, timestamp: number) {
+  if (!url || !enabled) return url
+  return `${url}${url.includes('?') ? '&' : '?'}_t=${timestamp}`
+}
+
 const ImageManager: React.FC = () => {
   const t = useLocale()
   const { theme } = useContext(GlobalContext)
@@ -123,16 +128,18 @@ const ImageManager: React.FC = () => {
       })
 
       // 添加时间戳到图片URL以避免缓存问题
-      const timestamp = new Date().getTime()
+      const timestamp = Date.now()
+      const shouldCacheBust = storageType === 'local'
+      const images = Array.isArray(res?.data?.images) ? res.data.images : []
       const processedData = {
         ...res.data,
-        images: res.data.images.map(img => ({
+        images: images.map(img => ({
           ...img,
-          url: `${img.url}${img.url.includes('?') ? '&' : '?'}_t=${timestamp}`
+          url: appendCacheBust(img.url, shouldCacheBust, timestamp)
         }))
       }
 
-      setData((pre) => processedData)
+      setData(processedData)
     } catch (error) {
       message.error(t['content.images.fetchFailed'] || '获取图片列表失败')
       console.error(error)
@@ -938,7 +945,7 @@ const ImageManager: React.FC = () => {
                 }
                 const items = (res?.data?.items || []).map(it => ({
                   ...it,
-                  url: `${it.url}${String(it.url).includes('?') ? '&' : '?'}_t=${Date.now()}`
+                  url: appendCacheBust(it.url, storageType === 'local', Date.now())
                 }))
                 setCleanupItems(items)
                 setCleanupTotal(res?.data?.total || items.length)

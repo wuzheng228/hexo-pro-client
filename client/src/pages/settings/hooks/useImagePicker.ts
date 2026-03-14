@@ -8,6 +8,13 @@ export type ImageItem = {
   [key: string]: any
 }
 
+function appendCacheBustForRelativeUrl(src: string, timestamp: number): string {
+  if (!src) return src
+  const isAbsolute = /^(?:https?:)?\/\//i.test(src)
+  if (isAbsolute) return src
+  return `${src}${src.includes('?') ? '&' : '?'}_t=${timestamp}`
+}
+
 type UseImagePickerResult = {
   open: boolean
   setOpen: (open: boolean) => void
@@ -40,9 +47,7 @@ export function useImagePicker(pageSizeInitial = 12): UseImagePickerResult {
         const rawImages: ImageItem[] = res?.data?.images || []
         const mapped = rawImages.map((img) => {
           const src = img.url || img.path || ''
-          const cacheBusted = src
-            ? `${src}${src.includes('?') ? '&' : '?'}_t=${timestamp}`
-            : src
+          const cacheBusted = appendCacheBustForRelativeUrl(src, timestamp)
           return {
             ...img,
             url: cacheBusted,
@@ -80,4 +85,3 @@ export function useImagePicker(pageSizeInitial = 12): UseImagePickerResult {
     fetchPage,
   }
 }
-

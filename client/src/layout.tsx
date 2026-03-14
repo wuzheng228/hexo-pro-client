@@ -163,11 +163,19 @@ export default function PageLayout() {
     function onClickItem(item) {
         const { key } = item
         const currentRoute = flatternRoutes.find((r) => r.key === key)
-        const component = currentRoute.component
-        const preload = component.preload()
-        preload.then(() => {
-            navigate(currentRoute.path ? currentRoute.path : `/${key}`)
-        })
+        const targetPath = currentRoute?.path ? currentRoute.path : `/${key}`
+        const component = currentRoute?.component
+
+        if (!component || typeof component.preload !== 'function') {
+            navigate(targetPath)
+            return
+        }
+
+        Promise.resolve(component.preload())
+            .catch(() => undefined)
+            .finally(() => {
+                navigate(targetPath)
+            })
     }
 
     const updateMenuStatus = useCallback(() => {
