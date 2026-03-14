@@ -6,6 +6,7 @@ import {
   Divider,
   Drawer,
   message,
+  Modal,
   Row,
   Spin,
   Typography,
@@ -14,11 +15,19 @@ import {
   DownloadOutlined,
   SettingOutlined,
   AppstoreOutlined,
+  SwapOutlined,
 } from '@ant-design/icons'
 import service from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
 import ThemeConfigPanel from './components/ThemeConfigPanel'
 import styles from './style.module.less'
+
+// 检查是否为桌面环境
+function isDesktopEnvironment(): boolean {
+  return typeof window !== 'undefined' &&
+    typeof (window as any).electronAPI === 'object' &&
+    (window as any).electronAPI !== null
+}
 
 const { Title, Text } = Typography
 
@@ -102,6 +111,69 @@ const ThemeMarketPage: React.FC = () => {
     }
   }
 
+  // 处理主题切换
+  const handleSwitchTheme = async (themeId: string) => {
+    setInstalling(themeId) // 使用 loading 状态
+    try {
+      const res = await service.post('/hexopro/api/theme/switch', { themeId })
+      const data = res.data
+
+      if (data?.success) {
+        message.success(t['theme.switch.success'] || '主题切换成功')
+
+        // 如果需要重启
+        if (data?.needRestart) {
+          if (isDesktopEnvironment()) {
+            // 桌面端：显示重启中提示，然后调用重启 API
+            message.loading({
+              content: t['theme.switch.needRestart'] || '主题已切换，正在重启服务器...',
+              key: 'theme-restart',
+              duration: 0,
+            })
+
+            try {
+              // 调用桌面端重启 API
+              await service.post('/hexopro/api/desktop/restart')
+              message.success({
+                content: t['theme.restart.success'] || '服务器重启成功',
+                key: 'theme-restart',
+                duration: 2,
+              })
+              // 刷新状态
+              await fetchInstalledStatus()
+            } catch (restartError) {
+              message.error({
+                content: t['theme.restart.failed'] || '服务器重启失败',
+                key: 'theme-restart',
+                duration: 2,
+              })
+            }
+          } else {
+            // 插件端：提示用户手动重启
+            Modal.info({
+              title: t['theme.switch.success'] || '主题切换成功',
+              content: t['theme.switch.needRestartManual'] || '主题已切换，请手动重启服务器以生效',
+              okText: t['universal.confirm'] || '确定',
+              onOk: () => {
+                // 刷新状态
+                fetchInstalledStatus()
+              },
+            })
+          }
+        } else {
+          // 不需要重启，直接刷新状态
+          await fetchInstalledStatus()
+        }
+      } else {
+        message.error(data?.message || t['theme.switch.failed'] || '切换失败')
+      }
+    } catch (error) {
+      message.error(t['theme.switch.failed'] || '切换失败')
+    } finally {
+      setInstalling(null)
+    }
+  }
+
   const openConfig = (theme: BuiltinTheme) => {
     setConfigModal({
       visible: true,
@@ -165,9 +237,18 @@ const ThemeMarketPage: React.FC = () => {
                     </Button>
                   ) : (
                     <>
-                      {status.isCurrent && (
+                      {status.isCurrent ? (
                         <Button disabled>
                           {t['theme.current'] || '当前使用'}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="primary"
+                          icon={<SwapOutlined />}
+                          loading={isInstalling}
+                          onClick={() => handleSwitchTheme(theme.id)}
+                        >
+                          {t['theme.switch'] || '切换主题'}
                         </Button>
                       )}
                       <Button
