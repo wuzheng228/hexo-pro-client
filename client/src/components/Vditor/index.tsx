@@ -33,6 +33,11 @@ interface UploadResult {
     code?: number;
 }
 
+interface MigrateItemResult extends UploadResult {
+    success: boolean;
+    sourceUrl: string;
+}
+
 // 图片项接口
 interface ImageItem {
     name: string;
@@ -68,6 +73,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     const [loadingImages, setLoadingImages] = useState(false)
     // 添加上传图片相关状态
     const [uploadModalVisible, setUploadModalVisible] = useState(false)
+    const [isMigratingExternalImages, setIsMigratingExternalImages] = useState(false)
     const [uploadFolder, setUploadFolder] = useState('')
     const [uploadFileName, setUploadFileName] = useState('')
     const [storageType, setStorageType] = useState('local')
@@ -112,7 +118,9 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     }
 
     const [vd, setVd] = useState(undefined)
+    const vdRef = useRef<any>(null)
     const [isUploadingImage, setIsUPloadingImage] = useState(false)
+    const isMigratingExternalImagesRef = useRef(false)
 
     const [isEditorFocus, setIsEditorFocus] = useState(false)
 
@@ -355,6 +363,135 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         }
     }
 
+    const normalizeExternalImageUrl = (rawUrl: string): string => {
+        return String(rawUrl || '')
+            .trim()
+            .replace(/^<|>$/g, '')
+    }
+
+    const extractExternalImageUrls = (content: string): string[] => {
+        const urls = new Set<string>()
+        const addUrl = (url: string) => {
+            const normalized = normalizeExternalImageUrl(url)
+            if (/^https?:\/\//i.test(normalized)) {
+                urls.add(normalized)
+            }
+        }
+
+        const markdownImageRegex = /!\[[^\]]*]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g
+        let mdMatch: RegExpExecArray | null = null
+        while ((mdMatch = markdownImageRegex.exec(content)) !== null) {
+            addUrl(mdMatch[1])
+        }
+
+        const htmlImageRegex = /<img\s+[^>]*src=["']([^"']+)["'][^>]*>/gi
+        let htmlMatch: RegExpExecArray | null = null
+        while ((htmlMatch = htmlImageRegex.exec(content)) !== null) {
+            addUrl(htmlMatch[1])
+        }
+
+        return Array.from(urls)
+    }
+
+    const replaceMigratedImageUrls = (content: string, urlMap: Map<string, string>): string => {
+        if (!urlMap.size) return content
+
+        const replaceUrl = (rawUrl: string): string => {
+            const normalized = normalizeExternalImageUrl(rawUrl)
+            return urlMap.get(normalized) || rawUrl
+        }
+
+        let output = content.replace(/!\[[^\]]*]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g, (match, url) => {
+            const replaced = replaceUrl(String(url))
+            return replaced === url ? match : match.replace(url, replaced)
+        })
+
+        output = output.replace(/<img\s+[^>]*src=["']([^"']+)["'][^>]*>/gi, (match, url) => {
+            const replaced = replaceUrl(String(url))
+            return replaced === url ? match : match.replace(url, replaced)
+        })
+
+        return output
+    }
+
+    const handleMigrateExternalImages = async () => {
+        const editor = vdRef.current
+        if (!editor || isMigratingExternalImagesRef.current) return
+
+        const currentValue = editor.getValue()
+        const externalUrls = extractExternalImageUrls(currentValue)
+
+        if (!externalUrls.length) {
+            message.info(t['vditor.migrateExternalImages.none'] || '当前内容中未发现外链图片')
+            return
+        }
+
+        let targetFolder = uploadFolderRef.current || currentImageFolderRef.current || ''
+        if (String(targetFolder).toLowerCase().startsWith('trash')) targetFolder = ''
+
+        setIsMigratingExternalImages(true)
+        const hide = message.loading({
+            content: `${t['vditor.migrateExternalImages.loading'] || '正在转存外链图片...'} (${externalUrls.length})`,
+            duration: 0
+        })
+
+        try {
+            const response: any = await service.post('/hexopro/api/images/migrate', {
+                urls: externalUrls,
+                folder: targetFolder,
+                storageType: storageTypeRef.current
+            })
+
+            const items: MigrateItemResult[] = Array.isArray(response?.data?.items) ? response.data.items : []
+            if (!items.length) {
+                throw new Error(t['vditor.migrateExternalImages.allFailed'] || '没有可替换的图片')
+            }
+
+            const urlMap = new Map<string, string>()
+            let failedCount = 0
+            items.forEach((item) => {
+                if (!item || !item.sourceUrl) return
+                if (!item.success) {
+                    failedCount += 1
+                    return
+                }
+
+                const srcRaw = storageTypeRef.current === 'local'
+                    ? (item.path || item.src || item.url)
+                    : (item.url || item.src || item.path)
+
+                if (!srcRaw) {
+                    failedCount += 1
+                    return
+                }
+
+                urlMap.set(normalizeExternalImageUrl(item.sourceUrl), toMarkdownUrl(String(srcRaw)))
+            })
+
+            const successCount = urlMap.size
+            if (!successCount) {
+                message.error(t['vditor.migrateExternalImages.allFailed'] || '未成功转存任何图片')
+                return
+            }
+
+            const nextValue = replaceMigratedImageUrls(currentValue, urlMap)
+            editor.setValue(nextValue)
+            handleChangeContent(nextValue)
+
+            if (failedCount > 0) {
+                message.warning(`${t['vditor.migrateExternalImages.partial'] || '部分图片转存失败'} (${successCount}/${externalUrls.length})`)
+            } else {
+                message.success(`${t['vditor.migrateExternalImages.success'] || '外链图片转存完成'} (${successCount})`)
+            }
+        } catch (err: any) {
+            const msg = err?.message ? `: ${err.message}` : ''
+            message.error(`${t['vditor.migrateExternalImages.failed'] || '外链图片转存失败'}${msg}`)
+        } finally {
+            if (typeof hide === 'function') hide()
+            setIsMigratingExternalImages(false)
+        }
+    }
+
     // 处理页面变化
     const handleImagePageChange = (page: number, pageSize?: number) => {
         setCurrentImagePage(page)
@@ -403,6 +540,10 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     useEffect(() => {
         handleUploadingImage(isUploadingImage)
     }, [isUploadingImage, handleUploadingImage])
+
+    useEffect(() => {
+        isMigratingExternalImagesRef.current = isMigratingExternalImages
+    }, [isMigratingExternalImages])
 
     useEffect(() => {
         // console.log('isPinToolbar', isPinToolbar)
@@ -842,6 +983,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                         }
                     }
                 })
+                vdRef.current = vditor
                 setVd(vditor)
                 onReady?.()
 
@@ -1018,6 +1160,15 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     }
                 },
                 {
+                    name: 'migrate-external-images',
+                    tip: t['vditor.migrateExternalImages'] || '一键转存外链图片',
+                    icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M896 224H453.12l83.008-83.008a31.936 31.936 0 0 0-45.248-45.248L354.24 232.384a32 32 0 0 0 0 45.248l136.64 136.64a31.936 31.936 0 1 0 45.248-45.248L453.12 288H896a32 32 0 1 0 0-64zM533.12 609.728a31.936 31.936 0 1 0-45.248 45.248L570.88 736H128a32 32 0 1 0 0 64h442.88l-83.008 83.008a31.936 31.936 0 1 0 45.248 45.248l136.64-136.64a32 32 0 0 0 0-45.248l-136.64-136.64z"></path></svg>',
+                    click() {
+                        if (isMigratingExternalImagesRef.current) return
+                        handleMigrateExternalImages()
+                    }
+                },
+                {
                     name: 'preview',
                     className: 'toolbar-right'
                 }
@@ -1097,6 +1248,15 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     }
                 },
                 {
+                    name: 'migrate-external-images',
+                    tip: t['vditor.migrateExternalImages'] || '一键转存外链图片',
+                    icon: '<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M896 224H453.12l83.008-83.008a31.936 31.936 0 0 0-45.248-45.248L354.24 232.384a32 32 0 0 0 0 45.248l136.64 136.64a31.936 31.936 0 1 0 45.248-45.248L453.12 288H896a32 32 0 1 0 0-64zM533.12 609.728a31.936 31.936 0 1 0-45.248 45.248L570.88 736H128a32 32 0 1 0 0 64h442.88l-83.008 83.008a31.936 31.936 0 1 0 45.248 45.248l136.64-136.64a32 32 0 0 0 0-45.248l-136.64-136.64z"></path></svg>',
+                    click() {
+                        if (isMigratingExternalImagesRef.current) return
+                        handleMigrateExternalImages()
+                    }
+                },
+                {
                     name: 'link'
                 },
                 {
@@ -1132,6 +1292,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         })
         return () => {
             vditor.destroy()
+            vdRef.current = null
             setVd(undefined)
         }
     }, [lang, isMobile, editorMode, onReady]) // 避免输入时因 initValue 变化重建编辑器
