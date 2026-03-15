@@ -4,6 +4,7 @@ import service from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
 import { useNavigate } from 'react-router-dom'
 import { base64Encode } from '@/utils/encodeUtils'
+import styles from './style/index.module.less'
 
 const { Text } = Typography
 
@@ -91,10 +92,11 @@ export default function CategoriesPage() {
         title: t['content.categories.column.title'] || '标题',
         dataIndex: 'title',
         key: 'title',
+        ellipsis: true,
         render: (_: string, record: CategoryPostItem) => (
           <Button
             type="link"
-            style={{ paddingInline: 0 }}
+            className={styles.titleLink}
             onClick={() => navigate(`/post/${base64Encode(record.permalink)}`)}
           >
             {record.title}
@@ -116,13 +118,15 @@ export default function CategoriesPage() {
         title: t['content.categories.column.date'] || '日期',
         dataIndex: 'date',
         key: 'date',
-        width: 170,
+        width: 188,
+        render: (date: string) => <Text className={styles.dateText}>{date || '-'}</Text>,
       },
       {
         title: t['content.categories.column.updated'] || '更新',
         dataIndex: 'updated',
         key: 'updated',
-        width: 170,
+        width: 188,
+        render: (updated: string) => <Text className={styles.dateText}>{updated || '-'}</Text>,
       },
     ]
   }, [navigate, t])
@@ -172,10 +176,13 @@ export default function CategoriesPage() {
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t['content.categories.selectHint'] || '请选择一个分类'} />
           ) : (
             <Table
+              className={styles.categoryPostsTable}
               rowKey="permalink"
               loading={loadingPosts}
               columns={columns}
               dataSource={posts}
+              tableLayout="fixed"
+              scroll={{ x: 860 }}
               pagination={{
                 current: currentPage,
                 pageSize,
