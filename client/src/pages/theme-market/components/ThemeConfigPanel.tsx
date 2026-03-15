@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, message, Segmented, Spin, Space } from 'antd'
-import { SaveOutlined, CloseOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { SaveOutlined, CloseOutlined } from '@ant-design/icons'
 import service from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
 import type { SchemaJson } from '../themeSchema'
 import YamlEditor from '@/pages/content/yaml/components/YamlEditor'
 import FormMode, { type FormModeRef } from './FormMode'
-import SchemaGeneratorModal from './SchemaGeneratorModal'
 import styles from '../style.module.less'
 
 interface ThemeConfigPanelProps {
@@ -17,7 +16,6 @@ interface ThemeConfigPanelProps {
 
 const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   themeId,
-  themeName,
   onClose,
 }) => {
   const t = useLocale()
@@ -26,7 +24,6 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   const [editContent, setEditContent] = useState('')
   const [schemaJson, setSchemaJson] = useState<SchemaJson | null>(null)
   const [activeTab, setActiveTab] = useState<'raw' | 'form'>('raw')
-  const [generatorVisible, setGeneratorVisible] = useState(false)
   const formModeRef = useRef<FormModeRef>(null)
 
   const fetchConfig = useCallback(async () => {
@@ -83,7 +80,7 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
     <div className={styles.drawerConfigPanel}>
       {/* 固定顶部操作栏 */}
       <div className={styles.drawerHeader}>
-        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+        <Space style={{ width: '100%' }}>
           <Segmented
             value={activeTab}
             onChange={(val) => setActiveTab((val as 'raw' | 'form') ?? 'raw')}
@@ -99,14 +96,6 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
             ]}
             style={{ flex: 1 }}
           />
-          <Button
-            type="default"
-            icon={<ThunderboltOutlined />}
-            onClick={() => setGeneratorVisible(true)}
-            size="middle"
-          >
-            {t['theme.schema.optimize'] || '优化'}
-          </Button>
         </Space>
       </div>
 
@@ -161,26 +150,6 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
         </Space>
       </div>
 
-      {/* Schema 生成器模态框 */}
-      <SchemaGeneratorModal
-        themeId={themeId}
-        themeName={themeName}
-        visible={generatorVisible}
-        onClose={() => setGeneratorVisible(false)}
-        onApply={async (yamlContent, schema, language) => {
-          setEditContent(yamlContent)
-          if (schema) {
-            setSchemaJson(schema)
-            try {
-              await service.post('/hexopro/api/theme/schema/save', { themeId, schema, language: language ?? 'zh' })
-            } catch {
-              message.warning(t['theme.schema.saveSchemaFailed'] || 'Schema 保存失败，表单模式可能受限')
-            }
-          }
-          setActiveTab('form')
-          message.success(t['theme.schema.applySuccess'] || '配置已应用，已切换到表单模式')
-        }}
-      />
     </div>
   )
 }
