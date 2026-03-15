@@ -3,7 +3,8 @@
     border-radius: 10px;
     border: 1px solid #e6ebf5;
     background: #ffffff;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
 }
 
 /* 定义移动端专用的工具栏样式 */
@@ -27,7 +28,7 @@ pre.vditor-reset code {
 .vditor-toolbar {
     position: sticky !important;
     top: 0;
-    z-index: 12;
+    z-index: 52;
     display: flex !important;
     align-items: center;
     justify-content: flex-start;
@@ -37,6 +38,26 @@ pre.vditor-reset code {
     border-bottom: 1px solid #e9eef7;
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(8px) saturate(130%);
+}
+
+/* 确保工具栏弹出层在编辑头之上显示 */
+.vditor-panel,
+.vditor-hint {
+    z-index: 62 !important;
+}
+
+/* 避免最左/最右工具按钮的 tip 超出边界被截断 */
+.vditor-toolbar .vditor-toolbar__item:first-child .vditor-tooltipped::before,
+.vditor-toolbar .vditor-toolbar__item:first-child .vditor-tooltipped::after {
+    left: 8px !important;
+    transform: none !important;
+}
+
+.vditor-toolbar .vditor-toolbar__item:last-child .vditor-tooltipped::before,
+.vditor-toolbar .vditor-toolbar__item:last-child .vditor-tooltipped::after {
+    left: auto !important;
+    right: 8px !important;
+    transform: none !important;
 }
 
 .vditor-toolbar>div.vditor-toolbar__item {
