@@ -29,6 +29,8 @@ const getIconFromKey = (key: string) => {
             return <FileTextOutlined />
         case 'content/pages':
             return <AppstoreOutlined />
+        case 'content/categories':
+            return <AppstoreOutlined />
         case 'content/images':
             return <PictureOutlined />
         case 'content/recycle':

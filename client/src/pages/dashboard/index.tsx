@@ -17,6 +17,7 @@ import {
   Checkbox,
   Empty,
   Tag,
+  Select,
 } from 'antd'
 import {
   FileAddOutlined,
@@ -113,6 +114,8 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [todoLoading, setTodoLoading] = useState(false)
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([])
+  const [categoryLoading, setCategoryLoading] = useState(false)
 
   const [stats, setStats] = useState<DashboardStats>(DEFAULT_STATS)
   const [systemInfo, setSystemInfo] = useState<SystemInfo>(DEFAULT_SYSTEM_INFO)
@@ -135,19 +138,37 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  const createNewPost = async (title: string) => {
+  const normalizeCategoryValues = (values: string[] = []) => {
+    return Array.from(new Set(values.map(item => item.trim()).filter(Boolean)))
+  }
+
+  const createNewPost = async (title: string, categories: string[] = []) => {
     const exists = await checkTitleExists(title)
     const finalTitle = exists ? `${title} (${Date.now()})` : title
     if (exists) {
       message.info(t['dashboard.welcome.new.title.duplicated'] || '已存在同名文章，已自动添加区分字符')
     }
 
-    const res = await service.post('/hexopro/api/posts/new', { title: finalTitle })
+    const res = await service.post('/hexopro/api/posts/new', { title: finalTitle, categories })
     if (res.data?.permalink) {
       message.success(t['dashboard.success.createPost'])
       navigate(`/post/${base64Encode(res.data.permalink)}`)
     }
   }
+
+  const fetchCategoryOptions = useCallback(async () => {
+    try {
+      setCategoryLoading(true)
+      const res = await service.get('/hexopro/api/tags-categories-and-metadata')
+      const categoryMap = res.data?.categories || {}
+      const options = Object.keys(categoryMap).map(key => categoryMap[key]).filter(Boolean)
+      setCategoryOptions(options)
+    } catch {
+      setCategoryOptions([])
+    } finally {
+      setCategoryLoading(false)
+    }
+  }, [])
 
   const fetchStats = useCallback(async () => {
     try {
@@ -403,13 +424,19 @@ const Dashboard: React.FC = () => {
   const handleCreatePost = async () => {
     try {
       const values = await form.validateFields()
-      await createNewPost(values.title)
+      await createNewPost(values.title, normalizeCategoryValues(values.categories))
       setCreateModalOpen(false)
       form.resetFields()
     } catch {
       // no-op
     }
   }
+
+  useEffect(() => {
+    if (createModalOpen) {
+      fetchCategoryOptions()
+    }
+  }, [createModalOpen, fetchCategoryOptions])
 
   return (
     <div className={`${styles.dashboardContainer} ${isDark ? styles.darkMode : ''}`}>
@@ -698,6 +725,17 @@ const Dashboard: React.FC = () => {
             rules={[{ required: true, message: t['universal.input.placeholder'] }]}
           >
             <Input placeholder={t['universal.input.placeholder']} />
+          </Form.Item>
+          <Form.Item
+            name="categories"
+            label={t['dashboard.welcome.new.blog.category'] || '分类'}
+          >
+            <Select
+              mode="tags"
+              loading={categoryLoading}
+              placeholder={t['dashboard.welcome.new.blog.category.placeholder'] || '请选择或输入分类'}
+              options={categoryOptions.map(item => ({ label: item, value: item }))}
+            />
           </Form.Item>
         </Form>
       </Modal>

@@ -2,7 +2,7 @@ import React, { useContext, useRef, useState, useEffect } from "react"
 import _ from 'lodash'
 import styles from './style/index.module.less'
 import Logo from '@/assets/logo3.svg'
-import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Tag, message, notification } from "antd"
+import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Select, Tag, message, notification } from "antd"
 import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled, UserOutlined, GlobalOutlined } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
 import IconLangLight from "@/assets/langLight.svg"
@@ -41,6 +41,9 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
     const [searchLoading, setSearchLoading] = useState(false)
     const [api, contextHolder] = notification.useNotification()
     const [drawerVisible, setDrawerVisible] = useState(false)
+    const [availableCategories, setAvailableCategories] = useState<string[]>([])
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+    const [categoryLoading, setCategoryLoading] = useState(false)
 
     const writeDropList: MenuProps['items'] = [
         {
@@ -100,6 +103,8 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
     ]
 
     const handleCreateBlog: MenuProps['onClick'] = ({ key }) => {
+        setTitle('')
+        setSelectedCategories([])
         if (key === '1') {
             setOpen(true)
             setTarget('Post')
@@ -132,6 +137,26 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
 
     const onCancel = () => {
         setOpen(false)
+        setSelectedCategories([])
+    }
+
+    const normalizeCategoryValues = (values: string[] = []) => {
+        return Array.from(new Set(values.map(item => item.trim()).filter(Boolean)))
+    }
+
+    const fetchCategoriesForCreate = async () => {
+        try {
+            setCategoryLoading(true)
+            const res = await service.get('/hexopro/api/tags-categories-and-metadata')
+            const categoryMap = res.data?.categories || {}
+            const options = Object.keys(categoryMap).map(key => categoryMap[key]).filter(Boolean)
+            setAvailableCategories(options)
+        } catch (err) {
+            console.error('获取分类列表失败', err)
+            setAvailableCategories([])
+        } finally {
+            setCategoryLoading(false)
+        }
     }
 
     const checkTitle = (title: string) => {
@@ -158,6 +183,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         if (!checkTitle(title)) {
             return
         }
+        const categories = normalizeCategoryValues(selectedCategories)
         
         // 检查标题是否已存在
         const exists = await checkTitleExists(title)
@@ -166,7 +192,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             const uniqueTitle = `${title}${Date.now()}`
             message.info('已存在同名文章，已自动添加区分字符')
             
-            service.post('/hexopro/api/posts/new', { title: uniqueTitle }).then((res) => {
+            service.post('/hexopro/api/posts/new', { title: uniqueTitle, categories }).then((res) => {
                 const post = res.data
                 post.date = parseDateTime(post.date)
                 post.updated = parseDateTime(post.updated)
@@ -174,7 +200,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             })
         } else {
             // 如果不存在，直接创建
-            service.post('/hexopro/api/posts/new', { title: title }).then((res) => {
+            service.post('/hexopro/api/posts/new', { title: title, categories }).then((res) => {
                 const post = res.data
                 post.date = parseDateTime(post.date)
                 post.updated = parseDateTime(post.updated)
@@ -182,6 +208,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             })
         }
         setOpen(false)
+        setSelectedCategories([])
     }
 
     // 检查页面标题是否已存在
@@ -268,6 +295,12 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             searchBlog.cancel()
         }
     }, [])
+
+    useEffect(() => {
+        if (open && target === 'Post') {
+            fetchCategoriesForCreate()
+        }
+    }, [open, target])
 
     const onSearchModalChange = (v) => {
         setSearchValue(v.target.value)
@@ -374,6 +407,17 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 }
             >
                 <Input placeholder={locale['navbar.modal.input.placeholder']} value={title} onChange={(e) => setTitle(e.target.value)} />
+                {target === 'Post' && (
+                    <Select
+                        mode="tags"
+                        style={{ width: '100%', marginTop: 12 }}
+                        placeholder={locale['navbar.modal.category.placeholder'] || '请选择或输入分类'}
+                        value={selectedCategories}
+                        loading={categoryLoading}
+                        onChange={(values) => setSelectedCategories(normalizeCategoryValues(values))}
+                        options={availableCategories.map(item => ({ label: item, value: item }))}
+                    />
+                )}
             </Modal>
             <Modal
                 className={`${styles[theme]}`}
@@ -559,6 +603,8 @@ function getIconFromKey(key: string) {
             return <CloudUploadOutlined />
         case 'content/pages':
             return <FileTextOutlined />
+        case 'content/categories':
+            return <AppstoreOutlined />
         case 'content/images':
             return <PictureOutlined />
         case 'content/yaml':
