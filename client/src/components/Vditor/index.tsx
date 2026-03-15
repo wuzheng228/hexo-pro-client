@@ -72,9 +72,14 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     const [storageType, setStorageType] = useState('local')
     const [availableStorages, setAvailableStorages] = useState<string[]>(['local'])
     const isLocal = storageType === 'local'
+    const initValueRef = useRef(initValue)
 
 
     const t = useLocale()
+
+    useEffect(() => {
+        initValueRef.current = initValue
+    }, [initValue])
 
     // 统一的 URL 处理：
     // - 远程图床一般已返回完整且已编码的绝对 URL，直接使用
@@ -443,7 +448,20 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
 
     useEffect(() => {
         if (vd) {
-            vd.setValue(initValue)
+            const nextValue = typeof initValue === 'string' ? initValue : ''
+            const currentValue = vd.getValue()
+            if (currentValue === nextValue) {
+                return
+            }
+
+            // 编辑中不强制覆盖内容，避免光标抖动和失焦
+            const editorRoot = document.getElementById('vditor')
+            const isEditing = !!editorRoot?.contains(document.activeElement)
+            if (isEditing) {
+                return
+            }
+
+            vd.setValue(nextValue)
         }
     }, [vd, initValue])
 
@@ -775,8 +793,8 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             },
             after: () => {
                 // 设置初始值
-                if (!initValue && initValue !== '') {
-                    vditor.setValue(initValue)
+                if (typeof initValueRef.current === 'string') {
+                    vditor.setValue(initValueRef.current)
                 }
                 // 固定toolbar
                 const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement
@@ -1101,10 +1119,10 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             ]
         })
         return () => {
-            vd?.destroy()
+            vditor.destroy()
             setVd(undefined)
         }
-    }, [initValue, lang, isMobile, editorMode]) // 添加 editorMode 作为依赖
+    }, [lang, isMobile, editorMode]) // 避免输入时因 initValue 变化重建编辑器
 
     return (
         <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, borderRadius: '0px' }}>
