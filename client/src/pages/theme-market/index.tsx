@@ -8,6 +8,7 @@ import {
   message,
   Modal,
   Row,
+  Space,
   Spin,
   Typography,
 } from 'antd'
@@ -52,9 +53,10 @@ const ThemeMarketPage: React.FC = () => {
   const [installing, setInstalling] = useState<string | null>(null)
   const [configModal, setConfigModal] = useState<{
     visible: boolean
+    configType: 'theme' | 'global'
     themeId: string
-    themeName: string
-  }>({ visible: false, themeId: '', themeName: '' })
+    title: string
+  }>({ visible: false, configType: 'theme', themeId: '', title: '' })
 
   const fetchThemes = useCallback(async () => {
     try {
@@ -177,16 +179,27 @@ const ThemeMarketPage: React.FC = () => {
   const openConfig = (theme: BuiltinTheme) => {
     setConfigModal({
       visible: true,
+      configType: 'theme',
       themeId: theme.id,
-      themeName: theme.name,
+      title: theme.name,
+    })
+  }
+
+  const openGlobalConfig = () => {
+    setConfigModal({
+      visible: true,
+      configType: 'global',
+      themeId: '',
+      title: t['theme.globalConfig'] || '全局配置',
     })
   }
 
   const closeConfig = () => {
     setConfigModal({
       visible: false,
+      configType: 'theme',
       themeId: '',
-      themeName: '',
+      title: '',
     })
   }
 
@@ -202,6 +215,13 @@ const ThemeMarketPage: React.FC = () => {
             {t['theme.market.desc'] ||
               '一键安装 Hexo 主题，可视化配置主题参数'}
           </Text>
+          <div style={{ marginTop: 12 }}>
+            <Space>
+              <Button icon={<SettingOutlined />} onClick={openGlobalConfig}>
+                {t['theme.globalConfig'] || '全局配置 _config.yml'}
+              </Button>
+            </Space>
+          </div>
         </Col>
       </Row>
 
@@ -267,7 +287,9 @@ const ThemeMarketPage: React.FC = () => {
       </Spin>
 
       <Drawer
-        title={`${t['theme.config'] || '配置'} - ${configModal.themeName}`}
+        title={configModal.configType === 'global'
+          ? (t['theme.globalConfig'] || '全局配置 _config.yml')
+          : `${t['theme.config'] || '配置'} - ${configModal.title}`}
         placement="right"
         onClose={closeConfig}
         open={configModal.visible}
@@ -278,7 +300,7 @@ const ThemeMarketPage: React.FC = () => {
         {configModal.visible && (
           <ThemeConfigPanel
             themeId={configModal.themeId}
-            themeName={configModal.themeName}
+            configType={configModal.configType}
             onClose={closeConfig}
           />
         )}

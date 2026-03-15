@@ -16,19 +16,31 @@ import FormMode, { type FormModeRef } from './FormMode'
 import styles from '../style.module.less'
 
 interface ThemeConfigPanelProps {
-  themeId: string
-  themeName?: string
+  themeId?: string
+  configType?: 'theme' | 'global'
   onClose?: () => void
 }
 
 interface ThemeConfigSnapshot {
   id: string
-  themeId: string
+  themeId?: string
   createdAt: string
   source: string
   note?: string
   hash: string
   size: number
+}
+
+interface ConfigSaveResult {
+  success?: boolean
+  message?: string
+  needRestart?: boolean
+}
+
+function isDesktopEnvironment(): boolean {
+  return typeof window !== 'undefined' &&
+    typeof (window as any).electronAPI === 'object' &&
+    (window as any).electronAPI !== null
 }
 
 function formatYamlValidationError(error: unknown): string {
@@ -70,9 +82,12 @@ function extractRequestErrorMessage(error: unknown, fallback: string): string {
 
 const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   themeId,
+  configType = 'theme',
   onClose,
 }) => {
   const t = useLocale()
+  const isGlobalConfig = configType === 'global'
+  const configId = isGlobalConfig ? 'global' : themeId
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editContent, setEditContent] = useState('')
@@ -88,30 +103,42 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   const fetchConfig = useCallback(async () => {
     setLoading(true)
     try {
-      const [configRes, schemaRes] = await Promise.all([
-        service.get('/hexopro/api/theme/config', { params: { themeId } }),
-        service.get('/hexopro/api/theme/schema', { params: { themeId } }),
-      ])
-      const content = configRes.data?.content ?? ''
-      setEditContent(content)
-      if (schemaRes.data?.hasSchema && schemaRes.data?.schema) {
-        setSchemaJson(schemaRes.data.schema)
-      } else {
+      if (isGlobalConfig) {
+        const configRes = await service.get('/hexopro/api/site/config')
+        setEditContent(configRes.data?.content ?? '')
         setSchemaJson(null)
+      } else {
+        if (!themeId) {
+          message.error('缺少主题ID')
+          return
+        }
+        const [configRes, schemaRes] = await Promise.all([
+          service.get('/hexopro/api/theme/config', { params: { themeId } }),
+          service.get('/hexopro/api/theme/schema', { params: { themeId } }),
+        ])
+        const content = configRes.data?.content ?? ''
+        setEditContent(content)
+        if (schemaRes.data?.hasSchema && schemaRes.data?.schema) {
+          setSchemaJson(schemaRes.data.schema)
+        } else {
+          setSchemaJson(null)
+        }
       }
     } catch (err) {
       message.error(t['theme.config.fetchFailed'] || '获取配置失败')
     } finally {
       setLoading(false)
     }
-  }, [themeId, t])
+  }, [isGlobalConfig, themeId, t])
 
   const fetchSnapshots = useCallback(async (showError = true) => {
     setSnapshotLoading(true)
     try {
-      const res = await service.get('/hexopro/api/theme/config/snapshots', {
-        params: { themeId },
-      })
+      const endpoint = isGlobalConfig
+        ? '/hexopro/api/site/config/snapshots'
+        : '/hexopro/api/theme/config/snapshots'
+      const requestConfig = isGlobalConfig ? undefined : { params: { themeId } }
+      const res = await service.get(endpoint, requestConfig)
       setSnapshots(res.data?.snapshots ?? [])
     } catch {
       if (showError) {
@@ -120,12 +147,45 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
     } finally {
       setSnapshotLoading(false)
     }
-  }, [themeId, t])
+  }, [isGlobalConfig, themeId, t])
 
   useEffect(() => {
     void fetchConfig()
     void fetchSnapshots(false)
   }, [fetchConfig, fetchSnapshots])
+
+  const handleRestartIfNeeded = useCallback(async (result: ConfigSaveResult) => {
+    if (!result?.needRestart) return
+
+    if (isDesktopEnvironment()) {
+      message.loading({
+        content: t['theme.config.needRestart'] || '配置已更新，正在重启服务器...',
+        key: 'config-restart',
+        duration: 0,
+      })
+      try {
+        await service.post('/hexopro/api/desktop/restart')
+        message.success({
+          content: t['theme.restart.success'] || '服务器重启成功',
+          key: 'config-restart',
+          duration: 2,
+        })
+      } catch {
+        message.error({
+          content: t['theme.restart.failed'] || '服务器重启失败',
+          key: 'config-restart',
+          duration: 2,
+        })
+      }
+      return
+    }
+
+    Modal.info({
+      title: t['theme.config.saveSuccess'] || '配置已保存',
+      content: result.message || '配置已更新，请手动重启服务器后生效',
+      okText: t['universal.confirm'] || '确定',
+    })
+  }, [t])
 
   const handleSave = useCallback(async (content?: string) => {
     setSaving(true)
@@ -138,19 +198,20 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
         return
       }
 
-      await service.post('/hexopro/api/theme/config/save', {
-        themeId,
-        content: toSave,
-      })
-      message.success(t['theme.config.saveSuccess'] || '配置已保存')
+      const saveRes = isGlobalConfig
+        ? await service.post('/hexopro/api/site/config/save', { content: toSave })
+        : await service.post('/hexopro/api/theme/config/save', { themeId, content: toSave })
+      const saveResult = (saveRes.data || {}) as ConfigSaveResult
+      message.success(saveResult.message || t['theme.config.saveSuccess'] || '配置已保存')
       if (content) setEditContent(content)
       await fetchSnapshots(false)
+      await handleRestartIfNeeded(saveResult)
     } catch (error) {
       message.error(extractRequestErrorMessage(error, t['theme.config.saveFailed'] || '保存配置失败'))
     } finally {
       setSaving(false)
     }
-  }, [themeId, editContent, fetchSnapshots, t])
+  }, [isGlobalConfig, themeId, editContent, fetchSnapshots, handleRestartIfNeeded, t])
 
   const formatSnapshotSource = useCallback((source: string) => {
     if (source === 'manual') return t['theme.snapshot.source.manual'] || '手动'
@@ -162,7 +223,11 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   const handleCreateSnapshot = useCallback(async () => {
     setCreatingSnapshot(true)
     try {
-      const res = await service.post('/hexopro/api/theme/config/snapshot/create', { themeId })
+      const endpoint = isGlobalConfig
+        ? '/hexopro/api/site/config/snapshot/create'
+        : '/hexopro/api/theme/config/snapshot/create'
+      const payload = isGlobalConfig ? {} : { themeId }
+      const res = await service.post(endpoint, payload)
       if (res.data?.skipped) {
         message.info(t['theme.snapshot.createSkipped'] || '当前配置与最近快照一致，已跳过')
       } else {
@@ -174,7 +239,7 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
     } finally {
       setCreatingSnapshot(false)
     }
-  }, [themeId, fetchSnapshots, t])
+  }, [isGlobalConfig, themeId, fetchSnapshots, t])
 
   const handleRollback = useCallback((snapshot: ThemeConfigSnapshot) => {
     Modal.confirm({
@@ -188,12 +253,16 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
       onOk: async () => {
         setRollingBackSnapshotId(snapshot.id)
         try {
-          await service.post('/hexopro/api/theme/config/rollback', {
-            themeId,
-            snapshotId: snapshot.id,
-          })
+          const endpoint = isGlobalConfig
+            ? '/hexopro/api/site/config/rollback'
+            : '/hexopro/api/theme/config/rollback'
+          const payload = isGlobalConfig
+            ? { snapshotId: snapshot.id }
+            : { themeId, snapshotId: snapshot.id }
+          const rollbackRes = await service.post(endpoint, payload)
           message.success(t['theme.snapshot.rollbackSuccess'] || '回滚成功')
           await Promise.all([fetchConfig(), fetchSnapshots(false)])
+          await handleRestartIfNeeded((rollbackRes.data || {}) as ConfigSaveResult)
         } catch {
           message.error(t['theme.snapshot.rollbackFailed'] || '回滚失败')
         } finally {
@@ -201,7 +270,7 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
         }
       },
     })
-  }, [fetchConfig, fetchSnapshots, t, themeId])
+  }, [isGlobalConfig, fetchConfig, fetchSnapshots, handleRestartIfNeeded, t, themeId])
 
   if (loading) {
     return (
@@ -257,7 +326,7 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
         {activeTab === 'raw' ? (
           <div>
             <YamlEditor
-              id={`theme-config-${themeId}`}
+              id={`theme-config-${configId || 'unknown'}`}
               initialValue={editContent}
               height="calc(100vh - 180px)"
               onChange={setEditContent}
