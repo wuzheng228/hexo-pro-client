@@ -311,15 +311,11 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                             }}
                             onClick={() => !isPage ? navigate(`/post/${base64Encode(item.permalink)}`) : navigate(`/page/${base64Encode(item.permalink)}`)}
                         >
-                            <div style={{ 
-                                position: 'absolute', 
-                                top: showCover ? 8 : 2, 
-                                right: showCover ? 8 : 2, 
-                                zIndex: 1,
-                                display: 'flex',
-                                flexDirection: showCover ? 'row' : 'column',
-                                gap: showCover ? 0 : '2px'
-                            }}>
+                            <div
+                                className={`${styles['card-action-group']} ${
+                                    showCover ? styles['card-action-group-cover'] : styles['card-action-group-compact']
+                                } ${theme === 'dark' ? styles['card-action-group-dark'] : ''}`}
+                            >
                                 <Space size={showCover ? 'small' : 4} direction={showCover ? 'horizontal' : 'vertical'}>
                                     {/* 添加发布/撤销发布按钮 */}
                                     {!isPage && (
@@ -431,7 +427,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                     <Text 
                                         ellipsis={{ tooltip: item.title }} 
                                         style={{ 
-                                            maxWidth: showCover ? 'calc(100% - 80px)' : 'calc(100% - 50px)',
+                                            maxWidth: showCover ? 'calc(100% - 80px)' : 'calc(100% - 70px)',
                                             fontSize: showCover ? '16px' : '14px',
                                             fontWeight: showCover ? 'normal' : '500',
                                             lineHeight: showCover ? 'normal' : '1.3',
@@ -442,7 +438,7 @@ function ArticleList({ published, isPage = false, showPublishStatus = true }) {
                                     </Text>
                                 }
                                 description={
-                                    <div style={{ marginTop: showCover ? 8 : 4, paddingRight: showCover ? 0 : '20px' }}>
+                                    <div style={{ marginTop: showCover ? 8 : 4, paddingRight: showCover ? 0 : '26px' }}>
                                         <div style={{ fontSize: showCover ? '14px' : '12px', color: 'rgba(0, 0, 0, 0.45)' }}>
                                             {t['content.articleList.table.date']}: {item.date}
                                         </div>

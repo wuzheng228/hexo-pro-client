@@ -225,7 +225,7 @@ const ThemeMarketPage: React.FC = () => {
                     {t['theme.author'] || '作者'}: {theme.author}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <div className={styles.themeActions}>
                   {!status.installed ? (
                     <Button
                       type="primary"
