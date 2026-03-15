@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useState, forwardRef } from 'react'
-import { Alert, Button, Card, Collapse, Empty, Form, Input, InputNumber, Segmented, Select, Space, Switch, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Collapse, Empty, Form, Input, InputNumber, Segmented, Select, Space, Switch, Tag, Typography, message } from 'antd'
 import { get } from 'lodash'
 import yaml from 'js-yaml'
 import useLocale from '@/hooks/useLocale'
@@ -485,7 +485,7 @@ const FormMode = forwardRef<FormModeRef, FormModeProps>(({
   }, [filteredSchema, normalizedSearchKeyword])
 
   const normalizeFieldValue = useCallback((field: SchemaField, rawValue: unknown, oldValue: unknown): unknown => {
-    let finalVal = rawValue
+    const finalVal = rawValue
 
     if (field.type === 'select' && typeof rawValue === 'string') {
       if (rawValue === 'false') return false
@@ -529,6 +529,23 @@ const FormMode = forwardRef<FormModeRef, FormModeProps>(({
     return String(value)
   }, [])
 
+  const formatYamlError = useCallback((error: unknown): string => {
+    const fallback = t['theme.config.parseError'] || 'YAML 解析失败'
+    if (!error || typeof error !== 'object') {
+      return fallback
+    }
+
+    const yamlError = error as { message?: string; mark?: { line?: number; column?: number } }
+    const baseMessage = yamlError.message || fallback
+    const line = typeof yamlError.mark?.line === 'number' ? yamlError.mark.line + 1 : undefined
+    const column = typeof yamlError.mark?.column === 'number' ? yamlError.mark.column + 1 : undefined
+
+    if (line && column) {
+      return `${baseMessage} (line ${line}, column ${column})`
+    }
+    return baseMessage
+  }, [t])
+
   const handleSave = useCallback(async () => {
     try {
       const values = await form.validateFields()
@@ -550,13 +567,19 @@ const FormMode = forwardRef<FormModeRef, FormModeProps>(({
 
       // 基于工作态 YAML 保存，允许用户在启用模板后立即编辑其中字段
       const yamlContent = updateYamlValues(workingYaml, changes)
+      try {
+        yaml.load(yamlContent)
+      } catch (error) {
+        message.error(formatYamlError(error))
+        return
+      }
       await onSave(yamlContent)
     } catch (err) {
       if (err && typeof err === 'object' && 'errorFields' in err) {
         // validation error, form will show
       }
     }
-  }, [form, normalizeFieldValue, onSave, schema, stringifyComparableValue, workingYaml])
+  }, [form, formatYamlError, normalizeFieldValue, onSave, schema, stringifyComparableValue, workingYaml])
 
   useImperativeHandle(ref, () => ({
     save: handleSave,

@@ -485,7 +485,7 @@ export function updateYamlValues(
   originalYaml: string,
   changes: Record<string, unknown>
 ): string {
-  let result = originalYaml
+  const result = originalYaml
   const lines = result.split('\n')
 
   for (const [dotPath, newValue] of Object.entries(changes)) {

@@ -102,6 +102,13 @@
   }
 }
 
+.drawerHeaderMain {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .drawerContent {
   flex: 1;
   overflow-y: auto;
@@ -205,4 +212,17 @@
       font-size: 11px;
     }
   }
+}
+
+.snapshotList {
+  :global {
+    .ant-list-item {
+      align-items: flex-start;
+    }
+  }
+}
+
+.snapshotMeta {
+  color: rgba(0, 0, 0, 0.45);
+  word-break: break-all;
 }

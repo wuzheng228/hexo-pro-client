@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, message, Segmented, Spin, Space } from 'antd'
-import { SaveOutlined, CloseOutlined } from '@ant-design/icons'
+import { Button, List, message, Modal, Segmented, Space, Spin, Tag } from 'antd'
+import {
+  SaveOutlined,
+  CloseOutlined,
+  CameraOutlined,
+  HistoryOutlined,
+  RollbackOutlined,
+} from '@ant-design/icons'
+import yaml from 'js-yaml'
 import service from '@/utils/api'
 import useLocale from '@/hooks/useLocale'
 import type { SchemaJson } from '../themeSchema'
@@ -14,6 +21,53 @@ interface ThemeConfigPanelProps {
   onClose?: () => void
 }
 
+interface ThemeConfigSnapshot {
+  id: string
+  themeId: string
+  createdAt: string
+  source: string
+  note?: string
+  hash: string
+  size: number
+}
+
+function formatYamlValidationError(error: unknown): string {
+  const fallback = 'YAML 语法错误'
+  if (!error || typeof error !== 'object') return fallback
+
+  const yamlError = error as { message?: string; mark?: { line?: number; column?: number } }
+  const baseMessage = yamlError.message || fallback
+  const line = typeof yamlError.mark?.line === 'number' ? yamlError.mark.line + 1 : undefined
+  const column = typeof yamlError.mark?.column === 'number' ? yamlError.mark.column + 1 : undefined
+
+  if (line && column) {
+    return `${baseMessage} (line ${line}, column ${column})`
+  }
+  return baseMessage
+}
+
+function extractRequestErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object') {
+    const maybeError = error as {
+      message?: string
+      response?: {
+        data?: {
+          message?: string
+          msg?: string
+          details?: string
+        }
+      }
+    }
+    const messageFromResponse = maybeError.response?.data?.message || maybeError.response?.data?.msg
+    if (messageFromResponse) {
+      const details = maybeError.response?.data?.details
+      return details ? `${messageFromResponse} (${details})` : messageFromResponse
+    }
+    if (maybeError.message) return maybeError.message
+  }
+  return fallback
+}
+
 const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   themeId,
   onClose,
@@ -24,6 +78,11 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
   const [editContent, setEditContent] = useState('')
   const [schemaJson, setSchemaJson] = useState<SchemaJson | null>(null)
   const [activeTab, setActiveTab] = useState<'raw' | 'form'>('raw')
+  const [snapshots, setSnapshots] = useState<ThemeConfigSnapshot[]>([])
+  const [snapshotLoading, setSnapshotLoading] = useState(false)
+  const [creatingSnapshot, setCreatingSnapshot] = useState(false)
+  const [snapshotModalVisible, setSnapshotModalVisible] = useState(false)
+  const [rollingBackSnapshotId, setRollingBackSnapshotId] = useState<string | null>(null)
   const formModeRef = useRef<FormModeRef>(null)
 
   const fetchConfig = useCallback(async () => {
@@ -47,26 +106,102 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
     }
   }, [themeId, t])
 
+  const fetchSnapshots = useCallback(async (showError = true) => {
+    setSnapshotLoading(true)
+    try {
+      const res = await service.get('/hexopro/api/theme/config/snapshots', {
+        params: { themeId },
+      })
+      setSnapshots(res.data?.snapshots ?? [])
+    } catch {
+      if (showError) {
+        message.error(t['theme.snapshot.fetchFailed'] || '获取快照失败')
+      }
+    } finally {
+      setSnapshotLoading(false)
+    }
+  }, [themeId, t])
+
   useEffect(() => {
     void fetchConfig()
-  }, [fetchConfig])
+    void fetchSnapshots(false)
+  }, [fetchConfig, fetchSnapshots])
 
   const handleSave = useCallback(async (content?: string) => {
     setSaving(true)
     try {
       const toSave = content ?? editContent
+      try {
+        yaml.load(toSave)
+      } catch (error) {
+        message.error(formatYamlValidationError(error))
+        return
+      }
+
       await service.post('/hexopro/api/theme/config/save', {
         themeId,
         content: toSave,
       })
       message.success(t['theme.config.saveSuccess'] || '配置已保存')
       if (content) setEditContent(content)
-    } catch {
-      message.error(t['theme.config.saveFailed'] || '保存配置失败')
+      await fetchSnapshots(false)
+    } catch (error) {
+      message.error(extractRequestErrorMessage(error, t['theme.config.saveFailed'] || '保存配置失败'))
     } finally {
       setSaving(false)
     }
-  }, [themeId, editContent, t])
+  }, [themeId, editContent, fetchSnapshots, t])
+
+  const formatSnapshotSource = useCallback((source: string) => {
+    if (source === 'manual') return t['theme.snapshot.source.manual'] || '手动'
+    if (source === 'auto-save') return t['theme.snapshot.source.autoSave'] || '自动保存前'
+    if (source === 'rollback-backup') return t['theme.snapshot.source.rollbackBackup'] || '回滚前备份'
+    return source
+  }, [t])
+
+  const handleCreateSnapshot = useCallback(async () => {
+    setCreatingSnapshot(true)
+    try {
+      const res = await service.post('/hexopro/api/theme/config/snapshot/create', { themeId })
+      if (res.data?.skipped) {
+        message.info(t['theme.snapshot.createSkipped'] || '当前配置与最近快照一致，已跳过')
+      } else {
+        message.success(t['theme.snapshot.createSuccess'] || '快照已创建')
+      }
+      await fetchSnapshots(false)
+    } catch {
+      message.error(t['theme.snapshot.createFailed'] || '创建快照失败')
+    } finally {
+      setCreatingSnapshot(false)
+    }
+  }, [themeId, fetchSnapshots, t])
+
+  const handleRollback = useCallback((snapshot: ThemeConfigSnapshot) => {
+    Modal.confirm({
+      title: t['theme.snapshot.rollbackConfirmTitle'] || '确认回滚',
+      content:
+        (t['theme.snapshot.rollbackConfirmDesc'] || '将恢复到此快照，是否继续？') +
+        `\n#${snapshot.id.slice(0, 8)}`,
+      okText: t['theme.snapshot.rollback'] || '回滚',
+      cancelText: t['universal.cancel'] || '取消',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        setRollingBackSnapshotId(snapshot.id)
+        try {
+          await service.post('/hexopro/api/theme/config/rollback', {
+            themeId,
+            snapshotId: snapshot.id,
+          })
+          message.success(t['theme.snapshot.rollbackSuccess'] || '回滚成功')
+          await Promise.all([fetchConfig(), fetchSnapshots(false)])
+        } catch {
+          message.error(t['theme.snapshot.rollbackFailed'] || '回滚失败')
+        } finally {
+          setRollingBackSnapshotId(null)
+        }
+      },
+    })
+  }, [fetchConfig, fetchSnapshots, t, themeId])
 
   if (loading) {
     return (
@@ -80,7 +215,7 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
     <div className={styles.drawerConfigPanel}>
       {/* 固定顶部操作栏 */}
       <div className={styles.drawerHeader}>
-        <Space style={{ width: '100%' }}>
+        <div className={styles.drawerHeaderMain}>
           <Segmented
             value={activeTab}
             onChange={(val) => setActiveTab((val as 'raw' | 'form') ?? 'raw')}
@@ -96,7 +231,25 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
             ]}
             style={{ flex: 1 }}
           />
-        </Space>
+          <Space>
+            <Button
+              icon={<CameraOutlined />}
+              loading={creatingSnapshot}
+              onClick={() => void handleCreateSnapshot()}
+            >
+              {t['theme.snapshot.create'] || '创建快照'}
+            </Button>
+            <Button
+              icon={<HistoryOutlined />}
+              onClick={() => {
+                setSnapshotModalVisible(true)
+                void fetchSnapshots(false)
+              }}
+            >
+              {t['theme.snapshot.manage'] || '快照管理'}
+            </Button>
+          </Space>
+        </div>
       </div>
 
       {/* 内容区域 */}
@@ -149,6 +302,54 @@ const ThemeConfigPanel: React.FC<ThemeConfigPanelProps> = ({
           </Button>
         </Space>
       </div>
+
+      <Modal
+        title={t['theme.snapshot.manage'] || '快照管理'}
+        open={snapshotModalVisible}
+        onCancel={() => setSnapshotModalVisible(false)}
+        footer={null}
+        width={760}
+        destroyOnClose
+      >
+        <Spin spinning={snapshotLoading}>
+          <List
+            className={styles.snapshotList}
+            dataSource={snapshots}
+            locale={{ emptyText: t['theme.snapshot.empty'] || '暂无快照' }}
+            renderItem={(item) => (
+              <List.Item
+                key={item.id}
+                actions={[
+                  <Button
+                    key="rollback"
+                    danger
+                    icon={<RollbackOutlined />}
+                    loading={rollingBackSnapshotId === item.id}
+                    onClick={() => handleRollback(item)}
+                  >
+                    {t['theme.snapshot.rollback'] || '回滚'}
+                  </Button>,
+                ]}
+              >
+                <List.Item.Meta
+                  title={(
+                    <Space size={8} wrap>
+                      <Tag>{formatSnapshotSource(item.source)}</Tag>
+                      <span>{new Date(item.createdAt).toLocaleString()}</span>
+                    </Space>
+                  )}
+                  description={(
+                    <span className={styles.snapshotMeta}>
+                      #{item.id} · {item.size} B
+                      {item.note ? ` · ${item.note}` : ''}
+                    </span>
+                  )}
+                />
+              </List.Item>
+            )}
+          />
+        </Spin>
+      </Modal>
 
     </div>
   )
