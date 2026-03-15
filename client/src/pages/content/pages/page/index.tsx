@@ -268,14 +268,7 @@ function Page() {
             </div>
             {/* AI聊天面板 - 右侧侧栏 */}
             {aiPanelVisible && (
-                <div
-                    style={{
-                        height: '100%',
-                        width: 400,
-                        borderLeft: '1px solid #e5e5e5',
-                        flexShrink: 0,
-                    }}
-                >
+                <div className={styles['ai-panel-wrap']}>
                     <AIChatPanel
                         visible={aiPanelVisible}
                         onClose={() => setAiPanelVisible(false)}

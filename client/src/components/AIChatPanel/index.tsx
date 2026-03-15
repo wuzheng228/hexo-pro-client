@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react'
 import { Input, Button, message, Spin } from 'antd'
 import { SendOutlined, CloseOutlined, CopyOutlined, ReloadOutlined, InsertRowLeftOutlined } from '@ant-design/icons'
+import type { TextAreaRef } from 'antd/es/input/TextArea'
 import { flushSync } from 'react-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -35,6 +36,7 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
     const [isLoading, setIsLoading] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const contentRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<TextAreaRef>(null)
     const abortControllerRef = useRef<AbortController | null>(null)
 
     const SCROLL_THRESHOLD = 40
@@ -108,7 +110,7 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
 
             // 使用 aiService 的流式接口
             let hasReceivedData = false
-            for await (const chunk of aiChatStream(
+            for await (const chunkEvent of aiChatStream(
                 allMessagesForApi,
                 (chunk) => {
                     // 使用 flushSync 确保状态同步更新，实现打字机效果
@@ -165,6 +167,7 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                 abortControllerRef.current.signal
             )) {
                 // 流式处理在上面的回调中完成
+                void chunkEvent
             }
 
             // 确保流结束后 isStreaming 设为 false
@@ -181,7 +184,6 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                         : msg
                 ))
             } else {
-                console.error('AI API Error:', error)
                 setMessages(prev => prev.map(msg =>
                     msg.id === assistantMessage.id
                         ? { ...msg, content: `${t['ai.error']}: ${error.message}`, isStreaming: false }
@@ -196,6 +198,26 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
 
     const handleSend = () => {
         sendMessage(inputValue.trim(), messages)
+    }
+
+    const quickPrompts = [
+        t['ai.quick.improve'] || '润色当前段落并保持原意',
+        t['ai.quick.summary'] || '总结这段内容并给出小标题',
+        t['ai.quick.continue'] || '按当前风格续写两段内容'
+    ]
+
+    const handleInputKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault()
+            if (!isLoading && inputValue.trim()) {
+                handleSend()
+            }
+        }
+    }
+
+    const applyQuickPrompt = (prompt: string) => {
+        setInputValue(prompt)
+        requestAnimationFrame(() => inputRef.current?.focus?.())
     }
 
     const handleCopy = (content: string) => {
@@ -239,7 +261,12 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
     return (
         <div className={`${styles.panel} ${theme === 'dark' ? styles.dark : ''}`}>
             <div className={styles.header}>
-                <span className={styles.title}>{t['ai.title']}</span>
+                <div className={styles.titleWrap}>
+                    <span className={styles.title}>{t['ai.title']}</span>
+                    <span className={styles.subtitle}>
+                        {t['ai.panel.subtitle'] || 'Streaming mode enabled'}
+                    </span>
+                </div>
                 <Button
                     type="text"
                     icon={<CloseOutlined />}
@@ -253,6 +280,19 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                     <div className={styles.empty}>
                         <div className={styles.emptyIcon}>🤖</div>
                         <div className={styles.emptyText}>{t['ai.title']}</div>
+                        <div className={styles.quickPrompts}>
+                            {quickPrompts.map(prompt => (
+                                <Button
+                                    key={prompt}
+                                    type="default"
+                                    size="small"
+                                    className={styles.quickPrompt}
+                                    onClick={() => applyQuickPrompt(prompt)}
+                                >
+                                    {prompt}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
                 )}
 
@@ -269,8 +309,8 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                                             >
                                                 <span className={styles.reasoningLabel}>
                                                     {msg.isStreaming
-                                                        ? '思考中...'
-                                                        : `已思考${msg.reasoningDurationMs ? ` ${formatDuration(msg.reasoningDurationMs)}` : ''}`}
+                                                        ? (t['ai.thinking'] || 'AI is thinking...')
+                                                        : `${t['ai.reasoned'] || 'Reasoned'}${msg.reasoningDurationMs ? ` ${formatDuration(msg.reasoningDurationMs)}` : ''}`}
                                                 </span>
                                                 <span className={styles.reasoningToggle}>
                                                     {msg.reasoningExpanded ? '▼' : '▶'}
@@ -296,25 +336,28 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                         {msg.role === 'assistant' && !msg.isStreaming && msg.content && (
                             <div className={styles.actions}>
                                 <Button
-                                    type="text"
+                                    type="default"
                                     size="small"
                                     icon={<InsertRowLeftOutlined />}
+                                    className={styles.actionBtn}
                                     onClick={() => handleInsert(msg.content)}
                                 >
                                     {t['ai.insert']}
                                 </Button>
                                 <Button
-                                    type="text"
+                                    type="default"
                                     size="small"
                                     icon={<CopyOutlined />}
+                                    className={styles.actionBtn}
                                     onClick={() => handleCopy(msg.content)}
                                 >
                                     {t['ai.copy']}
                                 </Button>
                                 <Button
-                                    type="text"
+                                    type="default"
                                     size="small"
                                     icon={<ReloadOutlined />}
+                                    className={styles.actionBtn}
                                     onClick={handleRegenerate}
                                 >
                                     {t['ai.regenerate']}
@@ -327,14 +370,21 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
             </div>
 
             <div className={styles.footer}>
-                <Input
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    onPressEnter={!isLoading ? handleSend : undefined}
-                    placeholder={t['ai.placeholder']}
-                    disabled={isLoading}
-                    className={styles.input}
-                />
+                <div className={styles.inputWrap}>
+                    <Input.TextArea
+                        ref={inputRef}
+                        value={inputValue}
+                        onChange={e => setInputValue(e.target.value)}
+                        onKeyDown={handleInputKeyDown}
+                        placeholder={t['ai.placeholder']}
+                        disabled={isLoading}
+                        autoSize={{ minRows: 1, maxRows: 4 }}
+                        className={styles.input}
+                    />
+                    <div className={styles.inputHint}>
+                        {t['ai.input.hint'] || 'Enter to send, Shift+Enter for newline'}
+                    </div>
+                </div>
                 <Button
                     type="primary"
                     icon={<SendOutlined />}
@@ -342,7 +392,9 @@ export default function AIChatPanel({ visible, onClose, onInsertContent }: AICha
                     disabled={!inputValue.trim() || isLoading}
                     loading={isLoading}
                     className={styles.sendBtn}
-                />
+                >
+                    {t['ai.send']}
+                </Button>
             </div>
         </div>
     )
