@@ -21,6 +21,7 @@ interface HexoProVditorProps {
     isPinToolbar: boolean;
     handleChangeContent: (content: string) => void;
     handleUploadingImage: (isUploading: boolean) => void;
+    onReady?: () => void;
 }
 
 // 添加上传结果接口
@@ -50,7 +51,7 @@ interface FolderData {
     pageSize: number;
 }
 
-export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage }: HexoProVditorProps) {
+export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage, onReady }: HexoProVditorProps) {
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
     const { isMobile } = useDeviceDetect() // 添加设备检测
     const [imagePickerVisible, setImagePickerVisible] = useState(false)
@@ -180,6 +181,14 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
         } else {
             return 'en_US'
         }
+    }
+
+    function getVditorCdn() {
+        const customCdn = localStorage.getItem('hexoProVditorCdn')?.trim()
+        if (customCdn) {
+            return customCdn.replace(/\/+$/, '')
+        }
+        return 'https://cdn.jsdelivr.net/npm/vditor@3.11.1'
     }
 
     // 使用 ref 确保异步回调读取到最新的图床类型
@@ -706,6 +715,8 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     useEffect(() => {
         const vditor = new Vditor('vditor', {
             mode: editorMode as 'ir' | 'wysiwyg' | 'sv', // 设置编辑器模式
+            cdn: getVditorCdn(),
+            placeholder: t['editor.content.placeholder'] || 'Start writing here. You can paste text or drag images directly.',
             cache: {
                 enable: true
             },
@@ -832,6 +843,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                     }
                 })
                 setVd(vditor)
+                onReady?.()
 
                 // 统一处理编辑区域内图片/链接点击：
                 // - 本地图床使用相对路径，点击时补齐为绝对 URL 再打开
@@ -1122,7 +1134,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             vditor.destroy()
             setVd(undefined)
         }
-    }, [lang, isMobile, editorMode]) // 避免输入时因 initValue 变化重建编辑器
+    }, [lang, isMobile, editorMode, onReady]) // 避免输入时因 initValue 变化重建编辑器
 
     return (
         <div id='vditorWapper' style={{ width: '100%', height: '100%', flex: 1, borderRadius: '0px' }}>

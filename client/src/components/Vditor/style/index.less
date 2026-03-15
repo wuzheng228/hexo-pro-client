@@ -1,6 +1,9 @@
 .vditor {
-    border-radius: 0;
-    border-top: 0px;
+    height: 100%;
+    border-radius: 10px;
+    border: 1px solid #e6ebf5;
+    background: #ffffff;
+    overflow: hidden;
 }
 
 /* 定义移动端专用的工具栏样式 */
@@ -23,16 +26,69 @@ pre.vditor-reset code {
 
 .vditor-toolbar {
     position: sticky !important;
-    // z-index: 89;
+    top: 0;
+    z-index: 12;
     display: flex !important;
     align-items: center;
-    justify-content: center;
-    /* 工具栏项目水平居中 */
+    justify-content: flex-start;
     flex-wrap: wrap;
-    /* 允许工具栏换行 */
-    // width: 100%;
-    /* 垂直方向居中对齐 */
-    padding: 5px !important;
+    gap: 4px;
+    padding: 8px 10px !important;
+    border-bottom: 1px solid #e9eef7;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px) saturate(130%);
+}
+
+.vditor-toolbar>div.vditor-toolbar__item {
+    min-width: 30px;
+    min-height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.vditor-toolbar>div.vditor-toolbar__item:hover {
+    background: #f0f5ff !important;
+    color: #1a66ff;
+}
+
+.vditor-content {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.vditor-content .vditor-ir,
+.vditor-content .vditor-wysiwyg,
+.vditor-content .vditor-preview {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 26px 40px 56px;
+    line-height: 1.8;
+}
+
+.vditor-content .vditor-reset {
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+.vditor.vditor--dark {
+    border-color: #2f3646;
+    background: #171c25;
+}
+
+.vditor.vditor--dark .vditor-toolbar {
+    border-bottom-color: #2f3646;
+    background: rgba(22, 27, 37, 0.94);
+}
+
+.vditor.vditor--dark .vditor-toolbar>div.vditor-toolbar__item:hover {
+    background: #2a3448 !important;
+    color: #dce7ff;
+}
+
+.vditor.vditor--dark .vditor-content {
+    background: linear-gradient(180deg, #171c25 0%, #141920 100%);
 }
 
 .toolbar-right {
@@ -59,16 +115,13 @@ pre.vditor-reset code {
 @media screen and (max-width: 768px) {
     .vditor-toolbar {
         flex-wrap: wrap;
-        /* 确保在移动端工具栏可以换行 */
-        justify-content: center;
-        /* 工具栏居中 */
-        padding: 2px !important;
-        /* 减小内边距 */
+        justify-content: flex-start;
+        padding: 6px !important;
     }
 
     /* 移动端下每个按钮使用更小的间距 */
     .vditor-toolbar>div {
-        margin: 2px !important;
+        margin: 1px !important;
     }
 
     /* 在移动端下隐藏工具栏分隔线，节省空间 */
@@ -85,7 +138,7 @@ pre.vditor-reset code {
 
     /* 移动端下工具栏总高度固定，可滚动 */
     .vditor-toolbar {
-        max-height: 80px;
+        max-height: 92px;
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: thin;
@@ -94,6 +147,14 @@ pre.vditor-reset code {
     /* 移动端下工具栏按钮组样式 */
     .vditor-toolbar>div.vditor-toolbar__item {
         flex: 0 0 auto;
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    .vditor-content .vditor-ir,
+    .vditor-content .vditor-wysiwyg,
+    .vditor-content .vditor-preview {
+        padding: 18px 12px 44px;
     }
 }
 

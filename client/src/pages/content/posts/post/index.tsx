@@ -1,5 +1,5 @@
 import { service } from '@/utils/api'
-import React, { useEffect, useRef, useState, useContext } from 'react'
+import React, { useCallback, useEffect, useRef, useState, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import { message, Skeleton } from 'antd'
 import ErrorDisplay from '@/components/ErrorDisplay'
@@ -41,9 +41,8 @@ function Post() {
     const [visible, setVisible] = useState(false)
     const [aiPanelVisible, setAiPanelVisible] = useState(false)
 
-    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
-
-    const [skeletonLoading, setSkeletonLoading] = useState(true)
+    const [isDataLoading, setIsDataLoading] = useState(true)
+    const [editorReady, setEditorReady] = useState(false)
     const [error, setError] = useState<Error | null>(null)
     const toolbarPin = useSelector((state: GlobalState) => {
         return state.vditorToolbarPin
@@ -335,22 +334,6 @@ function Post() {
         postRef.current({ _content: newContent })
     }
 
-    useEffect(() => {
-        const handleResize = () => {
-            if (editorWapperRef.current) {
-                const { clientWidth, clientHeight } = editorWapperRef.current
-                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` })
-            }
-        }
-        handleResize() // 初始化尺寸
-        // editorWapperRef.current.style.overfllow = 'auto';
-        window.addEventListener('resize', handleResize) // 监听窗口 resize 事件
-
-        return () => {
-            window.removeEventListener('resize', handleResize) // 清理事件监听
-        }
-    }, [])
-
     const retryFetch = () => {
         setError(null)
         fetchData()
@@ -358,7 +341,7 @@ function Post() {
 
     const fetchData = async () => {
         try {
-            setSkeletonLoading(true)
+            setIsDataLoading(true)
             const items = fetch()
             const promises = Object.keys(items).map((name) => {
                 return Promise.resolve(items[name]).then((data) => {
@@ -381,11 +364,13 @@ function Post() {
             setError(err as Error)
             message.error('加载失败: ' + (err as Error).message)
         } finally {
-            setTimeout(() => {
-                setSkeletonLoading(false)
-            }, 800)
+            setIsDataLoading(false)
         }
     }
+
+    const handleEditorReady = useCallback(() => {
+        setEditorReady(true)
+    }, [])
 
     useEffect(() => {
         fetchData()
@@ -399,18 +384,16 @@ function Post() {
     }, [])
 
     return (
-        <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
+        <div className={styles['editor-page']}>
             {/* 编辑器区域 */}
             <div
+                className={styles['editor-layout']}
                 ref={editorWapperRef}
                 style={{
-                    width: '100%',
-                    height: '100%',
                     display: 'flex',
                     flex: 1,
                     flexDirection: 'column',
-                    overflowY: 'auto',
-                    overflowX: 'hidden',
+                    overflow: 'hidden',
                 }}
             >
                 {error ? (
@@ -419,10 +402,10 @@ function Post() {
                     <>
                         <Skeleton
                             paragraph={{ rows: 10 }}
-                            loading={skeletonLoading}
+                            loading={isDataLoading || !editorReady}
                             active
                             className={styles['skeleton']}
-                            style={{ ...skeletonSize, ...skeletonStyle }}
+                            style={{ ...skeletonStyle }}
                         />
                         <EditorHeader
                             isPage={false}
@@ -440,12 +423,18 @@ function Post() {
                             handleRemoveSource={removeBlog}
                             handleAIClick={handleAIClick}
                         />
-                        <div style={{ width: '100%', flex: 1, padding: 0, border: 'none' }}>
+                        <div className={styles['editor-main']}>
+                            {!isDataLoading && editorReady && !(doc || '').trim() && (
+                                <div className={styles['editor-empty-hint']}>
+                                    {t['editor.empty.hint'] || '提示：可以直接输入、粘贴 Markdown，或拖拽图片到编辑器，内容会自动保存。'}
+                                </div>
+                            )}
                             <HexoProVditor
                                 initValue={doc}
                                 isPinToolbar={toolbarPin}
                                 handleChangeContent={handleChangeContent}
                                 handleUploadingImage={handleUploadingImage}
+                                onReady={handleEditorReady}
                             />
                         </div>
                         <PostSettings

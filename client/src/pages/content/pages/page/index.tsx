@@ -1,6 +1,6 @@
 
 import { service } from '@/utils/api'
-import React, { useEffect, useRef, useState, useContext } from 'react'
+import React, { useCallback, useEffect, useRef, useState, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import _ from 'lodash'
 import { PageSettings } from './pageSettings'
@@ -38,8 +38,8 @@ function Page() {
     const [visible, setVisible] = useState(false)
     const [aiPanelVisible, setAiPanelVisible] = useState(true)
     const t = useLocale()
-    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
-    const [skeletonLoading, setSkeletonLoading] = useState(true)
+    const [isDataLoading, setIsDataLoading] = useState(true)
+    const [editorReady, setEditorReady] = useState(false)
 
     const { theme } = useContext(GlobalContext)
 
@@ -175,42 +175,30 @@ function Page() {
 
 
     useEffect(() => {
-        const handleResize = () => {
-            if (editorWapperRef.current) {
-                const { clientWidth, clientHeight } = editorWapperRef.current
-                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` })
+        setIsDataLoading(true)
+        const fetchData = async () => {
+            try {
+                const items = fetch()
+                const promises = Object.keys(items).map((name) => {
+                    return Promise.resolve(items[name]).then((data) => {
+                        const update = {}
+                        update[name] = data
+                        setUpdate(update)
+                        if (dataDidLoad) {
+                            dataDidLoad(name, data)
+                        }
+                    })
+                })
+                await Promise.all(promises)
+            } finally {
+                setIsDataLoading(false)
             }
         }
-        handleResize() // 初始化尺寸
-        // editorWapperRef.current.style.overfllow = 'auto';
-        window.addEventListener('resize', handleResize) // 监听窗口 resize 事件
-
-        return () => {
-            window.removeEventListener('resize', handleResize) // 清理事件监听
-        }
+        fetchData()
     }, [])
 
-    useEffect(() => {
-        setSkeletonLoading(true)
-        const fetchData = async () => {
-            const items = fetch()
-            const promises = Object.keys(items).map((name) => {
-                return Promise.resolve(items[name]).then((data) => {
-                    const update = {}
-                    update[name] = data
-                    setUpdate(update)
-                    if (dataDidLoad) {
-                        dataDidLoad(name, data)
-                    }
-                })
-            })
-            await Promise.all(promises)
-            // 添加延迟
-            setTimeout(() => {
-                setSkeletonLoading(false)
-            }, 800) // 这里的1000表示1000毫秒，即1秒的延迟
-        }
-        fetchData()
+    const handleEditorReady = useCallback(() => {
+        setEditorReady(true)
     }, [])
 
     useEffect(() => {
@@ -222,24 +210,24 @@ function Page() {
 
     // const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
     return (
-        <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
+        <div className={styles['editor-page']}>
             {/* 编辑器区域 */}
             <div
+                className={styles['editor-layout']}
                 ref={editorWapperRef}
                 style={{
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
-                    overflowY: 'auto',
-                    overflowX: 'hidden',
+                    overflow: 'hidden',
                 }}
             >
                 <Skeleton
                     paragraph={{ rows: 10 }}
-                    loading={skeletonLoading}
+                    loading={isDataLoading || !editorReady}
                     active
                     className={styles['skeleton']}
-                    style={{ ...skeletonSize, ...skeletonStyle }}
+                    style={{ ...skeletonStyle }}
                 />
                 <EditorHeader
                     isPage={true}
@@ -247,6 +235,7 @@ function Page() {
                     isDraft={false}
                     handlePublish={() => { }}
                     handleUnpublish={() => { }}
+                    className={styles['editor-header']}
                     initTitle={title}
                     popTitle={t['editor.header.pop.title']}
                     popDes={t['page.editor.header.pop.des']}
@@ -255,12 +244,18 @@ function Page() {
                     handleRemoveSource={removePage}
                     handleAIClick={handleAIClick}
                 />
-                <div style={{ width: '100%', flex: 1, padding: 0, border: 'none' }}>
+                <div className={styles['editor-main']}>
+                    {!isDataLoading && editorReady && !(doc || '').trim() && (
+                        <div className={styles['editor-empty-hint']}>
+                            {t['editor.empty.hint'] || '提示：可以直接输入、粘贴 Markdown，或拖拽图片到编辑器，内容会自动保存。'}
+                        </div>
+                    )}
                     <HexoProVditor
                         initValue={doc}
                         isPinToolbar={toolbarPin}
                         handleChangeContent={handleChangeContent}
                         handleUploadingImage={handleUploadingImage}
+                        onReady={handleEditorReady}
                     />
                 </div>
                 <PageSettings
