@@ -626,26 +626,31 @@ function formatYamlValue(value: unknown): string {
 function verifyYamlPath(lines: string[], lineIdx: number, parts: string[]): boolean {
   if (parts.length <= 1) return true
 
-  const targetIndent = (lines[lineIdx].match(/^\s*/) || [''])[0].length
+  let currentIndent = getLineIndent(lines[lineIdx])
+  let searchStart = lineIdx - 1
 
-  // 向上查找父级 key
+  // 从最近父级开始逐层向上匹配（例如 a.b.c 先找 b 再找 a）
   for (let depth = parts.length - 2; depth >= 0; depth--) {
     const parentKey = parts[depth]
     let found = false
 
-    for (let j = lineIdx - 1; j >= 0; j--) {
+    for (let j = searchStart; j >= 0; j--) {
       const prevLine = lines[j]
-      const prevIndent = (prevLine.match(/^\s*/) || [''])[0].length
+      const trimmed = prevLine.trim()
+      if (!trimmed || trimmed.startsWith('#')) continue
 
-      // 找到缩进更小的行（父级）
-      if (prevIndent < targetIndent) {
-        const parsedKeyLine = parseYamlKeyLine(prevLine)
-        if (parsedKeyLine && parsedKeyLine.key === parentKey) {
-          found = true
-          break
-        }
-        break
+      const parsedKeyLine = parseYamlKeyLine(prevLine)
+      if (!parsedKeyLine) continue
+      if (parsedKeyLine.indent >= currentIndent) continue
+
+      if (parsedKeyLine.key !== parentKey) {
+        return false
       }
+
+      found = true
+      currentIndent = parsedKeyLine.indent
+      searchStart = j - 1
+      break
     }
 
     if (!found) return false

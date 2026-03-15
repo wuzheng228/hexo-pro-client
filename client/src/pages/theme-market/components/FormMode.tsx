@@ -400,9 +400,12 @@ const FormMode = forwardRef<FormModeRef, FormModeProps>(({
       if (config && typeof config === 'object' && schema.length > 0) {
         const values = configToFormValues(config, schema)
         const currentValues = form.getFieldsValue(true)
+        const definedCurrentValues = Object.fromEntries(
+          Object.entries(currentValues).filter(([, value]) => value !== undefined)
+        )
         form.setFieldsValue({
           ...values,
-          ...currentValues,
+          ...definedCurrentValues,
         })
       }
     } catch {
