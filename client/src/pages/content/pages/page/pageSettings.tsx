@@ -7,7 +7,7 @@ import useLocale from "@/hooks/useLocale"
 export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handleChange }) {
     // 添加使用的状态
     const [fmOpenStat, setFmOpenStat] = useState(false)
-    const [originFms, setOriginFms] = useState([])
+    const [originFms, setOriginFms] = useState({})
 
     const t = useLocale()
 

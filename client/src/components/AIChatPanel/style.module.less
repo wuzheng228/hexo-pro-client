@@ -169,8 +169,17 @@
 }
 
 .emptyIcon {
-    font-size: 42px;
-    line-height: 1;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    :global(svg) {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
 }
 
 .emptyText {

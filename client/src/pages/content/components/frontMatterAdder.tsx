@@ -1,9 +1,10 @@
-import { Button, Card, Checkbox, Input, Tag, Tooltip, Select, Switch, InputNumber, Space, Divider } from "antd"
+import { Button, Card, Checkbox, Input, Tag, Tooltip, Select, Switch, InputNumber, Space, Divider, message } from "antd"
 import React from "react"
 import { useEffect, useState } from "react"
 import useDeviceDetect from '../../../hooks/useDeviceDetect'
 import { formatFrontMatterValue } from "@/utils/booleanUtils"
 import useLocale from "@/hooks/useLocale"
+import yaml from "js-yaml"
 
 const CheckboxGroup = Checkbox.Group
 const { Option } = Select
@@ -19,6 +20,32 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
 
     const t = useLocale()
 
+    const hasOwn = (obj: Record<string, any>, key: string) => Object.prototype.hasOwnProperty.call(obj || {}, key)
+
+    // 用户在字符串类型里输入 "category" 时，自动还原为 category，避免最终写出 '"category"'
+    const normalizeStringInput = (value: string) => {
+        const raw = typeof value === 'string' ? value : ''
+        const trimmed = raw.trim()
+        if (!trimmed) return raw
+
+        const wrappedByDoubleQuote = trimmed.startsWith('"') && trimmed.endsWith('"')
+        const wrappedBySingleQuote = trimmed.startsWith("'") && trimmed.endsWith("'")
+        if (!wrappedByDoubleQuote && !wrappedBySingleQuote) {
+            return raw
+        }
+
+        try {
+            const parsed = yaml.load(trimmed)
+            if (typeof parsed === 'string') {
+                return parsed
+            }
+        } catch (_) {
+            // ignore parsing error and fallback below
+        }
+
+        return trimmed.slice(1, -1)
+    }
+
     useEffect(() => {
         setLocalVisible(visible)
     }, [visible])
@@ -33,14 +60,19 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
     }
 
     const existFontMatter = () => {
-        const fmkeys = Object.keys(existFrontMatter)
+        const fmkeys = Array.from(new Set([
+            ...Object.keys(existFrontMatter || {}),
+            ...Object.keys(frontMatter || {})
+        ]))
+        const selectedKeys = Object.keys(frontMatter || {})
         const options = []
 
         fmkeys.forEach((name, i) => {
+            const value = hasOwn(frontMatter, name) ? frontMatter[name] : existFrontMatter[name]
             options.push({
                 label: (
-                    <Tooltip key={i} title={formatFrontMatterValue(frontMatter[name])}>
-                        <Tag color={frontMatter[name] === null || frontMatter[name] === undefined ? 'default' : 'blue'} style={{fontSize: '11px', padding: '2px 6px'}}>{name}</Tag>
+                    <Tooltip key={i} title={formatFrontMatterValue(value)}>
+                        <Tag color={value === null || value === undefined ? 'default' : 'blue'} style={{fontSize: '11px', padding: '2px 6px'}}>{name}</Tag>
                     </Tooltip>
                 ),
                 value: name
@@ -48,39 +80,49 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
         })
 
         return (
-            <CheckboxGroup options={options} defaultValue={fmkeys} onChange={(v) => {
+            <CheckboxGroup options={options} value={selectedKeys} onChange={(v) => {
                 const newfmt = {}
                 v.forEach(name => {
-                    // 保持原始值，不进行任何转换
-                    newfmt[name] = !existFrontMatter[name] ? null : existFrontMatter[name]
+                    // 优先保留用户当前编辑中的值；不存在时回退到初始值
+                    if (hasOwn(frontMatter, name)) {
+                        newfmt[name] = frontMatter[name]
+                    } else if (hasOwn(existFrontMatter, name)) {
+                        newfmt[name] = existFrontMatter[name]
+                    } else {
+                        newfmt[name] = null
+                    }
                 })
-                console.log('newfmt', newfmt)
                 onChange(newfmt)
             }} />
         )
     }
 
     const onInputEnterKeyPress = () => {
-        if (inputFmtKeyValue.trim().length == 0) {
+        const normalizedKey = inputFmtKeyValue.trim()
+        if (normalizedKey.length === 0) {
             return
         }
-        
+
         const newFmt = { ...frontMatter }
-        
+
         // 根据选择的类型设置值
         switch (inputValueType) {
             case 'boolean':
-                newFmt[inputFmtKeyValue] = booleanValue
+                newFmt[normalizedKey] = booleanValue
                 break
             case 'number':
-                newFmt[inputFmtKeyValue] = numberValue
+                newFmt[normalizedKey] = numberValue
                 break
             case 'string':
             default:
-                newFmt[inputFmtKeyValue] = inputFmtValueValue
+                newFmt[normalizedKey] = normalizeStringInput(inputFmtValueValue)
                 break
         }
-        
+
+        if (hasOwn(frontMatter, normalizedKey)) {
+            message.info(`已更新字段: ${normalizedKey}`)
+        }
+
         onChange(newFmt)
         resetInputState()
     }

@@ -13,7 +13,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
     const [catOpenStat, setCatOpenStat] = useState(false)
     const [originCats, setOriginCats] = useState([])
     const [fmOpenStat, setFmOpenStat] = useState(false)
-    const [originFms, setOriginFms] = useState([])
+    const [originFms, setOriginFms] = useState({})
 
     const t = useLocale()
     // console.log(postMeta)
