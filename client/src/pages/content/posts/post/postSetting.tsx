@@ -14,6 +14,8 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
     const [originCats, setOriginCats] = useState([])
     const [fmOpenStat, setFmOpenStat] = useState(false)
     const [originFms, setOriginFms] = useState({})
+    const [frontMatterStyles, setFrontMatterStyles] = useState({})
+    const [originFmStyles, setOriginFmStyles] = useState({})
 
     const t = useLocale()
     // console.log(postMeta)
@@ -32,6 +34,7 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
 
     const fmtClose = (v) => {
         const newfmt = {}
+        const newStyles = { ...frontMatterStyles }
         Object.keys(postMeta.frontMatter).forEach(key => {
             if (key === v) {
                 return
@@ -40,9 +43,11 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
             console.log(key, postMeta.frontMatter[key])
             newfmt[key] = postMeta.frontMatter[key]
         })
+        delete newStyles[v]
         const meta = { ...postMeta, frontMatter: newfmt }
         console.log(meta)
         setPostMeta(meta)
+        setFrontMatterStyles(newStyles)
     }
 
     return (
@@ -57,15 +62,22 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                 setVisible(false)
                 console.log('cancel', originFms)
                 setPostMeta({ ...postMeta, tags: originTags, categories: originCats, frontMatter: originFms })
+                setFrontMatterStyles(originFmStyles)
             }}
             onOk={() => {
                 setVisible(false)
-                handleChange({ tags: postMeta.tags, categories: postMeta.categories, frontMatter: postMeta.frontMatter })
+                handleChange({
+                    tags: postMeta.tags,
+                    categories: postMeta.categories,
+                    frontMatter: postMeta.frontMatter,
+                    frontMatterStyles
+                })
             }}
             afterOpenChange={() => {
                 setOriginTags(postMeta.tags)
                 setOriginCats(postMeta.categories)
                 setOriginFms(postMeta.frontMatter)
+                setOriginFmStyles(frontMatterStyles)
             }}
             style={{ width: 800 }}
         >
@@ -142,11 +154,19 @@ export function PostSettings({ visible, setVisible, tagCatMeta, setTagCatMeta, p
                     </Space>
                     {
                         /* todo 打开添加标签的界面 */
-                        <FrontMatterAdder existFrontMatter={originFms} onClose={() => { setFmOpenStat(false) }} visible={fmOpenStat} title={'Font-Matter'} frontMatter={postMeta.frontMatter} onChange={
-                            (v) => {
+                        <FrontMatterAdder
+                            existFrontMatter={originFms}
+                            onClose={() => { setFmOpenStat(false) }}
+                            visible={fmOpenStat}
+                            title={'Font-Matter'}
+                            frontMatter={postMeta.frontMatter}
+                            frontMatterStyles={frontMatterStyles}
+                            onChange={
+                            (v, styles) => {
                                 // 直接使用用户选择的值，不进行自动转换
                                 const meta = { ...postMeta, frontMatter: v }
                                 setPostMeta(meta)
+                                setFrontMatterStyles(styles || {})
                             }
                         } />
                     }

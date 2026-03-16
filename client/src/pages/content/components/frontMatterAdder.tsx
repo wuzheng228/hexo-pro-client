@@ -9,7 +9,7 @@ import yaml from "js-yaml"
 const CheckboxGroup = Checkbox.Group
 const { Option } = Select
 
-export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, frontMatter, onChange }) {
+export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, frontMatter, frontMatterStyles = {}, onChange }) {
     const { isMobile } = useDeviceDetect()
     const [localVisible, setLocalVisible] = useState(false)
     const [inputFmtKeyValue, setInputFmtKeyValue] = useState('')
@@ -22,18 +22,28 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
 
     const hasOwn = (obj: Record<string, any>, key: string) => Object.prototype.hasOwnProperty.call(obj || {}, key)
 
-    // 用户在字符串类型里输入 "category" 时，自动还原为 category，避免最终写出 '"category"'
-    const normalizeStringInput = (value: string) => {
+    const getStringInputStyle = (value: string): 'double' | 'single' | 'plain' => {
         const raw = typeof value === 'string' ? value : ''
         const trimmed = raw.trim()
-        if (!trimmed) return raw
+        if (!trimmed) return 'plain'
 
         const wrappedByDoubleQuote = trimmed.startsWith('"') && trimmed.endsWith('"')
         const wrappedBySingleQuote = trimmed.startsWith("'") && trimmed.endsWith("'")
-        if (!wrappedByDoubleQuote && !wrappedBySingleQuote) {
-            return raw
+        if (wrappedByDoubleQuote) {
+            return 'double'
         }
+        if (wrappedBySingleQuote) {
+            return 'single'
+        }
+        return 'plain'
+    }
 
+    // 把输入值解析成真实字符串值；引号风格通过 frontMatterStyles 单独保存
+    const normalizeStringInput = (value: string, style: 'double' | 'single' | 'plain') => {
+        const raw = typeof value === 'string' ? value : ''
+        const trimmed = raw.trim()
+        if (!trimmed) return raw
+        if (style === 'plain') return raw
         try {
             const parsed = yaml.load(trimmed)
             if (typeof parsed === 'string') {
@@ -82,6 +92,7 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
         return (
             <CheckboxGroup options={options} value={selectedKeys} onChange={(v) => {
                 const newfmt = {}
+                const newStyles = {}
                 v.forEach(name => {
                     // 优先保留用户当前编辑中的值；不存在时回退到初始值
                     if (hasOwn(frontMatter, name)) {
@@ -91,8 +102,12 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
                     } else {
                         newfmt[name] = null
                     }
+
+                    if (hasOwn(frontMatterStyles, name)) {
+                        newStyles[name] = frontMatterStyles[name]
+                    }
                 })
-                onChange(newfmt)
+                onChange(newfmt, newStyles)
             }} />
         )
     }
@@ -104,26 +119,36 @@ export function FrontMatterAdder({ visible, onClose, title, existFrontMatter, fr
         }
 
         const newFmt = { ...frontMatter }
+        const nextStyles = { ...frontMatterStyles }
 
         // 根据选择的类型设置值
         switch (inputValueType) {
             case 'boolean':
                 newFmt[normalizedKey] = booleanValue
+                delete nextStyles[normalizedKey]
                 break
             case 'number':
                 newFmt[normalizedKey] = numberValue
+                delete nextStyles[normalizedKey]
                 break
             case 'string':
-            default:
-                newFmt[normalizedKey] = normalizeStringInput(inputFmtValueValue)
+            default: {
+                const style = getStringInputStyle(inputFmtValueValue)
+                newFmt[normalizedKey] = normalizeStringInput(inputFmtValueValue, style)
+                if (style === 'plain') {
+                    delete nextStyles[normalizedKey]
+                } else {
+                    nextStyles[normalizedKey] = style
+                }
                 break
+            }
         }
 
         if (hasOwn(frontMatter, normalizedKey)) {
             message.info(`已更新字段: ${normalizedKey}`)
         }
 
-        onChange(newFmt)
+        onChange(newFmt, nextStyles)
         resetInputState()
     }
 

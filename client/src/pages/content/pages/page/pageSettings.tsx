@@ -8,11 +8,14 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
     // 添加使用的状态
     const [fmOpenStat, setFmOpenStat] = useState(false)
     const [originFms, setOriginFms] = useState({})
+    const [frontMatterStyles, setFrontMatterStyles] = useState({})
+    const [originFmStyles, setOriginFmStyles] = useState({})
 
     const t = useLocale()
 
     const fmtClose = (v) => {
         const newfmt = {}
+        const newStyles = { ...frontMatterStyles }
         Object.keys(pageMeta.frontMatter).forEach(key => {
             if (key === v) {
                 return
@@ -20,8 +23,10 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
             // 保持原始值，不进行自动转换
             newfmt[key] = pageMeta.frontMatter[key]
         })
+        delete newStyles[v]
         const meta = { ...pageMeta, frontMatter: newfmt }
         setPageMeta(meta)
+        setFrontMatterStyles(newStyles)
     }
 
     function isPathValid(path) {
@@ -40,6 +45,7 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
             visible={visible}
             onCancel={() => {
                 setPageMeta({ ...pageMeta, tags: [], categories: [], frontMatter: originFms })
+                setFrontMatterStyles(originFmStyles)
                 setVisible(false)
             }}
             onOk={() => {
@@ -47,11 +53,12 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
                     message.error(t['pageSettings.input.path.error'])
                 } else {
                     setVisible(false)
-                    handleChange({ frontMatter: pageMeta.frontMatter, source: pageMeta.source })
+                    handleChange({ frontMatter: pageMeta.frontMatter, frontMatterStyles, source: pageMeta.source })
                 }
             }}
             afterOpenChange={() => {
                 setOriginFms(pageMeta.frontMatter)
+                setOriginFmStyles(frontMatterStyles)
             }}
             style={{ width: 800 }}
         >
@@ -78,11 +85,19 @@ export function PageSettings({ visible, setVisible, pageMeta, setPageMeta, handl
 
                     {
                         /* todo 打开添加标签的界面 */
-                        <FrontMatterAdder existFrontMatter={originFms} onClose={() => { setFmOpenStat(false) }} visible={fmOpenStat} title={'Font-Matter'} frontMatter={pageMeta.frontMatter} onChange={
-                            (v) => {
+                        <FrontMatterAdder
+                            existFrontMatter={originFms}
+                            onClose={() => { setFmOpenStat(false) }}
+                            visible={fmOpenStat}
+                            title={'Font-Matter'}
+                            frontMatter={pageMeta.frontMatter}
+                            frontMatterStyles={frontMatterStyles}
+                            onChange={
+                            (v, styles) => {
                                 // 直接使用用户选择的值，不进行自动转换
                                 const meta = { ...pageMeta, frontMatter: v }
                                 setPageMeta(meta)
+                                setFrontMatterStyles(styles || {})
                             }
                         } />
                     }
