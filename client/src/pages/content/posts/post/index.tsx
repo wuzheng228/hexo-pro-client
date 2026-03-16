@@ -152,79 +152,61 @@ function Post() {
         }
     }
 
+    const updatePostTitleAndSource = (nextTitle: string) => {
+        if (!post.source) {
+            postRef.current({ title: nextTitle })
+            setPost({ ...post, title: nextTitle })
+            return
+        }
+
+        const parts = post.source.split('/')
+        parts[parts.length - 1] = `${nextTitle}.md`
+        const newSource = parts.join('/')
+
+        postRef.current({ title: nextTitle, source: newSource })
+        setPost({ ...post, title: nextTitle, source: newSource })
+    }
+
     // 修改标题处理函数
     const handleChangeTitle = async (v) => {
-
-        // 直接更新标题状态，不立即检查重复
-        setTitle(v)
-        // 如果标题没有变化，直接返回
-        if (v === title) {
+        const nextTitle = String(v || '').trim()
+        if (!nextTitle || nextTitle === post.title) {
+            setTitle(post.title || '')
             return
         }
 
-        // 检查是否存在同名文章
-        const exists = await checkTitleExists(v)
-
+        const exists = await checkTitleExists(nextTitle)
         if (exists) {
-            // 提示用户但不阻止输入
             message.warning('已存在同名文章，保存时将自动添加区分字符')
-            // 如果重复，自动添加时间戳后缀
-            const uniqueTitle = `${v} (${Date.now()})`
+            const uniqueTitle = `${nextTitle} (${Date.now()})`
             setTitle(uniqueTitle)
-
-            // 更新文件名
-            const parts = post.source.split('/')
-            parts[parts.length - 1] = uniqueTitle + '.md'
-            const newSource = parts.join('/')
-            postRef.current({ title: uniqueTitle, source: newSource })
-            setPost({ ...post, title: uniqueTitle })
+            updatePostTitleAndSource(uniqueTitle)
             return
         }
 
-        // 无论是否重复，都更新文件名
-        const parts = post.source.split('/')
-        parts[parts.length - 1] = v + '.md'
-        const newSource = parts.join('/')
-        postRef.current({ title: v, source: newSource })
+        setTitle(nextTitle)
+        updatePostTitleAndSource(nextTitle)
     }
 
     // 添加标题失去焦点时的处理函数
     const handleTitleBlur = async (v) => {
-
-        // 如果标题没有变化，直接返回
-        console.log('handleTitleBlur', title, post.title, v.target.value)
-        if (title === post.title) {
+        const nextTitle = String(v?.target?.value || '').trim()
+        if (!nextTitle || nextTitle === post.title) {
+            setTitle(post.title || '')
             return
         }
 
-        const debouncedUpdate = _.debounce(async (newTitle) => {
-            // 检查是否存在同名文章
-            const exists = await checkTitleExists(newTitle)
+        const exists = await checkTitleExists(nextTitle)
+        if (exists) {
+            const uniqueTitle = `${nextTitle} (${Date.now()})`
+            setTitle(uniqueTitle)
+            updatePostTitleAndSource(uniqueTitle)
+            message.info('已自动为重复标题添加区分字符')
+            return
+        }
 
-            if (exists) {
-                // 如果重复，自动添加时间戳后缀
-                const uniqueTitle = `${title} (${Date.now()})`
-                setTitle(uniqueTitle)
-
-                // 更新文件名
-                const parts = post.source.split('/')
-                parts[parts.length - 1] = uniqueTitle + '.md'
-                const newSource = parts.join('/')
-                postRef.current({ title: uniqueTitle, source: newSource })
-
-                message.info('已自动为重复标题添加区分字符')
-                setPost({ ...post, title: uniqueTitle })
-            }
-
-            // 无论是否重复，都更新文件名
-            const parts = post.source.split('/')
-            parts[parts.length - 1] = newTitle + '.md'
-            const newSource = parts.join('/')
-            console.log('handleTitleBlur111', newTitle, newSource)
-            postRef.current({ title: newTitle, source: newSource })
-        }, 100) // 800ms 的延迟
-
-        debouncedUpdate(v.target.value)
+        setTitle(nextTitle)
+        updatePostTitleAndSource(nextTitle)
     }
 
     const handleChangeContent = (text) => {

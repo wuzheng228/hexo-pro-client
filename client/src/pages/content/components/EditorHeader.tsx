@@ -1,7 +1,7 @@
 import { DeleteOutlined, SettingOutlined, EditOutlined, SaveOutlined } from "@ant-design/icons"
 import { Button, Col, Popconfirm, Row, message } from "antd"
 import ButtonGroup from "antd/es/button/button-group"
-import React, { useContext, useState } from "react"
+import React, { useContext, useRef, useState } from "react"
 import cs from 'classnames'
 import { GlobalContext } from "@/context"
 import useLocale from "@/hooks/useLocale"
@@ -15,6 +15,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
 
     const [isEditingTitle, setIsEditingTitle] = useState(false)
     const [tempTitle, setTempTitle] = useState('')
+    const suppressBlurRef = useRef(false)
     const locale = useLocale()
     const { isMobile } = useDeviceDetect()
 
@@ -98,6 +99,16 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
         setTempTitle(value)
     }
 
+    const onInputBlur = (e) => {
+        if (suppressBlurRef.current) {
+            suppressBlurRef.current = false
+            return
+        }
+        if (handleTitleBlur) {
+            handleTitleBlur(e)
+        }
+    }
+
     return (
         <Row style={{
             width: "100%",
@@ -126,7 +137,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                         }}
                         value={tempTitle}
                         onChange={(e) => handleTitleChange(e.target.value)}
-                        onBlur={handleTitleBlur || undefined}
+                        onBlur={onInputBlur}
                         autoFocus
                     />
                 ) : (
@@ -174,6 +185,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             <Button
                                 type='primary'
                                 icon={<SaveOutlined />}
+                                onMouseDown={() => { suppressBlurRef.current = true }}
                                 onClick={saveTitle}
                                 style={{
                                     ...buttonBaseStyle
@@ -183,6 +195,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             </Button>
                             <Button
                                 type='default'
+                                onMouseDown={() => { suppressBlurRef.current = true }}
                                 onClick={cancelEditTitle}
                                 style={{
                                     ...buttonBaseStyle
