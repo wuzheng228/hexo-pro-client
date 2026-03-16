@@ -226,6 +226,21 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         }
     }
 
+    const extractCreatedPage = (payload: any) => {
+        if (payload?.permalink) return payload
+        if (payload?.page?.permalink) return payload.page
+        if (payload?.data?.permalink) return payload.data
+        return null
+    }
+
+    const queryLatestCreatedPage = async (targetTitle: string) => {
+        const res = await service.get('/hexopro/api/pages/list', {
+            params: { deleted: false, page: 1, pageSize: 20 }
+        })
+        const pages = res.data?.data || []
+        return pages.find((item) => item.title === targetTitle) || pages[0]
+    }
+
     const newPage = async () => {
         if (!checkTitle(title)) {
             return
@@ -234,28 +249,24 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         try {
             // 检查标题是否已存在
             const exists = await checkPageTitleExists(title)
+            const finalTitle = exists ? `${title}${Date.now()}` : title
             if (exists) {
-                // 如果存在，自动添加时间戳后缀
-                const uniqueTitle = `${title}${Date.now()}`
                 message.info(locale['navbar.page.exists'] || '已存在同名页面，已自动添加区分字符')
-                
-                const res = await service.post('/hexopro/api/pages/new', { title: uniqueTitle })
-                if (res.status === 200) {
-                    const post = res.data
-                    post.date = parseDateTime(post.date)
-                    post.updated = parseDateTime(post.updated)
-                    navigate(`/page/${base64Encode(post.permalink)}`)
-                }
-            } else {
-                // 如果不存在，直接创建
-                const res = await service.post('/hexopro/api/pages/new', { title: title })
-                if (res.status === 200) {
-                    const post = res.data
-                    post.date = parseDateTime(post.date)
-                    post.updated = parseDateTime(post.updated)
-                    navigate(`/page/${base64Encode(post.permalink)}`)
-                }
             }
+
+            const res = await service.post('/hexopro/api/pages/new', { title: finalTitle })
+            let page = extractCreatedPage(res.data)
+
+            // 兼容接口未返回创建实体的情况（例如 204），通过列表回查保证可跳转
+            if (!page?.permalink) {
+                page = await queryLatestCreatedPage(finalTitle)
+            }
+
+            if (!page?.permalink) {
+                throw new Error('页面已创建，但未获取到页面链接')
+            }
+
+            navigate(`/page/${base64Encode(page.permalink)}`)
         } catch (err) {
             console.log(err)
             api.error({ message: locale['error.title'], description: err.message })
