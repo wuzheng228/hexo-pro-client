@@ -3,9 +3,6 @@ import { Button, Col, Popconfirm, Row, message } from "antd"
 import ButtonGroup from "antd/es/button/button-group"
 import React, { useContext, useState } from "react"
 import cs from 'classnames'
-import IconPin from "@/assets/pin.svg"
-import IconPinFill from "@/assets/pin-fill.svg"
-import { useDispatch } from "react-redux"
 import { GlobalContext } from "@/context"
 import useLocale from "@/hooks/useLocale"
 import useDeviceDetect from "@/hooks/useDeviceDetect"
@@ -16,10 +13,8 @@ import IconAI from "@/assets/ai.svg"
 
 export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleTitleBlur = undefined, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish, handleAIClick = undefined }) {
 
-    const [isPin, setIsPin] = useState(true)
     const [isEditingTitle, setIsEditingTitle] = useState(false)
     const [tempTitle, setTempTitle] = useState('')
-    const dispatch = useDispatch()
     const locale = useLocale()
     const { isMobile } = useDeviceDetect()
 
@@ -73,17 +68,6 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
         borderColor: theme === 'dark' ? '#2f3646' : '#d9dfec',
         backgroundColor: currentTheme.buttonBackgroundColor,
         color: currentTheme.buttonColor,
-    }
-
-    const handlePinClick = () => {
-        const newPinState = !isPin
-        setIsPin(newPinState)
-        dispatch({
-            type: 'toggle-vditor-toolbar-pin',
-            payload: {
-                vditorToolbarPin: newPinState
-            },
-        })
     }
 
     // 开始编辑标题
@@ -238,9 +222,6 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             </Button>
                         )
                     }
-                    <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />}
-                        onClick={handlePinClick}
-                        style={{ ...buttonBaseStyle }} />
                     {handleAIClick && (
                         <Button
                             type='default'

@@ -11,8 +11,6 @@ import AIChatPanel from '@/components/AIChatPanel'
 import useLocale from '@/hooks/useLocale'
 import { Skeleton } from 'antd'
 import styles from '../../style/index.module.less'
-import { useSelector } from 'react-redux'
-import { GlobalState } from '@/store'
 import { GlobalContext } from '@/context'
 
 
@@ -50,11 +48,6 @@ function Page() {
         backgroundColor: '#fff', // 明亮主题背景色
         color: '#000' // 明亮主题文字颜色
     }
-
-
-    const toolbarPin = useSelector((state: GlobalState) => {
-        return state.vditorToolbarPin
-    })
 
     const queryPageById = (_id) => {
         return new Promise((resolve, reject) => {
@@ -252,7 +245,6 @@ function Page() {
                     )}
                     <HexoProVditor
                         initValue={doc}
-                        isPinToolbar={toolbarPin}
                         handleChangeContent={handleChangeContent}
                         handleUploadingImage={handleUploadingImage}
                         onReady={handleEditorReady}

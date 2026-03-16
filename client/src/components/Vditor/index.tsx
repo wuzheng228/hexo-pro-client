@@ -18,7 +18,6 @@ const { Option } = Select
 
 interface HexoProVditorProps {
     initValue: string;
-    isPinToolbar: boolean;
     handleChangeContent: (content: string) => void;
     handleUploadingImage: (isUploading: boolean) => void;
     onReady?: () => void;
@@ -56,7 +55,7 @@ interface FolderData {
     pageSize: number;
 }
 
-export default function HexoProVditor({ initValue, isPinToolbar, handleChangeContent, handleUploadingImage, onReady }: HexoProVditorProps) {
+export default function HexoProVditor({ initValue, handleChangeContent, handleUploadingImage, onReady }: HexoProVditorProps) {
     // 'emoji', 'headings', 'bold', 'italic', 'strike', '|', 'line', 'quote', 'list', 'ordered-list', 'check', 'outdent', 'indent', 'code', 'inline-code', 'insert-after', 'insert-before', 'undo', 'redo', 'upload', 'link', 'table', 'edit-mode', 'preview', 'fullscreen', 'outline', 'export'
     const { isMobile } = useDeviceDetect() // 添加设备检测
     const [imagePickerVisible, setImagePickerVisible] = useState(false)
@@ -546,26 +545,6 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
     }, [isMigratingExternalImages])
 
     useEffect(() => {
-        // console.log('isPinToolbar', isPinToolbar)
-        if (vd) {
-            // console.log('isPinToolbar111', isPinToolbar)
-            vd.updateToolbarConfig({
-                pin: isPinToolbar
-            })
-
-            // 根据pin状态添加/移除相应的类名，用于CSS样式控制
-            const toolbar = document.querySelector('.vditor-toolbar') as HTMLElement
-            if (toolbar) {
-                if (isPinToolbar) {
-                    toolbar.classList.add('vditor-toolbar--pin')
-                } else {
-                    toolbar.classList.remove('vditor-toolbar--pin')
-                }
-            }
-        }
-    }, [vd, isPinToolbar])
-
-    useEffect(() => {
         // console.log('theme', theme)
         if (vd) {
             // console.log('theme111', theme)
@@ -941,7 +920,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
             height: '100%',
             width: '100%',
             toolbarConfig: {
-                pin: false // 确保工具栏固定
+                pin: true
             },
             after: () => {
                 // 设置初始值
@@ -953,6 +932,7 @@ export default function HexoProVditor({ initValue, isPinToolbar, handleChangeCon
                 const vditorElement = document.getElementById('vditor') as HTMLElement
                 if (toolbar && vditorElement) {
                     toolbar.style.width = `${vditorElement.clientWidth}px !important`
+                    toolbar.classList.add('vditor-toolbar--pin')
 
                     // 为移动设备添加专用样式
                     if (isMobile) {

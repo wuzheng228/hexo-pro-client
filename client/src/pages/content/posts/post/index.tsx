@@ -11,8 +11,6 @@ import EditorHeader from '../../components/EditorHeader'
 import AIChatPanel from '@/components/AIChatPanel'
 import useLocale from '@/hooks/useLocale'
 import styles from '../../style/index.module.less'
-import { useSelector, useDispatch } from 'react-redux'
-import { GlobalState } from '@/store'
 import { GlobalContext } from '@/context'
 import HexoProMilkdown from '@/components/MilkdownEditor'
 
@@ -44,12 +42,7 @@ function Post() {
     const [isDataLoading, setIsDataLoading] = useState(true)
     const [editorReady, setEditorReady] = useState(false)
     const [error, setError] = useState<Error | null>(null)
-    const toolbarPin = useSelector((state: GlobalState) => {
-        return state.vditorToolbarPin
-    })
-
     const { theme } = useContext(GlobalContext)
-    const dispatch = useDispatch()
 
     const skeletonStyle = theme === 'dark' ? {
         backgroundColor: '#333', // 暗黑主题背景色
@@ -431,7 +424,6 @@ function Post() {
                             )}
                             <HexoProVditor
                                 initValue={doc}
-                                isPinToolbar={toolbarPin}
                                 handleChangeContent={handleChangeContent}
                                 handleUploadingImage={handleUploadingImage}
                                 onReady={handleEditorReady}

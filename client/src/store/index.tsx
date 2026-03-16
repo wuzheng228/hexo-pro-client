@@ -9,14 +9,12 @@ export interface GlobalState {
         email?: string;
         userLoading?: boolean;
     },
-    vditorToolbarPin: boolean,
     aiPanelVisible: boolean,
 }
 
 const initialState: GlobalState = {
     userInfo: {
     },
-    vditorToolbarPin: true,
     aiPanelVisible: false,
 }
 
@@ -29,12 +27,6 @@ const rootReducer = function store(state = initialState, action) {
                 ...state,
                 userLoading,
                 userInfo,
-            }
-        }
-        case 'toggle-vditor-toolbar-pin': {
-            return {
-                ...state,
-                vditorToolbarPin: !state.vditorToolbarPin,
             }
         }
         case 'toggle-ai-panel': {
