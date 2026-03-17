@@ -1,17 +1,16 @@
 
 import { service } from '@/utils/api'
-import React, { useEffect, useRef, useState, useContext } from 'react'
+import React, { useCallback, useEffect, useRef, useState, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import _ from 'lodash'
 import { PageSettings } from './pageSettings'
 import { useNavigate } from "react-router-dom"
 import HexoProVditor from '@/components/Vditor'
 import EditorHeader from '../../components/EditorHeader'
+import AIChatPanel from '@/components/AIChatPanel'
 import useLocale from '@/hooks/useLocale'
 import { Skeleton } from 'antd'
 import styles from '../../style/index.module.less'
-import { useSelector } from 'react-redux'
-import { GlobalState } from '@/store'
 import { GlobalContext } from '@/context'
 
 
@@ -35,9 +34,10 @@ function Page() {
     // const [rendered, setRendered] = useState('');
     const [update, setUpdate] = useState({})
     const [visible, setVisible] = useState(false)
+    const [aiPanelVisible, setAiPanelVisible] = useState(true)
     const t = useLocale()
-    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
-    const [skeletonLoading, setSkeletonLoading] = useState(true)
+    const [isDataLoading, setIsDataLoading] = useState(true)
+    const [editorReady, setEditorReady] = useState(false)
 
     const { theme } = useContext(GlobalContext)
 
@@ -48,11 +48,6 @@ function Page() {
         backgroundColor: '#fff', // 明亮主题背景色
         color: '#000' // 明亮主题文字颜色
     }
-
-
-    const toolbarPin = useSelector((state: GlobalState) => {
-        return state.vditorToolbarPin
-    })
 
     const queryPageById = (_id) => {
         return new Promise((resolve, reject) => {
@@ -126,10 +121,8 @@ function Page() {
     }
 
     const handleChangeContent = (text) => {
-        // if (text === rendered) {
-        //     return
-        // }
-        // setRendered(text)
+        // 同步本地状态，保证 AI 插入等场景拿到的是最新内容
+        setDoc(text)
         postRef.current({ _content: text })
     }
 
@@ -160,81 +153,122 @@ function Page() {
         // console.log('handleUploadingImage', isUploading)
     }
 
+    const handleAIClick = () => {
+        setAiPanelVisible(!aiPanelVisible)
+    }
+
+    const handleInsertContent = (content: string) => {
+        const base = doc || ''
+        const newContent = base + '\n\n' + content
+        // 更新本地状态
+        setDoc(newContent)
+        // 触发编辑器内容和后端更新
+        postRef.current({ _content: newContent })
+    }
+
 
     useEffect(() => {
-        const handleResize = () => {
-            if (editorWapperRef.current) {
-                const { clientWidth, clientHeight } = editorWapperRef.current
-                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` })
+        setIsDataLoading(true)
+        const fetchData = async () => {
+            try {
+                const items = fetch()
+                const promises = Object.keys(items).map((name) => {
+                    return Promise.resolve(items[name]).then((data) => {
+                        const update = {}
+                        update[name] = data
+                        setUpdate(update)
+                        if (dataDidLoad) {
+                            dataDidLoad(name, data)
+                        }
+                    })
+                })
+                await Promise.all(promises)
+            } finally {
+                setIsDataLoading(false)
             }
         }
-        handleResize() // 初始化尺寸
-        // editorWapperRef.current.style.overfllow = 'auto';
-        window.addEventListener('resize', handleResize) // 监听窗口 resize 事件
-
-        return () => {
-            window.removeEventListener('resize', handleResize) // 清理事件监听
-        }
+        fetchData()
     }, [])
 
-    useEffect(() => {
-        setSkeletonLoading(true)
-        const fetchData = async () => {
-            const items = fetch()
-            const promises = Object.keys(items).map((name) => {
-                return Promise.resolve(items[name]).then((data) => {
-                    const update = {}
-                    update[name] = data
-                    setUpdate(update)
-                    if (dataDidLoad) {
-                        dataDidLoad(name, data)
-                    }
-                })
-            })
-            await Promise.all(promises)
-            // 添加延迟
-            setTimeout(() => {
-                setSkeletonLoading(false)
-            }, 800) // 这里的1000表示1000毫秒，即1秒的延迟
-        }
-        fetchData()
+    const handleEditorReady = useCallback(() => {
+        setEditorReady(true)
     }, [])
 
     useEffect(() => {
         const p = _.debounce((update) => {
             handleUpdate(update)
-        }, 1000, { trailing: true, loading: true })
+        }, 1000, { trailing: true })
         postRef.current = p
     }, [])
 
     // const [editorRef, editorView] = MarkDownEditor({ initialValue: doc, adminSettings: { editor: { lineNumbers: true } }, setRendered, handleChangeContent, handleScroll, forceLineNumbers: lineNumber })
     return (
-        <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: 'auto', overflowX: 'hidden' }}>
-            <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
-            <EditorHeader
-                isPage={true}
-                permalink={page.permalink} // 桌面端使用需要替换域名为localhost:4000
-                isDraft={false}
-                handlePublish={() => { }}
-                handleUnpublish={() => { }}
-                initTitle={title}
-                popTitle={t['editor.header.pop.title']}
-                popDes={t['page.editor.header.pop.des']}
-                handleChangeTitle={handleChangeTitle}
-                handleSettingClick={(v) => setVisible(true)}
-                handleRemoveSource={removePage}
-            />
-            <div style={{ width: "100%", flex: 1, padding: 0, border: 'none' }}>
-                <HexoProVditor initValue={doc} isPinToolbar={toolbarPin} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
+        <div className={styles['editor-page']}>
+            {/* 编辑器区域 */}
+            <div
+                className={styles['editor-layout']}
+                ref={editorWapperRef}
+                style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                }}
+            >
+                <Skeleton
+                    paragraph={{ rows: 10 }}
+                    loading={isDataLoading || !editorReady}
+                    active
+                    className={styles['skeleton']}
+                    style={{ ...skeletonStyle }}
+                />
+                <EditorHeader
+                    isPage={true}
+                    permalink={page.permalink} // 桌面端使用需要替换域名为localhost:4000
+                    isDraft={false}
+                    handlePublish={() => { }}
+                    handleUnpublish={() => { }}
+                    className={styles['editor-header']}
+                    initTitle={title}
+                    popTitle={t['editor.header.pop.title']}
+                    popDes={t['page.editor.header.pop.des']}
+                    handleChangeTitle={handleChangeTitle}
+                    handleSettingClick={(v) => setVisible(true)}
+                    handleRemoveSource={removePage}
+                    handleAIClick={handleAIClick}
+                />
+                <div className={styles['editor-main']}>
+                    {!isDataLoading && editorReady && !(doc || '').trim() && (
+                        <div className={styles['editor-empty-hint']}>
+                            {t['editor.empty.hint'] || '提示：可以直接输入、粘贴 Markdown，或拖拽图片到编辑器，内容会自动保存。'}
+                        </div>
+                    )}
+                    <HexoProVditor
+                        initValue={doc}
+                        handleChangeContent={handleChangeContent}
+                        handleUploadingImage={handleUploadingImage}
+                        onReady={handleEditorReady}
+                    />
+                </div>
+                <PageSettings
+                    visible={visible}
+                    setVisible={setVisible}
+                    pageMeta={pageMetaData}
+                    setPageMeta={setPageMetadata}
+                    handleChange={handleChange}
+                />
             </div>
-            <PageSettings
-                visible={visible}
-                setVisible={setVisible}
-                pageMeta={pageMetaData}
-                setPageMeta={setPageMetadata}
-                handleChange={handleChange}
-            />
-        </div >
+            {/* AI聊天面板 - 右侧侧栏 */}
+            {aiPanelVisible && (
+                <div className={styles['ai-panel-wrap']}>
+                    <AIChatPanel
+                        visible={aiPanelVisible}
+                        onClose={() => setAiPanelVisible(false)}
+                        onInsertContent={handleInsertContent}
+                    />
+                </div>
+            )}
+        </div>
     )
 }
 

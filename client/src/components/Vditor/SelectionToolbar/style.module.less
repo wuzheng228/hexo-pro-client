@@ -1,0 +1,288 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 480px;
+
+    &.flipped {
+        flex-direction: column-reverse;
+    }
+}
+
+.bar {
+    padding: 6px 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+
+    .dark & {
+        background: #2a2a2a;
+        border-color: #424242;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+}
+
+.loadingWrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px;
+}
+
+.loadingText {
+    font-size: 13px;
+    color: #666;
+
+    .dark & {
+        color: #aaa;
+    }
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+}
+
+.actionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #333;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover {
+        background: #f0f0f0;
+        color: #1677ff;
+    }
+
+    .dark & {
+        color: #e0e0e0;
+
+        &:hover {
+            background: #3a3a3a;
+            color: #1677ff;
+        }
+    }
+}
+
+.icon {
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+
+.label {
+    line-height: 1.3;
+}
+
+/* AI 结果对话框 */
+.resultBox {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid #e8e8e8;
+    overflow: hidden;
+
+    .dark & {
+        background: #2a2a2a;
+        border-color: #424242;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+}
+
+.resultContent {
+    padding: 12px 14px;
+    max-height: 260px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #333;
+
+    .dark & {
+        color: #e0e0e0;
+    }
+}
+
+.reasoning {
+    margin-bottom: 12px;
+    padding: 0;
+    background: transparent;
+}
+
+.reasoningHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    padding: 2px 0;
+
+    &:hover {
+        opacity: 0.85;
+    }
+}
+
+.reasoningLabel {
+    font-size: 12px;
+    color: #999;
+    font-weight: 400;
+
+    .dark & {
+        color: #8a8a8a;
+    }
+}
+
+.reasoningToggle {
+    font-size: 10px;
+    color: #999;
+    margin-left: 8px;
+
+    .dark & {
+        color: #6a6a6a;
+    }
+}
+
+.reasoningContent {
+    margin-top: 8px;
+    padding-left: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #555;
+
+    .dark & {
+        color: #b0b0b0;
+    }
+}
+
+.cursor {
+    display: inline;
+    animation: blink 1s steps(2) infinite;
+    color: #1677ff;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.markdown {
+    p {
+        margin: 0 0 8px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    code {
+        background: #f5f5f5;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 13px;
+
+        .dark & {
+            background: #3a3a3a;
+        }
+    }
+
+    pre {
+        background: #f5f5f5;
+        padding: 10px;
+        border-radius: 6px;
+        overflow-x: auto;
+
+        code {
+            background: transparent;
+            padding: 0;
+        }
+
+        .dark & {
+            background: #1a1a1a;
+        }
+    }
+
+    ul, ol {
+        padding-left: 20px;
+        margin: 4px 0;
+    }
+}
+
+.resultActions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 10px;
+    border-top: 1px solid #f0f0f0;
+
+    .dark & {
+        border-top-color: #3a3a3a;
+    }
+}
+
+.resultBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #555;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover {
+        background: #f0f0f0;
+        color: #1677ff;
+    }
+
+    .dark & {
+        color: #bbb;
+
+        &:hover {
+            background: #3a3a3a;
+            color: #1677ff;
+        }
+    }
+}
+
+.closeBtn {
+    margin-left: auto;
+}
+
+.kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-family: inherit;
+    line-height: 1.4;
+    color: #999;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    margin-left: 2px;
+
+    .dark & {
+        background: #333;
+        border-color: #555;
+        color: #888;
+    }
+}

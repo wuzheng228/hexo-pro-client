@@ -1,694 +1,349 @@
 .dashboardContainer {
+  --bg: linear-gradient(180deg, #f6f8fc 0%, #eff3fa 100%);
+  --surface: #ffffff;
+  --surface-soft: #f8faff;
+  --text-primary: #1f2430;
+  --text-secondary: #677087;
+  --border: #e5ebf5;
+  --shadow: 0 10px 30px rgba(16, 24, 40, 0.06);
+  --shadow-soft: 0 4px 14px rgba(16, 24, 40, 0.05);
+
+  min-height: 100%;
   padding: 16px;
-  
+  background: var(--bg);
+
   @media (max-width: 768px) {
     padding: 8px;
   }
 }
 
-.dashboardCard {
-  height: 100%;  
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.darkMode {
+  --bg: linear-gradient(180deg, #111722 0%, #0f141f 100%);
+  --surface: #161d2a;
+  --surface-soft: #131a25;
+  --text-primary: #e5edf8;
+  --text-secondary: #9aa7bf;
+  --border: #2a3446;
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 6px 16px rgba(0, 0, 0, 0.26);
+}
+
+.heroCard,
+.sectionCard,
+.metricCard {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+
   :global(.ant-card-head) {
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    min-height: 52px;
   }
-  
+
   :global(.ant-card-body) {
-    padding: 16px;
+    color: var(--text-primary);
   }
 }
 
-// 优化欢迎卡片
-.welcomeCard {
-  background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
-  color: white;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
-  
+.heroCard {
+  margin-bottom: 14px;
+  background: linear-gradient(115deg, #2f72ff 0%, #4ba0ff 45%, #5fc4d8 100%);
+  border: none;
+  box-shadow: 0 14px 30px rgba(43, 107, 255, 0.24);
+
   :global(.ant-card-body) {
-    padding: 24px;
-  }
-  
-  :global(.ant-typography) {
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    padding: 20px;
   }
 }
 
-.welcomeHeader {
+.heroTop {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  
-  @media (max-width: 768px) {
+  gap: 16px;
+
+  @media (max-width: 992px) {
     flex-direction: column;
-    align-items: flex-start;
   }
 }
 
-.welcomeInfo {
-  flex: 1;
+.heroTitle {
+  margin: 0 !important;
+  color: #ffffff !important;
 }
 
-.quickActions {
+.heroSubtitle {
+  margin: 6px 0 0 !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.heroActions {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  
-  @media (max-width: 768px) {
-    margin-top: 16px;
+  gap: 8px;
+  justify-content: flex-end;
+
+  @media (max-width: 992px) {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
-  
-  button {
-    margin-bottom: 8px;
+
+  :global(.ant-btn) {
+    border-radius: 9px;
+  }
+
+  :global(.ant-btn:not(.ant-btn-primary)) {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.34);
+    color: #ffffff;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.24);
+      border-color: rgba(255, 255, 255, 0.5);
+      color: #ffffff;
+    }
+  }
+
+  :global(.ant-btn-primary) {
+    border-color: rgba(255, 255, 255, 0.65);
+    color: #1e49b8;
+    background: #ffffff;
   }
 }
 
-// 核心指标卡片样式
-.metricsGroupCard {
-  margin-bottom: 14px; // 增加底部边距，使其与 trendsRow 上方间距一致
+.heroStatusRow {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-// .trendsRow {
-//   // margin-bottom: 14px;
-//   width: 100%;
-//   height: 327px;
-//   margin-top: 0; // 去掉顶部边距，保证与上方卡片间距一致
-//   @media (max-width: 768px) {
-//     height: auto; // 移动端不固定高度，防止内容重叠
-    
-//     flex-direction: column;
-//     display: block;
-//   }
-// }
+.statusTag {
+  margin: 0;
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.metricsRow {
+  margin-bottom: 14px;
+}
 
 .metricCard {
   height: 100%;
-  transition: all 0.3s;
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  :global(.ant-card-body) {
+    padding: 16px;
   }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: #7ea6ff;
+  }
+}
+
+.metricCardClickable {
+  cursor: pointer;
 }
 
 .metricIcon {
-  font-size: 24px;
-  margin-right: 8px;
-  color: #1890ff;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #2b6bff;
+  background: rgba(43, 107, 255, 0.11);
 }
 
-.metricStatistic {
-  :global(.ant-statistic-title) {
-    font-size: 16px;
-    margin-bottom: 8px;
-  }
-  
-  :global(.ant-statistic-content) {
-    font-size: 28px;
-    font-weight: bold;
-  }
+.metricValue {
+  margin-top: 10px;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-// 优化饼图容器
-.pieChartContainer {
-  height: 300px;
-  display: flex;
-  flex-direction: column;
-  
-  .pieTitle {
-    font-size: 16px;
-    font-weight: 500;
-    margin-bottom: 16px;
-    color: #1890ff;
-    display: flex;
-    align-items: center;
-    
-    svg {
-      margin-right: 8px;
-    }
-  }
-  
-  .pieWrapper {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.metricLabel {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.metricHint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.mainRow {
+  margin-bottom: 4px;
+}
+
+.sectionCard {
+  :global(.ant-card-body) {
+    padding: 14px;
   }
 }
 
-.calendarContainer {
-  :global(.ant-picker-calendar-date-content) {
-    height: 20px;
-  }
-}
-
-.chartContainer {
-  height: 250px; // 调整默认高度以适应柱状图
+.chartWrap {
+  height: 250px;
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  @media (max-width: 768px) {
-    height: 200px; // 移动端高度
-  }
 
   > * {
     width: 100% !important;
-    height: 100% !important;
-    min-width: 0;
-    min-height: 0;
   }
 }
 
-.popularContainer {
-  // height: 300px; // 可以移除固定高度，让内容自适应
-  overflow-y: auto;
-  padding-right: 8px;
-  
-  @media (max-width: 768px) {
-    // height: 250px;
-  }
+.secondaryRow {
+  margin-top: 14px;
 }
 
-.sectionTitle {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 12px;
-  color: #1890ff;
-}
+.trendCard {
+  height: auto !important;
 
-// 优化系统信息区域样式
-.systemRow {
-  margin-bottom: 16px;
-}
-
-// 系统信息卡片样式优化
-.systemInfoCard {
-  height: 100%;
-  
-  :global(.ant-list-item) {
-    padding: 8px 0;
-    display: flex;
-    justify-content: space-between;
-    
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-  
-  :global(.ant-list-item-meta-title) {
-    margin-bottom: 0;
-  }
-}
-
-// 插件状态卡片样式优化
-.pluginsCard {
-  height: 100%;
-  
   :global(.ant-card-body) {
-    padding: 0 16px;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .pluginsHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
-    margin-bottom: 8px;
-    
-    .pluginsCount {
-      font-size: 13px;
-      color: rgba(0, 0, 0, 0.45);
-    }
-  }
-  
-  .pluginsList {
-    flex: 1;
-    overflow-y: auto;
-    max-height: 180px;
-    padding-right: 4px;
-    
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
-    }
-    
-    :global(.ant-list-item) {
-      padding: 8px 0;
-      display: flex;
-      align-items: center;
-      
-      &:last-child {
-        border-bottom: none;
-      }
-    }
-  }
-  
-  .pluginName {
-    flex: 1;
-    margin-left: 8px;
-    font-size: 14px;
-  }
-  
-  .pluginVersion {
-    font-size: 12px;
-    color: rgba(0, 0, 0, 0.45);
-    margin-left: 8px;
-  }
-  
-  .pluginStatus {
-    margin-left: auto;
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background-color: #f6ffed;
-    color: #52c41a;
-    
-    &.disabled {
-      background-color: #f5f5f5;
-      color: rgba(0, 0, 0, 0.45);
-    }
+    height: clamp(240px, 34vh, 320px);
+    overflow: hidden;
+    padding: 12px 14px;
   }
 }
 
-// 构建记录卡片样式优化
-.buildCard {
-  height: 100%;
-  
+.recentCard {
+  margin-top: 14px;
+  height: auto !important;
+
   :global(.ant-card-body) {
-    padding: 0 16px;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .buildHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
-    margin-bottom: 8px;
-    
-    .buildCount {
-      font-size: 13px;
-      color: rgba(0, 0, 0, 0.45);
-    }
-  }
-  
-  .buildTimeline {
-    flex: 1;
+    height: clamp(260px, 38vh, 340px);
     overflow-y: auto;
-    max-height: 180px;
-    padding-right: 4px;
-    
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    
-    &::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
-    }
-  }
-  
-  :global(.ant-timeline-item) {
-    padding-bottom: 12px;
-    
-    &:last-child {
-      padding-bottom: 0;
-    }
-  }
-  
-  :global(.ant-timeline-item-content) {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .buildItemTitle {
-    font-weight: 500;
-    font-size: 14px;
-  }
-  
-  .buildItemTime {
-    font-size: 12px;
-    color: rgba(0, 0, 0, 0.45);
-    margin-top: 2px;
-  }
-  
-  .buildItemStatus {
-    font-size: 12px;
-    padding: 1px 6px;
-    border-radius: 10px;
-    background-color: #f6ffed;
-    color: #52c41a;
-    margin-left: 8px;
-    
-    &.failed {
-      background-color: #fff2f0;
-      color: #ff4d4f;
-    }
+    padding: 8px 12px;
   }
 }
 
-// 新增/优化核心指标卡片区域样式
-.metricCardNew {
-  background: linear-gradient(135deg, #f8fafc 0%, #e6f7ff 100%);
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(24, 144, 255, 0.08);
-  padding: 24px 12px 18px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: box-shadow 0.3s, transform 0.3s;
-  min-height: 120px;
-  position: relative;
+.trendChartWrap {
+  height: 100%;
+}
+
+.recentListItem {
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 8px 10px !important;
+  transition: background 0.2s ease;
 
   &:hover {
-    box-shadow: 0 6px 24px rgba(24, 144, 255, 0.18);
-    transform: translateY(-4px) scale(1.03);
-  }
-
-  &.darkMode {
-    background: linear-gradient(135deg, #23272f 0%, #1a2233 100%);
-    box-shadow: 0 2px 12px rgba(24, 144, 255, 0.12);
+    background: var(--surface-soft);
   }
 }
 
-.metricIconBadge {
-  font-size: 32px;
-  color: #1890ff;
-  margin-bottom: 8px;
-  transition: color 0.3s;
-  display: block;
+.recentTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-  .darkMode & {
-    color: #40a9ff;
+.draftBadge {
+  :global(.ant-badge-status-text) {
+    color: var(--text-secondary);
   }
 }
 
-.metricStatisticNew {
-  :global(.ant-statistic-title) {
-    font-size: 15px;
-    color: #888;
-    margin-bottom: 6px;
-    text-align: center;
-    letter-spacing: 1px;
-    .darkMode & {
-      color: #bbb;
-    }
-  }
-  :global(.ant-statistic-content) {
-    font-size: 32px;
-    font-weight: 700;
-    color: #222;
-    text-align: center;
-    .darkMode & {
-      color: #fff;
-      text-shadow: 0 1px 4px rgba(24,144,255,0.12);
-    }
-  }
+.recentMeta {
+  color: var(--text-secondary);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-// 响应式优化
-@media (max-width: 768px) {
-  .metricCardNew {
-    padding: 16px 6px 12px 6px;
-    min-height: 90px;
-  }
-  .metricIconBadge {
-    font-size: 26px;
-    margin-bottom: 4px;
-  }
-  .metricStatisticNew {
-    :global(.ant-statistic-title) {
-      font-size: 13px;
-    }
-    :global(.ant-statistic-content) {
-      font-size: 22px;
-    }
-  }
-}
-
-// 待办事项区域样式优化
-.rightColumn {
+.sideColumn {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  gap: 16px; // 新增：让右侧所有卡片有间隙
+  gap: 14px;
 }
 
-// 待办事项卡片样式
 .todoCard {
-  // margin-bottom: 16px;
-  flex-shrink: 0;
-  max-height: 327px;
-  
-  :global(.ant-card-head) {
-    border-bottom: 1px solid #f0f0f0;
-    background: linear-gradient(90deg, #e6f7ff 0%, #f8fafc 100%);
-    border-radius: 10px 10px 0 0;
-    
-    // 卡片头部布局优化
-    :global(.ant-card-head-wrapper) {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      
-      @media (max-width: 768px) {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-    }
-    
-    // 标题区域
-    :global(.ant-card-head-title) {
-      flex: 0 0 auto;
-      margin-right: 16px;
-      
-      @media (max-width: 768px) {
-        margin-right: 0;
-        margin-bottom: 0;
-      }
-    }
-    
-    // extra 区域
-    :global(.ant-card-extra) {
-      flex: 1 1 auto;
-      display: flex;
-      justify-content: flex-end;
-      min-width: 0;
-      
-      @media (max-width: 768px) {
-        width: 100%;
-        justify-content: flex-start;
-      }
-    }
-  }
-  
   :global(.ant-card-body) {
-    padding: 18px 12px 12px 12px !important;
-    background: #fcfeff;
-    border-radius: 0 0 10px 10px;
-    max-height: 270px !important;
-    overflow-y: auto !important;
-  }
-  :global(.ant-card-body)::-webkit-scrollbar {
-    display: none;
+    max-height: 360px;
+    overflow-y: auto;
   }
 
-  &.darkMode {
-    :global(.ant-card-head) {
-      border-bottom: 1px solid #23272f;
-      background: linear-gradient(90deg, #23272f 0%, #1a2233 100%);
-    }
-    :global(.ant-card-body) {
-      background: #181c24;
-      color: #eee;
-    }
-  }
-
-  // 新增：隐藏title时的样式
-  &.noTitle {
-    :global(.ant-card-head) {
-      padding: 12px 16px;
-      border-radius: 10px 10px 0 0;
-      
-      :global(.ant-card-head-wrapper) {
-        justify-content: center;
-      }
-      
-      :global(.ant-card-extra) {
-        flex: 1;
-        justify-content: center;
-        margin-left: 0;
-      }
-    }
-    
-    // 增加body的高度，因为header变小了
-    :global(.ant-card-body) {
-      max-height: 295px !important;
-    }
+  :global(.ant-card-head-title) {
+    white-space: nowrap;
   }
 }
 
-// 待办事项搜索框容器样式
-.todoSearchWrapper {
-  width: 100%;
-  max-width: 280px;
-  min-width: 200px;
-  
+.todoInput {
+  min-width: 210px;
+
   @media (max-width: 768px) {
-    max-width: 100%;
-    min-width: auto;
+    min-width: 140px;
   }
-  
-  // 新增：占满宽度的样式
-  &.fullWidth {
-    max-width: 100%;
-    min-width: 300px;
-    
-    @media (max-width: 768px) {
-      min-width: auto;
-    }
+}
+
+.systemCard {
+  .systemList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
-  
-  :global(.ant-input-search) {
-    width: 100%;
-    
-    :global(.ant-input) {
-      border-radius: 6px 0 0 6px;
-    }
-    
-    :global(.ant-btn) {
-      border-radius: 0 6px 6px 0;
-      white-space: nowrap;
-      
-      @media (max-width: 768px) {
-        padding: 0 8px;
-      }
+
+  .systemListItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-soft);
+
+    > span {
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
   }
 }
 
-// 最近文章卡片样式（假设类名为 recentPostsCard，可根据实际组件类名调整）
-.recentArticlesCard {
-  max-height: 327px; // 新增：限制最大高度
+.deployCard {
   :global(.ant-card-body) {
-    overflow-y: auto;  // 新增：内容超出时滚动
+    max-height: 300px;
+    overflow-y: auto;
   }
-  :global(.ant-card-body)::-webkit-scrollbar {
-    display: none;
+
+  :global(.ant-timeline-item-content) {
+    color: var(--text-secondary);
   }
 }
 
-.recentArticlesCard::-webkit-scrollbar {
-  display: none;
-}
-
-// 热门标签词云下方空白优化（假设类名为 tagWordCloudContainer，可根据实际组件类名调整）
-.tagWordCloudContainer {
-  margin-bottom: 0; // 新增：去除多余底部间距
-}
-
-.todoInputWrapper {
-  margin-bottom: 14px;
-  .ant-input {
-    border-radius: 8px;
-    border: 1px solid #d9d9d9;
-    transition: border-color 0.2s;
-    &:focus, &:hover {
-      border-color: #1890ff;
-      box-shadow: 0 0 0 2px rgba(24,144,255,0.08);
-    }
+.darkMode {
+  .heroCard {
+    box-shadow: 0 14px 34px rgba(35, 86, 186, 0.45);
   }
-}
 
-.todoItem {
-  display: flex !important;
-  align-items: center;
-  padding: 8px 0 !important;
-  border-bottom: 1px solid #f5f5f5;
-  transition: background 0.2s;
-  &:last-child {
-    border-bottom: none;
+  .metricIcon {
+    color: #8fb6ff;
+    background: rgba(127, 166, 255, 0.16);
   }
-  &:hover {
-    background: #f4faff;
-    .todoDeleteBtn {
-      opacity: 1;
-    }
-  }
-}
 
-.todoCheckbox {
-  margin-right: 10px;
-  .ant-checkbox-inner {
-    border-radius: 4px;
-    width: 18px;
-    height: 18px;
+  .recentListItem:hover {
+    background: #1a2230;
   }
-}
 
-.todoContent {
-  flex: 1;
-  font-size: 15px;
-  color: #222;
-  transition: color 0.2s;
-  &.completed {
-    color: #bfbfbf;
-    text-decoration: line-through;
-  }
-}
-
-.todoTime {
-  font-size: 13px;
-  color: #aaa;
-  margin-left: 18px;
-  min-width: 80px;
-  text-align: right;
-}
-
-.todoDeleteBtn {
-  margin-left: 10px;
-  opacity: 0.5;
-  transition: opacity 0.2s;
-  &:hover {
-    opacity: 1;
-    color: #ff4d4f !important;
-  }
-}
-
-// 已完成待办的背景色
-.todoItem .ant-checkbox-checked + .todoContent,
-.todoItem .todoContent[style*="line-through"] {
-  color: #bfbfbf !important;
-}
-
-// 移动端适配
-@media (max-width: 768px) {
-  .todoCard .ant-card-body {
-    padding: 12px 4px 8px 4px;
-  }
-  .todoInputWrapper {
-    margin-bottom: 10px;
-  }
-  .todoContent {
-    font-size: 13px;
-  }
-  .todoTime {
-    font-size: 12px;
-    min-width: 60px;
+  .statusTag {
+    border-color: rgba(255, 255, 255, 0.28);
   }
 }

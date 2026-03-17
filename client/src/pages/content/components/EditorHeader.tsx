@@ -1,43 +1,40 @@
 import { DeleteOutlined, SettingOutlined, EditOutlined, SaveOutlined } from "@ant-design/icons"
-import { Button, Col, message, Popconfirm, Row } from "antd"
+import { Button, Col, Popconfirm, Row, message } from "antd"
 import ButtonGroup from "antd/es/button/button-group"
-import React, { useContext, useState } from "react"
+import React, { useContext, useRef, useState } from "react"
 import cs from 'classnames'
-import IconPin from "@/assets/pin.svg"
-import IconPinFill from "@/assets/pin-fill.svg"
-import { useDispatch } from "react-redux"
 import { GlobalContext } from "@/context"
 import useLocale from "@/hooks/useLocale"
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import { openDesktopLink } from "@/utils/desktopUtils"
 import IconLink from "@/assets/link.svg"
 import IconLinkLight from "@/assets/linkLight.svg"
+import IconAI from "@/assets/ai.svg"
 
-export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleTitleBlur = undefined, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish }) {
+export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, popDes, className = '', permalink = undefined, handleChangeTitle, handleTitleBlur = undefined, handleSettingClick, handleRemoveSource, handlePublish, handleUnpublish, handleAIClick = undefined }) {
 
-    const [isPin, setIsPin] = useState(true)
     const [isEditingTitle, setIsEditingTitle] = useState(false)
     const [tempTitle, setTempTitle] = useState('')
-    const dispatch = useDispatch()
+    const suppressBlurRef = useRef(false)
     const locale = useLocale()
     const { isMobile } = useDeviceDetect()
 
     const themeStyles = {
         light: {
             backgroundColor: "white",
-            borderBottomColor: 'gray',
+            borderBottomColor: '#edf1f7',
             inputBackgroundColor: "white",
-            inputColor: "black",
+            inputColor: "#1f2430",
             buttonBackgroundColor: "white",
-            buttonColor: "black"
+            buttonColor: "#1f2430"
         },
         dark: {
-            backgroundColor: "#2e2e2e",
-            borderBottomColor: '#555',
-            inputBackgroundColor: "#2e2e2e",
-            inputColor: "white",
-            buttonBackgroundColor: "#555",
-            buttonColor: "white"
+            backgroundColor: "#161a22",
+            borderBottomColor: '#2f3646',
+            inputBackgroundColor: "#161a22",
+            inputColor: "#e6ebf5",
+            buttonBackgroundColor: "#1c2230",
+            buttonColor: "#e6ebf5"
         }
     }
 
@@ -47,38 +44,31 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
     // 响应式样式配置
     const responsiveHeaderStyles: React.CSSProperties | null = isMobile ? {
         flexWrap: 'wrap',
-        padding: '8px 0',
     } : null
 
     const responsiveInputStyles = isMobile ? {
-        fontSize: 22,
-        marginLeft: 8,
-        marginRight: 8,
-        height: 50
+        fontSize: 20,
+        marginLeft: 6,
+        marginRight: 6,
+        minHeight: 44
     } : {
-        fontSize: 19,
+        fontSize: 20,
+        minHeight: 42,
     }
 
     const responsiveButtonColStyles = isMobile ? {
-        fontSize: 22,
-        marginLeft: 8,
-        marginRight: 8,
-        height: 50,
+        marginTop: 6,
         whiteSpace: 'nowrap'
     } : {
-        fontSize: 18,
-        height: 60,
+        minHeight: 44,
     }
 
-    const handlePinClick = () => {
-        const newPinState = !isPin
-        setIsPin(newPinState)
-        dispatch({
-            type: 'toggle-vditor-toolbar-pin',
-            payload: {
-                vditorToolbarPin: newPinState
-            },
-        })
+    const buttonBaseStyle: React.CSSProperties = {
+        height: 34,
+        borderRadius: 8,
+        borderColor: theme === 'dark' ? '#2f3646' : '#d9dfec',
+        backgroundColor: currentTheme.buttonBackgroundColor,
+        color: currentTheme.buttonColor,
     }
 
     // 开始编辑标题
@@ -93,7 +83,7 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
             message.error('标题不能为空')
             return
         }
-        
+
         handleChangeTitle(tempTitle) // 添加这行，确保父组件的标题状态更新
         setIsEditingTitle(false)
     }
@@ -109,12 +99,23 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
         setTempTitle(value)
     }
 
+    const onInputBlur = (e) => {
+        if (suppressBlurRef.current) {
+            suppressBlurRef.current = false
+            return
+        }
+        if (handleTitleBlur) {
+            handleTitleBlur(e)
+        }
+    }
+
     return (
         <Row style={{
             width: "100%",
             borderBottomColor: currentTheme.borderBottomColor,
             borderBottom: '1px solid',
             backgroundColor: currentTheme.backgroundColor,
+            padding: isMobile ? '8px 10px' : '10px 14px',
             ...responsiveHeaderStyles
         }} align='middle' className={cs("editor-header", className)}>
             {/* 标题输入 */}
@@ -126,14 +127,17 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             border: 'none',
                             outline: 'none',
                             boxSizing: 'border-box',
-                            fontWeight: 500,
+                            fontWeight: 600,
+                            borderRadius: 8,
                             backgroundColor: currentTheme.inputBackgroundColor,
                             color: currentTheme.inputColor,
+                            lineHeight: '1.4',
+                            padding: isMobile ? '4px 6px' : '4px 8px',
                             ...responsiveInputStyles
                         }}
                         value={tempTitle}
                         onChange={(e) => handleTitleChange(e.target.value)}
-                        onBlur={handleTitleBlur || undefined}
+                        onBlur={onInputBlur}
                         autoFocus
                     />
                 ) : (
@@ -141,8 +145,10 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                         style={{
                             width: "100%",
                             boxSizing: 'border-box',
-                            fontWeight: 500,
+                            fontWeight: 600,
                             color: currentTheme.inputColor,
+                            lineHeight: '1.4',
+                            padding: isMobile ? '4px 6px' : '4px 8px',
                             ...responsiveInputStyles
                         }}
                     >
@@ -161,57 +167,54 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'flex-end',
-                    paddingRight: !isMobile ? '20px' : undefined,
                     ...responsiveButtonColStyles
                 }}>
                 <ButtonGroup style={{
-                    width: '100%',
+                    width: 'auto',
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'flex-end',
-                    gap: '10px',
+                    gap: '8px',
                     flexWrap: isMobile ? 'nowrap' : 'wrap',
                     overflowX: isMobile ? 'auto' : 'visible'
                 }}>
                     {/* 标题编辑按钮 */}
                     {isEditingTitle ? (
                         <>
-                            <Button 
+                            <Button
                                 type='primary'
                                 icon={<SaveOutlined />}
+                                onMouseDown={() => { suppressBlurRef.current = true }}
                                 onClick={saveTitle}
-                                style={{ 
-                                    backgroundColor: currentTheme.buttonBackgroundColor, 
-                                    color: currentTheme.buttonColor,
-                                    borderColor: theme === 'dark' ? '#555' : '#d9d9d9' // 添加适合主题的边框颜色
+                                style={{
+                                    ...buttonBaseStyle
                                 }}
                             >
                                 {isMobile ? '' : locale["editor.header.edit.title.save"]}
                             </Button>
-                            <Button 
+                            <Button
                                 type='default'
+                                onMouseDown={() => { suppressBlurRef.current = true }}
                                 onClick={cancelEditTitle}
-                                style={{ 
-                                    backgroundColor: currentTheme.buttonBackgroundColor, 
-                                    color: currentTheme.buttonColor,
-                                    borderColor: theme === 'dark' ? '#555' : '#d9d9d9' // 添加适合主题的边框颜色
+                                style={{
+                                    ...buttonBaseStyle
                                 }}
                             >
                                 {isMobile ? locale["editor.header.edit.title.cancel"] : locale["editor.header.edit.title.cancel"]}
                             </Button>
                         </>
                     ) : (
-                        <Button 
+                        <Button
                             type='default'
                             icon={<EditOutlined />}
                             onClick={startEditTitle}
-                            style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}
+                            style={{ ...buttonBaseStyle }}
                         >
                             {isMobile ? '' : locale["editor.header.edit.title"]}
                         </Button>
                     )}
-                    
+
                     {/* 移动端优先显示主要操作 */}
                     {!isMobile && (
                         <>
@@ -220,9 +223,9 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                     )}
                     {
                         (isPage || (!isPage && !isDraft)) && (
-                                                        <Button
+                            <Button
                                 type="default"
-                                style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }}
+                                style={{ ...buttonBaseStyle }}
                                 onClick={(event) => {
                                     event.stopPropagation()
                                     openDesktopLink(permalink)
@@ -232,29 +235,34 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                             </Button>
                         )
                     }
-                    <Button type='default' icon={isPin ? <IconPinFill /> : <IconPin />}
-                        onClick={handlePinClick}
-                        style={{ backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                    {handleAIClick && (
+                        <Button
+                            type='default'
+                            icon={theme === 'dark' ? <IconAI /> : <IconAI />}
+                            onClick={handleAIClick}
+                            style={{ ...buttonBaseStyle }}
+                            title={locale['ai.title'] || 'AI 助手'}
+                        />
+                    )}
                     <Button type='default' icon={<SettingOutlined />}
                         onClick={(e) => handleSettingClick(e)}
-                        style={{ borderRight: 'none', backgroundColor: currentTheme.buttonBackgroundColor, color: currentTheme.buttonColor }} />
+                        style={{ ...buttonBaseStyle }} />
                     {!isPage && (isDraft ?
                         <Button type='primary'
                             onClick={handlePublish}
                             style={{
-                                zIndex: 2,
-                                border: '1px  dashed',
-                                borderColor: 'gray',
-                                backgroundColor: currentTheme.buttonBackgroundColor,
-                                color: currentTheme.buttonColor,
+                                ...buttonBaseStyle,
+                                borderStyle: 'solid',
+                                borderColor: '#1a66ff',
+                                backgroundColor: '#1a66ff',
+                                color: '#ffffff',
                             }}>
                             {isMobile ? '发布' : locale['editor.header.publish']}
                         </Button>
                         : <Button type='default'
                             onClick={handleUnpublish}
                             style={{
-                                backgroundColor: currentTheme.buttonBackgroundColor,
-                                color: currentTheme.buttonColor,
+                                ...buttonBaseStyle,
                             }}>
                             {locale['editor.header.unpublish']}
                         </Button>
@@ -264,23 +272,15 @@ export default function EditorHeader({ initTitle, isPage, isDraft, popTitle, pop
                         title={popTitle}
                         description={popDes}
                         onConfirm={() => {
-                            message.info({ content: 'ok' })
                             handleRemoveSource()
-                        }}
-                        onCancel={() => {
-                            message.error({ content: 'cancel' })
                         }}
                     >
                         <Button
                             type='default'
                             icon={<DeleteOutlined />}
                             style={{
-                                paddingLeft: isMobile ? 0 : 30,
-                                backgroundColor: currentTheme.buttonBackgroundColor,
-                                color: currentTheme.buttonColor,
-                                width: isMobile ? 'auto' : 'auto',
-                                minWidth: isMobile ? '40px' : 'auto',
-                                padding: isMobile ? '0 8px' : undefined
+                                ...buttonBaseStyle,
+                                minWidth: isMobile ? '40px' : undefined,
                             }} />
                     </Popconfirm>
                 </ButtonGroup>

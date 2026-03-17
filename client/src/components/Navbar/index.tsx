@@ -2,8 +2,8 @@ import React, { useContext, useRef, useState, useEffect } from "react"
 import _ from 'lodash'
 import styles from './style/index.module.less'
 import Logo from '@/assets/logo3.svg'
-import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Tag, message, notification } from "antd"
-import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled, UserOutlined } from "@ant-design/icons"
+import { Avatar, Button, Drawer, Dropdown, Input, List, Menu, MenuProps, Modal, Select, Tag, message, notification } from "antd"
+import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DownOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuOutlined, MoonOutlined, PictureOutlined, PoweroffOutlined, SearchOutlined, SettingOutlined, SunFilled, UserOutlined, GlobalOutlined } from "@ant-design/icons"
 import IconLang from "@/assets/lang.svg"
 import IconLangLight from "@/assets/langLight.svg"
 import useLocale from "@/hooks/useLocale"
@@ -18,6 +18,7 @@ import cs from 'classnames'
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import useRoute from "@/routes"
 import { base64Encode } from "@/utils/encodeUtils"
+import { openDesktopLink } from "@/utils/desktopUtils"
 import SettingIcon from '../../assets/setting.svg'
 
 type NavbarProps = {
@@ -41,6 +42,9 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
     const [searchLoading, setSearchLoading] = useState(false)
     const [api, contextHolder] = notification.useNotification()
     const [drawerVisible, setDrawerVisible] = useState(false)
+    const [availableCategories, setAvailableCategories] = useState<string[]>([])
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+    const [categoryLoading, setCategoryLoading] = useState(false)
 
     const writeDropList: MenuProps['items'] = [
         {
@@ -100,6 +104,8 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
     ]
 
     const handleCreateBlog: MenuProps['onClick'] = ({ key }) => {
+        setTitle('')
+        setSelectedCategories([])
         if (key === '1') {
             setOpen(true)
             setTarget('Post')
@@ -132,6 +138,26 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
 
     const onCancel = () => {
         setOpen(false)
+        setSelectedCategories([])
+    }
+
+    const normalizeCategoryValues = (values: string[] = []) => {
+        return Array.from(new Set(values.map(item => item.trim()).filter(Boolean)))
+    }
+
+    const fetchCategoriesForCreate = async () => {
+        try {
+            setCategoryLoading(true)
+            const res = await service.get('/hexopro/api/tags-categories-and-metadata')
+            const categoryMap = res.data?.categories || {}
+            const options = Object.keys(categoryMap).map(key => categoryMap[key]).filter(Boolean)
+            setAvailableCategories(options)
+        } catch (err) {
+            console.error('获取分类列表失败', err)
+            setAvailableCategories([])
+        } finally {
+            setCategoryLoading(false)
+        }
     }
 
     const checkTitle = (title: string) => {
@@ -158,6 +184,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         if (!checkTitle(title)) {
             return
         }
+        const categories = normalizeCategoryValues(selectedCategories)
         
         // 检查标题是否已存在
         const exists = await checkTitleExists(title)
@@ -166,7 +193,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             const uniqueTitle = `${title}${Date.now()}`
             message.info('已存在同名文章，已自动添加区分字符')
             
-            service.post('/hexopro/api/posts/new', { title: uniqueTitle }).then((res) => {
+            service.post('/hexopro/api/posts/new', { title: uniqueTitle, categories }).then((res) => {
                 const post = res.data
                 post.date = parseDateTime(post.date)
                 post.updated = parseDateTime(post.updated)
@@ -174,7 +201,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             })
         } else {
             // 如果不存在，直接创建
-            service.post('/hexopro/api/posts/new', { title: title }).then((res) => {
+            service.post('/hexopro/api/posts/new', { title: title, categories }).then((res) => {
                 const post = res.data
                 post.date = parseDateTime(post.date)
                 post.updated = parseDateTime(post.updated)
@@ -182,6 +209,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
             })
         }
         setOpen(false)
+        setSelectedCategories([])
     }
 
     // 检查页面标题是否已存在
@@ -199,6 +227,21 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         }
     }
 
+    const extractCreatedPage = (payload: any) => {
+        if (payload?.permalink) return payload
+        if (payload?.page?.permalink) return payload.page
+        if (payload?.data?.permalink) return payload.data
+        return null
+    }
+
+    const queryLatestCreatedPage = async (targetTitle: string) => {
+        const res = await service.get('/hexopro/api/pages/list', {
+            params: { deleted: false, page: 1, pageSize: 20 }
+        })
+        const pages = res.data?.data || []
+        return pages.find((item) => item.title === targetTitle) || pages[0]
+    }
+
     const newPage = async () => {
         if (!checkTitle(title)) {
             return
@@ -207,28 +250,24 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         try {
             // 检查标题是否已存在
             const exists = await checkPageTitleExists(title)
+            const finalTitle = exists ? `${title}${Date.now()}` : title
             if (exists) {
-                // 如果存在，自动添加时间戳后缀
-                const uniqueTitle = `${title}${Date.now()}`
                 message.info(locale['navbar.page.exists'] || '已存在同名页面，已自动添加区分字符')
-                
-                const res = await service.post('/hexopro/api/pages/new', { title: uniqueTitle })
-                if (res.status === 200) {
-                    const post = res.data
-                    post.date = parseDateTime(post.date)
-                    post.updated = parseDateTime(post.updated)
-                    navigate(`/page/${base64Encode(post.permalink)}`)
-                }
-            } else {
-                // 如果不存在，直接创建
-                const res = await service.post('/hexopro/api/pages/new', { title: title })
-                if (res.status === 200) {
-                    const post = res.data
-                    post.date = parseDateTime(post.date)
-                    post.updated = parseDateTime(post.updated)
-                    navigate(`/page/${base64Encode(post.permalink)}`)
-                }
             }
+
+            const res = await service.post('/hexopro/api/pages/new', { title: finalTitle })
+            let page = extractCreatedPage(res.data)
+
+            // 兼容接口未返回创建实体的情况（例如 204），通过列表回查保证可跳转
+            if (!page?.permalink) {
+                page = await queryLatestCreatedPage(finalTitle)
+            }
+
+            if (!page?.permalink) {
+                throw new Error('页面已创建，但未获取到页面链接')
+            }
+
+            navigate(`/page/${base64Encode(page.permalink)}`)
         } catch (err) {
             console.log(err)
             api.error({ message: locale['error.title'], description: err.message })
@@ -269,6 +308,12 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         }
     }, [])
 
+    useEffect(() => {
+        if (open && target === 'Post') {
+            fetchCategoriesForCreate()
+        }
+    }, [open, target])
+
     const onSearchModalChange = (v) => {
         setSearchValue(v.target.value)
         // searchBlog(v.target.value)
@@ -302,6 +347,10 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         }
     }
 
+    const handleVisitBlog = () => {
+        openDesktopLink('/')
+    }
+
     return (
         <div className={`${styles.navbar} ${styles[theme]}`} style={style}>
             {contextHolder}
@@ -330,6 +379,9 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                     <>
                          <li>
                     <Button type="default" shape="circle" icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} />
+                </li>
+                <li>
+                    <Button type="default" shape="circle" icon={<GlobalOutlined />} onClick={handleVisitBlog} className={`${styles.customButtonHover} ${styles[theme]}`} title={locale['navbar.visit.blog'] || '访问博客前台'} />
                 </li>
                 <li>
                     <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
@@ -371,6 +423,17 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 }
             >
                 <Input placeholder={locale['navbar.modal.input.placeholder']} value={title} onChange={(e) => setTitle(e.target.value)} />
+                {target === 'Post' && (
+                    <Select
+                        mode="tags"
+                        style={{ width: '100%', marginTop: 12 }}
+                        placeholder={locale['navbar.modal.category.placeholder'] || '请选择或输入分类'}
+                        value={selectedCategories}
+                        loading={categoryLoading}
+                        onChange={(values) => setSelectedCategories(normalizeCategoryValues(values))}
+                        options={availableCategories.map(item => ({ label: item, value: item }))}
+                    />
+                )}
             </Modal>
             <Modal
                 className={`${styles[theme]}`}
@@ -424,6 +487,9 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                 <div className={styles.mobileMenuActions}>
                     <Button block icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
                         {locale['navbar.search']}
+                    </Button>
+                    <Button block icon={<GlobalOutlined />} onClick={handleVisitBlog} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                        {locale['navbar.visit.blog'] || '访问博客前台'}
                     </Button>
                     <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
                         <Button block icon={theme === 'dark' ? <IconLangLight /> : <IconLang />} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
@@ -488,15 +554,18 @@ const MenuItems = () => {
     const onClickItem = (item) => {
         const { key } = item
         const currentRoute = getFlatternRoute(routes).find((r) => r.key === key)
-        
+        const targetPath = currentRoute?.path || `/${key}`
+
         // 添加检查，确保找到了路由且路由的component存在并有preload方法
         if (currentRoute && currentRoute.component && typeof currentRoute.component.preload === 'function') {
-            currentRoute.component.preload().then(() => {
-                navigate(currentRoute.path ? currentRoute.path : `/${key}`)
-            })
+            Promise.resolve(currentRoute.component.preload())
+                .catch(() => undefined)
+                .finally(() => {
+                    navigate(targetPath)
+                })
         } else {
             // 如果没有preload方法或找不到路由，直接导航
-            navigate(currentRoute?.path || `/${key}`)
+            navigate(targetPath)
         }
     }
 
@@ -550,6 +619,8 @@ function getIconFromKey(key: string) {
             return <CloudUploadOutlined />
         case 'content/pages':
             return <FileTextOutlined />
+        case 'content/categories':
+            return <AppstoreOutlined />
         case 'content/images':
             return <PictureOutlined />
         case 'content/yaml':

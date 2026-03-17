@@ -51,14 +51,14 @@ export default function useRoute(): [IRoute[], string] {
   const routes = [
     {
       key: 'dashboard',
-      name:'menu.dashboard',
+      name: 'menu.dashboard',
     },
     {
       key: 'content_management',
       name: 'menu.content_management',
       children: [
         {
-          name:'menu.posts',
+          name: 'menu.posts',
           key: 'posts',
           children: [
             {
@@ -68,8 +68,12 @@ export default function useRoute(): [IRoute[], string] {
             {
               name: 'menu.posts.drafts',
               key: 'content/posts/drafts',
+            },
+            {
+              name: 'menu.categories',
+              key: 'content/categories',
             }
-           
+
           ]
         },
         {
@@ -81,6 +85,10 @@ export default function useRoute(): [IRoute[], string] {
           name: 'menu.content.images',
           key: 'content/images',
         },
+        {
+          name: 'menu.recycle',
+          key: 'content/recycle',
+        },
         // 添加YAML管理路由
         {
           name: 'menu.content.yaml',
@@ -88,7 +96,7 @@ export default function useRoute(): [IRoute[], string] {
         },
       ],
     },
-    
+
     {
       name: 'menu.system',
       key: 'system',
@@ -96,6 +104,10 @@ export default function useRoute(): [IRoute[], string] {
         {
           name: 'menu.deploy',
           key: 'deploy',
+        },
+        {
+          name: 'menu.themeMarket',
+          key: 'theme-market',
         },
         {
           name: 'menu.settings',

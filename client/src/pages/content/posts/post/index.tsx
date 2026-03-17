@@ -1,5 +1,5 @@
 import { service } from '@/utils/api'
-import React, { useEffect, useRef, useState, useContext } from 'react'
+import React, { useCallback, useEffect, useRef, useState, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 import { message, Skeleton } from 'antd'
 import ErrorDisplay from '@/components/ErrorDisplay'
@@ -8,11 +8,11 @@ import { PostSettings } from './postSetting'
 import { useNavigate } from "react-router-dom"
 import HexoProVditor from '@/components/Vditor'
 import EditorHeader from '../../components/EditorHeader'
+import AIChatPanel from '@/components/AIChatPanel'
 import useLocale from '@/hooks/useLocale'
 import styles from '../../style/index.module.less'
-import { useSelector } from 'react-redux'
-import { GlobalState } from '@/store'
 import { GlobalContext } from '@/context'
+import HexoProMilkdown from '@/components/MilkdownEditor'
 
 
 type Post = {
@@ -26,6 +26,7 @@ function Post() {
     const navigate = useNavigate()
     const postRef = useRef(null)
     const editorWapperRef = useRef(null)
+    const vditorRef = useRef(null)
     const { _id } = useParams()
     const [post, setPost] = useState({ isDraft: true, source: null, permalink: null, title: null })
     const [tagsCatMeta, setTagsCatMeta] = useState({})
@@ -36,15 +37,11 @@ function Post() {
     const [rendered, setRendered] = useState('')
     const [update, setUpdate] = useState({})
     const [visible, setVisible] = useState(false)
+    const [aiPanelVisible, setAiPanelVisible] = useState(false)
 
-    const [skeletonSize, setSkeletonSize] = useState({ width: '100%', height: '100%' })
-
-    const [skeletonLoading, setSkeletonLoading] = useState(true)
+    const [isDataLoading, setIsDataLoading] = useState(true)
+    const [editorReady, setEditorReady] = useState(false)
     const [error, setError] = useState<Error | null>(null)
-    const toolbarPin = useSelector((state: GlobalState) => {
-        return state.vditorToolbarPin
-    })
-
     const { theme } = useContext(GlobalContext)
 
     const skeletonStyle = theme === 'dark' ? {
@@ -155,86 +152,70 @@ function Post() {
         }
     }
 
+    const updatePostTitleAndSource = (nextTitle: string) => {
+        if (!post.source) {
+            postRef.current({ title: nextTitle })
+            setPost({ ...post, title: nextTitle })
+            return
+        }
+
+        const parts = post.source.split('/')
+        parts[parts.length - 1] = `${nextTitle}.md`
+        const newSource = parts.join('/')
+
+        postRef.current({ title: nextTitle, source: newSource })
+        setPost({ ...post, title: nextTitle, source: newSource })
+    }
+
     // 修改标题处理函数
     const handleChangeTitle = async (v) => {
-
-        // 直接更新标题状态，不立即检查重复
-        setTitle(v)
-        // 如果标题没有变化，直接返回
-        if (v === title) {
+        const nextTitle = String(v || '').trim()
+        if (!nextTitle || nextTitle === post.title) {
+            setTitle(post.title || '')
             return
         }
 
-        // 检查是否存在同名文章
-        const exists = await checkTitleExists(v)
-
+        const exists = await checkTitleExists(nextTitle)
         if (exists) {
-            // 提示用户但不阻止输入
             message.warning('已存在同名文章，保存时将自动添加区分字符')
-            // 如果重复，自动添加时间戳后缀
-            const uniqueTitle = `${v} (${Date.now()})`
+            const uniqueTitle = `${nextTitle} (${Date.now()})`
             setTitle(uniqueTitle)
-
-            // 更新文件名
-            const parts = post.source.split('/')
-            parts[parts.length - 1] = uniqueTitle + '.md'
-            const newSource = parts.join('/')
-            postRef.current({ title: uniqueTitle, source: newSource })
-            setPost({ ...post, title: uniqueTitle })
+            updatePostTitleAndSource(uniqueTitle)
             return
         }
 
-        // 无论是否重复，都更新文件名
-        const parts = post.source.split('/')
-        parts[parts.length - 1] = v + '.md'
-        const newSource = parts.join('/')
-        postRef.current({ title: v, source: newSource })
+        setTitle(nextTitle)
+        updatePostTitleAndSource(nextTitle)
     }
 
     // 添加标题失去焦点时的处理函数
     const handleTitleBlur = async (v) => {
-
-        // 如果标题没有变化，直接返回
-        console.log('handleTitleBlur', title, post.title, v.target.value)
-        if (title === post.title) {
+        const nextTitle = String(v?.target?.value || '').trim()
+        if (!nextTitle || nextTitle === post.title) {
+            setTitle(post.title || '')
             return
         }
 
-        const debouncedUpdate = _.debounce(async (newTitle) => {
-            // 检查是否存在同名文章
-            const exists = await checkTitleExists(newTitle)
+        const exists = await checkTitleExists(nextTitle)
+        if (exists) {
+            const uniqueTitle = `${nextTitle} (${Date.now()})`
+            setTitle(uniqueTitle)
+            updatePostTitleAndSource(uniqueTitle)
+            message.info('已自动为重复标题添加区分字符')
+            return
+        }
 
-            if (exists) {
-                // 如果重复，自动添加时间戳后缀
-                const uniqueTitle = `${title} (${Date.now()})`
-                setTitle(uniqueTitle)
-
-                // 更新文件名
-                const parts = post.source.split('/')
-                parts[parts.length - 1] = uniqueTitle + '.md'
-                const newSource = parts.join('/')
-                postRef.current({ title: uniqueTitle, source: newSource })
-
-                message.info('已自动为重复标题添加区分字符')
-                setPost({ ...post, title: uniqueTitle })
-            }
-
-            // 无论是否重复，都更新文件名
-            const parts = post.source.split('/')
-            parts[parts.length - 1] = newTitle + '.md'
-            const newSource = parts.join('/')
-            console.log('handleTitleBlur111', newTitle, newSource)
-            postRef.current({ title: newTitle, source: newSource })
-        }, 100) // 800ms 的延迟
-
-        debouncedUpdate(v.target.value)
+        setTitle(nextTitle)
+        updatePostTitleAndSource(nextTitle)
     }
 
     const handleChangeContent = (text) => {
         if (text === rendered) {
             return
         }
+        // 同步本地内容（用于 AI 插入等场景）
         setRendered(text)
+        setDoc(text)
         postRef.current({ _content: text })
     }
 
@@ -313,21 +294,20 @@ function Post() {
         // console.log('handleUploadingImage', isUploading)
     }
 
-    useEffect(() => {
-        const handleResize = () => {
-            if (editorWapperRef.current) {
-                const { clientWidth, clientHeight } = editorWapperRef.current
-                setSkeletonSize({ width: `${clientWidth + 20}px`, height: `${clientHeight + 20}px` })
-            }
-        }
-        handleResize() // 初始化尺寸
-        // editorWapperRef.current.style.overfllow = 'auto';
-        window.addEventListener('resize', handleResize) // 监听窗口 resize 事件
+    const handleAIClick = () => {
+        setAiPanelVisible(!aiPanelVisible)
+    }
 
-        return () => {
-            window.removeEventListener('resize', handleResize) // 清理事件监听
-        }
-    }, [])
+    const handleInsertContent = (content: string) => {
+        // 在当前文档末尾插入 AI 内容，但不关闭面板
+        const base = doc || ''
+        const newContent = base + '\n\n' + content
+        // 更新本地状态，驱动编辑器刷新
+        setDoc(newContent)
+        setRendered(newContent)
+        // 触发后端保存
+        postRef.current({ _content: newContent })
+    }
 
     const retryFetch = () => {
         setError(null)
@@ -336,7 +316,7 @@ function Post() {
 
     const fetchData = async () => {
         try {
-            setSkeletonLoading(true)
+            setIsDataLoading(true)
             const items = fetch()
             const promises = Object.keys(items).map((name) => {
                 return Promise.resolve(items[name]).then((data) => {
@@ -359,11 +339,13 @@ function Post() {
             setError(err as Error)
             message.error('加载失败: ' + (err as Error).message)
         } finally {
-            setTimeout(() => {
-                setSkeletonLoading(false)
-            }, 800)
+            setIsDataLoading(false)
         }
     }
+
+    const handleEditorReady = useCallback(() => {
+        setEditorReady(true)
+    }, [])
 
     useEffect(() => {
         fetchData()
@@ -372,47 +354,86 @@ function Post() {
     useEffect(() => {
         const p = _.debounce((update) => {
             handleUpdate(update)
-        }, 1000, { trailing: true, loading: true })
+        }, 1000, { trailing: true })
         postRef.current = p
     }, [])
 
     return (
-        <div ref={editorWapperRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", overflowY: 'auto', overflowX: 'hidden' }}>
-            {error ? (
-                <ErrorDisplay error={error} onRetry={retryFetch} />
-            ) : (
-                <>
-                    <Skeleton paragraph={{ rows: 10 }} loading={skeletonLoading} active className={styles['skeleton']} style={{ ...skeletonSize, ...skeletonStyle }} />
-                    <EditorHeader
-                        isPage={false}
-                        permalink={post.permalink} // 桌面端使用需要替换域名为localhost:4000
-                        isDraft={post.isDraft}
-                        handlePublish={publish}
-                        handleUnpublish={unpublish}
-                        className={styles['editor-header']}
-                        initTitle={title}
-                        popTitle={t['editor.header.pop.title']}
-                        popDes={t['page.editor.header.pop.des']}
-                        handleChangeTitle={handleChangeTitle}
-                        handleTitleBlur={handleTitleBlur}
-                        handleSettingClick={(_) => setVisible(true)}
-                        handleRemoveSource={removeBlog}
+        <div className={styles['editor-page']}>
+            {/* 编辑器区域 */}
+            <div
+                className={styles['editor-layout']}
+                ref={editorWapperRef}
+                style={{
+                    display: 'flex',
+                    flex: 1,
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                }}
+            >
+                {error ? (
+                    <ErrorDisplay error={error} onRetry={retryFetch} />
+                ) : (
+                    <>
+                        <Skeleton
+                            paragraph={{ rows: 10 }}
+                            loading={isDataLoading || !editorReady}
+                            active
+                            className={styles['skeleton']}
+                            style={{ ...skeletonStyle }}
+                        />
+                        <EditorHeader
+                            isPage={false}
+                            permalink={post.permalink} // 桌面端使用需要替换域名为localhost:4000
+                            isDraft={post.isDraft}
+                            handlePublish={publish}
+                            handleUnpublish={unpublish}
+                            className={styles['editor-header']}
+                            initTitle={title}
+                            popTitle={t['editor.header.pop.title']}
+                            popDes={t['page.editor.header.pop.des']}
+                            handleChangeTitle={handleChangeTitle}
+                            handleTitleBlur={handleTitleBlur}
+                            handleSettingClick={(_) => setVisible(true)}
+                            handleRemoveSource={removeBlog}
+                            handleAIClick={handleAIClick}
+                        />
+                        <div className={styles['editor-main']}>
+                            {!isDataLoading && editorReady && !(doc || '').trim() && (
+                                <div className={styles['editor-empty-hint']}>
+                                    {t['editor.empty.hint'] || '提示：可以直接输入、粘贴 Markdown，或拖拽图片到编辑器，内容会自动保存。'}
+                                </div>
+                            )}
+                            <HexoProVditor
+                                initValue={doc}
+                                handleChangeContent={handleChangeContent}
+                                handleUploadingImage={handleUploadingImage}
+                                onReady={handleEditorReady}
+                            />
+                        </div>
+                        <PostSettings
+                            visible={visible}
+                            setVisible={setVisible}
+                            tagCatMeta={tagsCatMeta}
+                            setTagCatMeta={setTagsCatMeta}
+                            postMeta={postMetaData}
+                            setPostMeta={setPostMetadata}
+                            handleChange={handleChange}
+                        />
+                    </>
+                )}
+            </div>
+            {/* AI聊天面板 - 右侧侧栏 */}
+            {aiPanelVisible && (
+                <div className={styles['ai-panel-wrap']}>
+                    <AIChatPanel
+                        visible={aiPanelVisible}
+                        onClose={() => setAiPanelVisible(false)}
+                        onInsertContent={handleInsertContent}
                     />
-                    <div style={{ width: "100%", flex: 1, padding: 0, border: 'none' }}>
-                        <HexoProVditor initValue={doc} isPinToolbar={toolbarPin} handleChangeContent={handleChangeContent} handleUploadingImage={handleUploadingImage} />
-                    </div>
-                    <PostSettings
-                        visible={visible}
-                        setVisible={setVisible}
-                        tagCatMeta={tagsCatMeta}
-                        setTagCatMeta={setTagsCatMeta}
-                        postMeta={postMetaData}
-                        setPostMeta={setPostMetadata}
-                        handleChange={handleChange}
-                    />
-                </>
+                </div>
             )}
-        </div >
+        </div>
     )
 }
 

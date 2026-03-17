@@ -4,7 +4,7 @@ import Layout, { Content } from 'antd/es/layout/layout'
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './style/layout.module.less'
 import useRoute, { IRoute } from './routes'
-import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuFoldOutlined, MenuUnfoldOutlined, PictureOutlined, SettingOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, CloudUploadOutlined, CodeOutlined, DeleteOutlined, EditOutlined, FileTextOutlined, HomeOutlined, MenuFoldOutlined, MenuUnfoldOutlined, PictureOutlined, SettingOutlined } from '@ant-design/icons'
 import useLocale from './hooks/useLocale'
 import lazyload from './utils/lazyload'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
@@ -22,23 +22,29 @@ type MenuItem = Required<MenuProps>['items'][number];
 const getIconFromKey = (key: string) => {
     switch (key) {
         case 'dashboard':
-            return <HomeOutlined />;
+            return <HomeOutlined />
         case 'content/posts/blogs':
-            return <EditOutlined />;
+            return <EditOutlined />
         case 'content/posts/drafts':
-            return <FileTextOutlined />;
+            return <FileTextOutlined />
         case 'content/pages':
-            return <AppstoreOutlined />;
+            return <AppstoreOutlined />
+        case 'content/categories':
+            return <AppstoreOutlined />
         case 'content/images':
-            return <PictureOutlined />;
+            return <PictureOutlined />
+        case 'content/recycle':
+            return <DeleteOutlined />
         case 'content/yaml':
-            return <CodeOutlined />;
+            return <CodeOutlined />
         case 'deploy':
-            return <CloudUploadOutlined />;
+            return <CloudUploadOutlined />
+        case 'theme-market':
+            return <AppstoreOutlined />
         case 'settings':
-            return <SettingOutlined />;
+            return <SettingOutlined />
         default:
-            return <HomeOutlined />;
+            return <HomeOutlined />
     }
 }
 
@@ -98,7 +104,7 @@ export default function PageLayout() {
     //     const checkAuth = async () => {
     //         console.log('[PageLayout]: 开始权限验证...')
     //         const token = localStorage.getItem('hexoProToken')
-            
+
     //         if (!token) {
     //             console.log('[PageLayout]: 未找到token，重定向到登录页面')
     //             window.location.href = '/pro/login?reason=session_expired'
@@ -108,7 +114,7 @@ export default function PageLayout() {
     //         try {
     //             console.log('[PageLayout]: 验证token有效性...')
     //             const res = await service.get('/hexopro/api/userInfo')
-                
+
     //             if (res.data && res.data.code !== 401) {
     //                 console.log('[PageLayout]: Token验证成功，用户已认证')
     //                 setIsAuthenticated(true)
@@ -159,11 +165,19 @@ export default function PageLayout() {
     function onClickItem(item) {
         const { key } = item
         const currentRoute = flatternRoutes.find((r) => r.key === key)
-        const component = currentRoute.component
-        const preload = component.preload()
-        preload.then(() => {
-            navigate(currentRoute.path ? currentRoute.path : `/${key}`)
-        })
+        const targetPath = currentRoute?.path ? currentRoute.path : `/${key}`
+        const component = currentRoute?.component
+
+        if (!component || typeof component.preload !== 'function') {
+            navigate(targetPath)
+            return
+        }
+
+        Promise.resolve(component.preload())
+            .catch(() => undefined)
+            .finally(() => {
+                navigate(targetPath)
+            })
     }
 
     const updateMenuStatus = useCallback(() => {
