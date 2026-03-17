@@ -68,6 +68,10 @@ export default function useRoute(): [IRoute[], string] {
             {
               name: 'menu.posts.drafts',
               key: 'content/posts/drafts',
+            },
+            {
+              name: 'menu.categories',
+              key: 'content/categories',
             }
 
           ]
@@ -75,10 +79,6 @@ export default function useRoute(): [IRoute[], string] {
         {
           name: 'menu.pages',
           key: 'content/pages',
-        },
-        {
-          name: 'menu.categories',
-          key: 'content/categories',
         },
         // 添加图床管理路由
         {

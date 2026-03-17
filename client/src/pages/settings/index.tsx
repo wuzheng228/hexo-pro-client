@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect } from 'react'
 import { Spin, Tabs, message } from 'antd'
-import { CloudOutlined, EditOutlined, LinkOutlined, PictureOutlined, ThunderboltOutlined, UserOutlined } from '@ant-design/icons'
+import { CloudOutlined, EditOutlined, LinkOutlined, PictureOutlined, QuestionCircleOutlined, ThunderboltOutlined, UserOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router-dom'
 import styles from './style/index.module.less'
 import useLocale from '../../hooks/useLocale'
 import { GlobalContext } from '@/context'
@@ -11,10 +12,15 @@ import EditorSettingsCard from './components/EditorSettingsCard'
 import DisplaySettingsCard from './components/DisplaySettingsCard'
 import AISettingsCard from './components/AISettingsCard'
 import StorageSettingsCard from './components/StorageSettingsCard'
+import UpdateSettingsCard from './components/UpdateSettingsCard'
 
 const SettingsPage: React.FC = () => {
   const t = useLocale()
   const { theme } = useContext(GlobalContext)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [checkTrigger, setCheckTrigger] = React.useState(0)
+  const tabParam = searchParams.get('tab')
+  const activeTab = tabParam && ['account', 'link', 'editor', 'display', 'storage', 'ai', 'help'].includes(tabParam) ? tabParam : 'account'
   // 跳过设置直接进入
   const skipSettings = useCallback(() => {
     // 设置一个标记，表示用户选择了跳过设置
@@ -30,6 +36,30 @@ const SettingsPage: React.FC = () => {
     message.error(t['settings.checkSystemStatusFailed'])
   }, [error, t])
 
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (activeTab !== 'help' || action !== 'check-update') return
+
+    setCheckTrigger((value) => value + 1)
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('action')
+    setSearchParams(nextParams, { replace: true })
+  }, [activeTab, searchParams, setSearchParams])
+
+  const onTabChange = useCallback(
+    (key: string) => {
+      const nextParams = new URLSearchParams(searchParams)
+      if (key === 'account') {
+        nextParams.delete('tab')
+      } else {
+        nextParams.set('tab', key)
+      }
+      nextParams.delete('action')
+      setSearchParams(nextParams, { replace: true })
+    },
+    [searchParams, setSearchParams],
+  )
+
   return (
     <div className={styles.container} data-theme={theme}>
       <Spin spinning={loading}>
@@ -38,7 +68,8 @@ const SettingsPage: React.FC = () => {
         ) : (
           <Tabs
             className={styles.settingsTabs}
-            defaultActiveKey="account"
+            activeKey={activeTab}
+            onChange={onTabChange}
             animated={{ inkBar: false, tabPane: false }}
             items={[
               {
@@ -100,6 +131,16 @@ const SettingsPage: React.FC = () => {
                   </span>
                 ),
                 children: <AISettingsCard />,
+              },
+              {
+                key: 'help',
+                label: (
+                  <span className={styles.tabLabel}>
+                    <QuestionCircleOutlined className={styles.tabIcon} />
+                    {t['settings.helpTitle'] || '帮助与更新'}
+                  </span>
+                ),
+                children: <UpdateSettingsCard checkTrigger={checkTrigger} />,
               },
             ]}
           />
