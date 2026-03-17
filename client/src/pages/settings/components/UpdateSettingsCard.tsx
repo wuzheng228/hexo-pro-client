@@ -25,7 +25,7 @@ const DEFAULT_UPDATER_STATE: UpdaterState = {
   lastCheckedAt: null,
 }
 
-const RELEASE_URL = 'https://github.com/wuzheng228/hexo-pro-desktop/releases'
+const RELEASE_URL = 'https://github.com/wuzheng228/hexo-pro/releases'
 
 const getStatusText = (status: string, t: Record<string, string>) => {
   const statusMap: Record<string, string> = {

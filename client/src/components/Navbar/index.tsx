@@ -18,6 +18,7 @@ import cs from 'classnames'
 import useDeviceDetect from "@/hooks/useDeviceDetect"
 import useRoute from "@/routes"
 import { base64Encode } from "@/utils/encodeUtils"
+import { openDesktopLink } from "@/utils/desktopUtils"
 import SettingIcon from '../../assets/setting.svg'
 
 type NavbarProps = {
@@ -346,6 +347,10 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
         }
     }
 
+    const handleVisitBlog = () => {
+        openDesktopLink('/')
+    }
+
     return (
         <div className={`${styles.navbar} ${styles[theme]}`} style={style}>
             {contextHolder}
@@ -376,7 +381,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                     <Button type="default" shape="circle" icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} />
                 </li>
                 <li>
-                    <Button type="default" shape="circle" icon={<GlobalOutlined />} onClick={() => window.open('/', '_blank')} className={`${styles.customButtonHover} ${styles[theme]}`} title={locale['navbar.visit.blog'] || '访问博客前台'} />
+                    <Button type="default" shape="circle" icon={<GlobalOutlined />} onClick={handleVisitBlog} className={`${styles.customButtonHover} ${styles[theme]}`} title={locale['navbar.visit.blog'] || '访问博客前台'} />
                 </li>
                 <li>
                     <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
@@ -483,7 +488,7 @@ export default function Navbar({ style }: NavbarProps) { // 使用props中的sty
                     <Button block icon={<SearchOutlined />} onClick={onSearchClick} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
                         {locale['navbar.search']}
                     </Button>
-                    <Button block icon={<GlobalOutlined />} onClick={() => window.open('/', '_blank')} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
+                    <Button block icon={<GlobalOutlined />} onClick={handleVisitBlog} className={`${styles.customButtonHover} ${styles[theme]}`} style={{ marginBottom: 8 }}>
                         {locale['navbar.visit.blog'] || '访问博客前台'}
                     </Button>
                     <Dropdown menu={{ items: langDropList, onClick: handleToggleLang }}>
